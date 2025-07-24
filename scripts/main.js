@@ -5,13 +5,7 @@ import { WorldLoreSheet } from './world-lore-sheet.js';
 Hooks.once('init', async function() {
   console.log('Campaign Codex | Initializing');
   
-  // Register the module's flag scope
-  CONFIG.compatibility.includePatterns.add(/^campaign-codex\./);
-  
-  // Register custom journal entry sheet types (v12 approach)
-  // We'll use flags to identify our custom journal types instead of document types
-
-  // Register sheet classes for journal entries with our custom flags
+  // Register sheet classes for journal entries
   DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", NPCJournalSheet, {
     makeDefault: false,
     label: "Campaign Codex: NPC Journal"
@@ -82,12 +76,12 @@ Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
 // Hook to determine which sheet to use for journal entries
 Hooks.on('getJournalEntrySheetClass', (journalEntry, sheetClasses) => {
   // Check if this is an NPC journal entry
-  if (journalEntry.getFlag("campaign-codex", "actorId")) {
+  if (journalEntry.flags && journalEntry.flags["campaign-codex"] && journalEntry.flags["campaign-codex"].actorId) {
     return NPCJournalSheet;
   }
   
   // Check if this is a world lore entry
-  if (journalEntry.getFlag("campaign-codex", "loreData")) {
+  if (journalEntry.flags && journalEntry.flags["campaign-codex"] && journalEntry.flags["campaign-codex"].loreData) {
     return WorldLoreSheet;
   }
   
