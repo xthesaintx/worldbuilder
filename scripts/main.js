@@ -75,13 +75,15 @@ Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
 
 // Hook to determine which sheet to use for journal entries
 Hooks.on('getJournalEntrySheetClass', (journalEntry, sheetClasses) => {
-  // Check if this is an NPC journal entry
-  if (journalEntry.flags && journalEntry.flags["campaign-codex"] && journalEntry.flags["campaign-codex"].actorId) {
+  // Check if this is an NPC journal entry by looking for our data page
+  const hasNPCData = journalEntry.pages.find(p => p.name === "campaign-codex-npc-data");
+  if (hasNPCData) {
     return NPCJournalSheet;
   }
   
-  // Check if this is a world lore entry
-  if (journalEntry.flags && journalEntry.flags["campaign-codex"] && journalEntry.flags["campaign-codex"].loreData) {
+  // Check if this is a world lore entry by looking for our data page
+  const hasLoreData = journalEntry.pages.find(p => p.name === "campaign-codex-lore-data");
+  if (hasLoreData) {
     return WorldLoreSheet;
   }
   
