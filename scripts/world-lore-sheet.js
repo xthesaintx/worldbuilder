@@ -10,7 +10,7 @@ export class WorldLoreSheet extends JournalSheet {
   }
 
   get template() {
-    return "modules/campaign-codex/templates/world-lore-sheet.html";
+    return "modules/campaign-codex/templates/world-lore-sheet.hbs";
   }
 
   async getData() {
