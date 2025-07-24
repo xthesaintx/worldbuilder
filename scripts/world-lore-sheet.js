@@ -148,13 +148,16 @@ export class WorldLoreSheet extends JournalSheet {
   }
 
   _onChangeTab(event, tabName, html) {
+    // Convert html to jQuery if it isn't already
+    const $html = html instanceof jQuery ? html : $(html);
+    
     // Remove active from all tabs and content
-    html.find('.tabs .item').removeClass('active');
-    html.find('.tab').removeClass('active');
+    $html.find('.tabs .item').removeClass('active');
+    $html.find('.tab').removeClass('active');
 
     // Add active to clicked tab and corresponding content
     $(event.currentTarget).addClass('active');
-    html.find(`.tab[data-tab="${tabName}"]`).addClass('active');
+    $html.find(`.tab[data-tab="${tabName}"]`).addClass('active');
   }
 
   _onDragOver(event) {

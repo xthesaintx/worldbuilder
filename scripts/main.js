@@ -357,22 +357,24 @@ Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
   });
 });
 
-// Automatically use custom sheets for our journal types
+// Automatically use custom sheets for our journal types (simplified)
 Hooks.on('renderJournalEntry', (journal, html, data) => {
-  // Check if this journal should use our custom sheets
+  // Only auto-switch if not already using our sheets
   const hasNPCData = journal.pages.find(p => p.name === "campaign-codex-npc-data");
   const hasLoreData = journal.pages.find(p => p.name === "campaign-codex-lore-data");
   
   if (hasNPCData && !(journal.sheet instanceof NPCJournalSheet)) {
-    // Force NPC sheet
-    journal._sheet = null; // Clear existing sheet
-    journal.sheet.close();
-    new NPCJournalSheet(journal).render(true);
+    // Close current sheet and open with our sheet
+    setTimeout(() => {
+      journal.sheet.close();
+      new NPCJournalSheet(journal).render(true);
+    }, 100);
   } else if (hasLoreData && !(journal.sheet instanceof WorldLoreSheet)) {
-    // Force lore sheet
-    journal._sheet = null; // Clear existing sheet
-    journal.sheet.close();
-    new WorldLoreSheet(journal).render(true);
+    // Close current sheet and open with our sheet
+    setTimeout(() => {
+      journal.sheet.close();
+      new WorldLoreSheet(journal).render(true);
+    }, 100);
   }
 });
 

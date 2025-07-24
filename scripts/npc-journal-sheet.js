@@ -149,13 +149,16 @@ export class NPCJournalSheet extends JournalSheet {
   }
 
   _onChangeTab(event, tabName, html) {
+    // Convert html to jQuery if it isn't already
+    const $html = html instanceof jQuery ? html : $(html);
+    
     // Remove active from all tabs and content
-    html.find('.tabs .item').removeClass('active');
-    html.find('.tab').removeClass('active');
+    $html.find('.tabs .item').removeClass('active');
+    $html.find('.tab').removeClass('active');
 
     // Add active to clicked tab and corresponding content
     $(event.currentTarget).addClass('active');
-    html.find(`.tab[data-tab="${tabName}"]`).addClass('active');
+    $html.find(`.tab[data-tab="${tabName}"]`).addClass('active');
   }
 
   _onDragOver(event) {
@@ -184,14 +187,28 @@ export class NPCJournalSheet extends JournalSheet {
     const actor = await fromUuid(data.uuid);
     if (!actor || actor.type !== "npc") return;
 
-    const currentActorId = this.document.getFlag("campaign-codex", "actorId");
-    if (actor.id === currentActorId) return;
+    // Get current NPC data
+    let npcPage = this.document.pages.find(p => p.name === "campaign-codex-npc-data");
+    let currentData = {};
+    
+    if (npcPage) {
+      try {
+        currentData = JSON.parse(npcPage.text.content || "{}");
+      } catch (error) {
+        console.warn("Campaign Codex | Could not parse NPC data:", error);
+        currentData = {};
+      }
+    }
+
+    // Don't add relationship to self
+    if (actor.id === currentData.actorId) return;
 
     // Show relationship dialog
     const relationshipType = await this._showRelationshipDialog();
     if (!relationshipType) return;
 
-    const relationships = this.document.getFlag("campaign-codex", "npcData.relationships") || [];
+    // Add the relationship
+    const relationships = currentData.relationships || [];
     relationships.push({
       actorId: actor.id,
       type: relationshipType.type,
@@ -199,7 +216,17 @@ export class NPCJournalSheet extends JournalSheet {
       id: foundry.utils.randomID()
     });
 
-    await this.document.setFlag("campaign-codex", "npcData.relationships", relationships);
+    // Update the data
+    currentData.relationships = relationships;
+
+    // Save back to journal page
+    if (npcPage) {
+      await npcPage.update({
+        "text.content": JSON.stringify(currentData, null, 2)
+      });
+    }
+
+    // Re-render to show the new relationship
     this.render();
   }
 
@@ -211,7 +238,21 @@ export class NPCJournalSheet extends JournalSheet {
     const connectionType = await this._showLocationDialog();
     if (!connectionType) return;
 
-    const locations = this.document.getFlag("campaign-codex", "npcData.locations") || [];
+    // Get current NPC data
+    let npcPage = this.document.pages.find(p => p.name === "campaign-codex-npc-data");
+    let currentData = {};
+    
+    if (npcPage) {
+      try {
+        currentData = JSON.parse(npcPage.text.content || "{}");
+      } catch (error) {
+        console.warn("Campaign Codex | Could not parse NPC data:", error);
+        currentData = {};
+      }
+    }
+
+    // Add the location connection
+    const locations = currentData.locations || [];
     locations.push({
       locationId: journal.id,
       type: connectionType.type,
@@ -219,7 +260,17 @@ export class NPCJournalSheet extends JournalSheet {
       id: foundry.utils.randomID()
     });
 
-    await this.document.setFlag("campaign-codex", "npcData.locations", locations);
+    // Update the data
+    currentData.locations = locations;
+
+    // Save back to journal page
+    if (npcPage) {
+      await npcPage.update({
+        "text.content": JSON.stringify(currentData, null, 2)
+      });
+    }
+
+    // Re-render to show the new location
     this.render();
   }
 
@@ -375,19 +426,61 @@ export class NPCJournalSheet extends JournalSheet {
 
   async _onDeleteRelationship(event) {
     const relationshipId = event.currentTarget.dataset.relationshipId;
-    const relationships = this.document.getFlag("campaign-codex", "npcData.relationships") || [];
-    const filtered = relationships.filter(r => r.id !== relationshipId);
     
-    await this.document.setFlag("campaign-codex", "npcData.relationships", filtered);
+    // Get current NPC data
+    let npcPage = this.document.pages.find(p => p.name === "campaign-codex-npc-data");
+    let currentData = {};
+    
+    if (npcPage) {
+      try {
+        currentData = JSON.parse(npcPage.text.content || "{}");
+      } catch (error) {
+        console.warn("Campaign Codex | Could not parse NPC data:", error);
+        return;
+      }
+    }
+
+    // Filter out the relationship
+    const relationships = currentData.relationships || [];
+    currentData.relationships = relationships.filter(r => r.id !== relationshipId);
+
+    // Save back to journal page
+    if (npcPage) {
+      await npcPage.update({
+        "text.content": JSON.stringify(currentData, null, 2)
+      });
+    }
+    
     this.render();
   }
 
   async _onDeleteLocation(event) {
     const locationId = event.currentTarget.dataset.locationId;
-    const locations = this.document.getFlag("campaign-codex", "npcData.locations") || [];
-    const filtered = locations.filter(l => l.id !== locationId);
     
-    await this.document.setFlag("campaign-codex", "npcData.locations", filtered);
+    // Get current NPC data
+    let npcPage = this.document.pages.find(p => p.name === "campaign-codex-npc-data");
+    let currentData = {};
+    
+    if (npcPage) {
+      try {
+        currentData = JSON.parse(npcPage.text.content || "{}");
+      } catch (error) {
+        console.warn("Campaign Codex | Could not parse NPC data:", error);
+        return;
+      }
+    }
+
+    // Filter out the location
+    const locations = currentData.locations || [];
+    currentData.locations = locations.filter(l => l.id !== locationId);
+
+    // Save back to journal page
+    if (npcPage) {
+      await npcPage.update({
+        "text.content": JSON.stringify(currentData, null, 2)
+      });
+    }
+    
     this.render();
   }
 
