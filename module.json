@@ -1,7 +1,7 @@
 {
   "id": "worldbuilder",
   "title": "worldbuilder",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "esmodules": ["scripts/main.js"],
   "compatibility": {
     "minimum": "12",
