@@ -5,6 +5,9 @@ import { WorldLoreSheet } from './world-lore-sheet.js';
 Hooks.once('init', async function() {
   console.log('Campaign Codex | Initializing');
   
+  // Register the module's flag scope
+  CONFIG.compatibility.includePatterns.add(/^campaign-codex\./);
+  
   // Register custom journal entry sheet types (v12 approach)
   // We'll use flags to identify our custom journal types instead of document types
 
