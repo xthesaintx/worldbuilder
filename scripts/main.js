@@ -16,6 +16,8 @@ Hooks.once('init', async function() {
     label: "Campaign Codex: World Lore"
   });
 
+  console.log('Campaign Codex | Sheets registered');
+
   // Register settings
   game.settings.register("campaign-codex", "showPlayerNotes", {
     name: "Show Player Notes Section",
@@ -36,6 +38,9 @@ Hooks.once('ready', async function() {
   
   // Initialize the journal interface
   game.campaignCodex = new CampaignCodexJournal();
+  
+  // Log available sheets for debugging
+  console.log('Campaign Codex | Available journal sheets:', Object.keys(DocumentSheetConfig.get(JournalEntry)));
 });
 
 // Add context menu options to actors
@@ -73,21 +78,23 @@ Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
   });
 });
 
-// Hook to determine which sheet to use for journal entries
-Hooks.on('getJournalEntrySheetClass', (journalEntry, sheetClasses) => {
-  // Check if this is an NPC journal entry by looking for our data page
-  const hasNPCData = journalEntry.pages.find(p => p.name === "campaign-codex-npc-data");
-  if (hasNPCData) {
-    return NPCJournalSheet;
-  }
+// Automatically use custom sheets for our journal types
+Hooks.on('renderJournalEntry', (journal, html, data) => {
+  // Check if this journal should use our custom sheets
+  const hasNPCData = journal.pages.find(p => p.name === "campaign-codex-npc-data");
+  const hasLoreData = journal.pages.find(p => p.name === "campaign-codex-lore-data");
   
-  // Check if this is a world lore entry by looking for our data page
-  const hasLoreData = journalEntry.pages.find(p => p.name === "campaign-codex-lore-data");
-  if (hasLoreData) {
-    return WorldLoreSheet;
+  if (hasNPCData && !(journal.sheet instanceof NPCJournalSheet)) {
+    // Force NPC sheet
+    journal._sheet = null; // Clear existing sheet
+    journal.sheet.close();
+    new NPCJournalSheet(journal).render(true);
+  } else if (hasLoreData && !(journal.sheet instanceof WorldLoreSheet)) {
+    // Force lore sheet
+    journal._sheet = null; // Clear existing sheet
+    journal.sheet.close();
+    new WorldLoreSheet(journal).render(true);
   }
-  
-  return null; // Use default sheet
 });
 
 // Handle drag and drop functionality
