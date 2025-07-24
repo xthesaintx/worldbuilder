@@ -1,43 +1,42 @@
 {
-  "id": "campaign-codex",
-  "title": "Campaign Codex",
-  "description": "A comprehensive campaign journal for D&D 5e with NPC management, world lore, and interconnected storytelling tools.",
-  "version": "1.0.1",
+  "id": "worldbuilder",
+  "title": "worldbuilder",
+  "version": "1.0.3",
+  "esmodules": ["scripts/main.js"],
   "compatibility": {
     "minimum": "12",
+    "verified": "12"
   },
       "url": "https://github.com/xthesaintx/worldbuilder/",
   "manifest": "https://raw.githubusercontent.com/xthesaintx/worldbuilder/main/module.json",
-  "download": "https://github.com/xthesaintx/worldbuilder/archive/refs/tags/0.2.zip",
+  "download": "https://github.com/xthesaintx/worldbuilder/archive/refs/tags/0.3.zip",
   "readme": "https://github.com/xthesaintx/worldbuilder/blob/main/README.md",
-  "authors": [
+  
+"authors": [
     {
-      "name": "Your Name Here"
+      "name": "Stephen Garrett",
+      "url": "https://www.patreon.com/wgtngm",
+      "flags": {}
     }
   ],
-  "esmodules": [
-    "scripts/main.js"
-  ],
-  "styles": [
-    "styles/campaign-codex.css"
-  ],
-  "languages": [
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "lang/en.json"
-    }
-  ],
-  "packs": [],
-  "packFolders": [],
-  "system": ["dnd5e"],
-  "relationships": {
+    "relationships": {
     "systems": [
       {
         "id": "dnd5e",
         "type": "system",
-        "compatibility": {}
+        "compatibility": {
+          "minimum": "4.1.0",
+          "verified": "4.1.2",
+          "maximum": "4.9.999"
+  }
       }
     ]
   }
 }
+
+
+
+
+
+
+
