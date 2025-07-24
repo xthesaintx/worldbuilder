@@ -199,33 +199,34 @@ Hooks.on('preDeleteActor', async (document, options, userId) => {
 });
 
 
-// Add Campaign Codex creation buttons to Journal Directory
+// Fixed Campaign Codex creation buttons for Journal Directory
 Hooks.on('renderJournalDirectory', (app, html, data) => {
-  // Create the button container
-  const header = html.find('.directory-header');
+  // Remove any existing button group to prevent duplicates
+  html.find('.campaign-codex-buttons').remove();
   
-  // Create Campaign Codex button group
+  // Create the button container with better structure
   const buttonGroup = $(`
-    <div class="campaign-codex-buttons" style="margin-top: 8px;">
-      <div class="flexrow" style="gap: 4px;">
-        <button class="create-location-btn" title="Create New Location">
-          <i class="fas fa-map-marker-alt"></i> Location
+    <div class="campaign-codex-buttons">
+      <div class="button-row">
+        <button class="create-location-btn" type="button" title="Create New Location">
+          <i class="fas fa-map-marker-alt"></i>Location
         </button>
-        <button class="create-shop-btn" title="Create New Shop">
-          <i class="fas fa-store"></i> Shop
+        <button class="create-shop-btn" type="button" title="Create New Shop">
+          <i class="fas fa-store"></i>Shop
         </button>
-        <button class="create-npc-btn" title="Create New NPC Journal">
-          <i class="fas fa-user"></i> NPC
+        <button class="create-npc-btn" type="button" title="Create New NPC Journal">
+          <i class="fas fa-user"></i>NPC
         </button>
-        <button class="create-region-btn" title="Create New Region">
-          <i class="fas fa-globe"></i> Region
+        <button class="create-region-btn" type="button" title="Create New Region">
+          <i class="fas fa-globe"></i>Region
         </button>
       </div>
     </div>
   `);
 
-  // Add the button group after the header
-  header.after(buttonGroup);
+  // Insert after the header but before the directory list
+  const directoryList = html.find('.directory-list');
+  directoryList.before(buttonGroup);
 
   // Event listeners for the buttons
   html.find('.create-location-btn').click(async () => {
@@ -255,10 +256,10 @@ async function promptForName(type) {
     new Dialog({
       title: `Create New ${type}`,
       content: `
-        <form>
+        <form class="flexcol">
           <div class="form-group">
             <label>Name:</label>
-            <input type="text" name="name" placeholder="Enter ${type.toLowerCase()} name..." autofocus />
+            <input type="text" name="name" placeholder="Enter ${type.toLowerCase()} name..." autofocus style="width: 100%;" />
           </div>
         </form>
       `,
@@ -283,12 +284,11 @@ async function promptForName(type) {
         html.find('input[name="name"]').focus().keypress((e) => {
           if (e.which === 13) {
             const name = e.target.value.trim();
-            html.closest('.dialog').find('.dialog-button.create').click();
+            html.closest('.dialog').find('.dialog-button.create button').click();
           }
         });
       }
     }).render(true);
   });
 }
-
 

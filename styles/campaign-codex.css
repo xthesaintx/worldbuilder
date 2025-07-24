@@ -1,4 +1,4 @@
-/* Campaign Codex - Mockup Style Design */
+/* Campaign Codex - Complete Fixed CSS */
 
 :root {
   --cc-header-bg: #8b1538;
@@ -17,7 +17,25 @@
   --cc-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* Base Sheet Styling */
+/* Force Campaign Codex styles with higher specificity */
+.application.window-app.sheet.journal-sheet.campaign-codex {
+  background: var(--cc-main-bg) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: var(--cc-shadow-lg) !important;
+  overflow: hidden !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Force hide Foundry's default header */
+.application.window-app.sheet.journal-sheet.campaign-codex .window-header {
+  display: none !important;
+}
+
+/* Base Sheet Styling with high specificity */
 .campaign-codex {
   background: var(--cc-main-bg);
   border: none;
@@ -34,68 +52,68 @@
   display: none; /* Hide Foundry's default header */
 }
 
-/* Header Banner */
+/* Header Banner - Force styling */
 .campaign-codex .sheet-banner {
-  background: linear-gradient(135deg, var(--cc-header-bg) 0%, #a91b47 100%);
-  background-image: url('modules/campaign-codex/assets/banner-texture.jpg');
-  background-blend-mode: overlay;
-  background-size: cover;
-  background-position: center;
-  height: 120px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: 0 40px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, var(--cc-header-bg) 0%, #a91b47 100%) !important;
+  background-image: url('modules/campaign-codex/assets/banner-texture.jpg') !important;
+  background-blend-mode: overlay !important;
+  background-size: cover !important;
+  background-position: center !important;
+  height: 120px !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 40px !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
 .campaign-codex .banner-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--cc-header-overlay);
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: var(--cc-header-overlay) !important;
 }
 
 .campaign-codex .banner-content {
-  position: relative;
-  z-index: 1;
-  color: white;
+  position: relative !important;
+  z-index: 1 !important;
+  color: white !important;
 }
 
 .campaign-codex .location-name {
-  font-size: 32px;
-  font-weight: bold;
-  margin: 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  font-size: 32px !important;
+  font-weight: bold !important;
+  margin: 0 !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
 }
 
 .campaign-codex .location-type {
-  font-size: 14px;
-  opacity: 0.9;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-top: 5px;
+  font-size: 14px !important;
+  opacity: 0.9 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  margin-top: 5px !important;
 }
 
-/* Sheet Body */
+/* Sheet Body - Force layout */
 .campaign-codex .sheet-body {
-  display: flex;
-  flex: 1;
-  min-height: 0;
+  display: flex !important;
+  flex: 1 !important;
+  min-height: 0 !important;
 }
 
-/* Sidebar */
+/* Sidebar - Force styling */
 .campaign-codex .sidebar {
-  width: 280px;
-  background: var(--cc-sidebar-bg);
-  color: var(--cc-sidebar-text);
-  display: flex;
-  flex-direction: column;
-  border-right: 2px solid var(--cc-border);
+  width: 280px !important;
+  background: var(--cc-sidebar-bg) !important;
+  color: var(--cc-sidebar-text) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-right: 2px solid var(--cc-border) !important;
 }
 
 .campaign-codex .sidebar-header {
@@ -119,36 +137,36 @@
   object-fit: cover;
 }
 
-/* Sidebar Tabs */
+/* Sidebar Tabs - Force styling */
 .campaign-codex .sidebar-tabs {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-bottom: 1px solid var(--cc-border);
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-bottom: 1px solid var(--cc-border) !important;
 }
 
 .campaign-codex .tab-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-left: 4px solid transparent;
-  color: rgba(255, 255, 255, 0.8);
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 16px 20px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border-left: 4px solid transparent !important;
+  color: rgba(255, 255, 255, 0.8) !important;
 }
 
 .campaign-codex .tab-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-left-color: var(--cc-accent);
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  border-left-color: var(--cc-accent) !important;
 }
 
 .campaign-codex .tab-item.active {
-  background: rgba(212, 175, 55, 0.2);
-  color: var(--cc-accent);
-  border-left-color: var(--cc-accent);
-  font-weight: 600;
+  background: rgba(212, 175, 55, 0.2) !important;
+  color: var(--cc-accent) !important;
+  border-left-color: var(--cc-accent) !important;
+  font-weight: 600 !important;
 }
 
 .campaign-codex .tab-item i {
@@ -216,12 +234,12 @@
   white-space: nowrap;
 }
 
-/* Main Content */
+/* Main Content - Force styling */
 .campaign-codex .main-content {
-  flex: 1;
-  background: var(--cc-main-bg);
-  overflow-y: auto;
-  padding: 0;
+  flex: 1 !important;
+  background: var(--cc-main-bg) !important;
+  overflow-y: auto !important;
+  padding: 0 !important;
 }
 
 /* Tab Panels */
@@ -670,81 +688,6 @@
   color: var(--cc-accent);
 }
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .campaign-codex .sheet-body {
-    flex-direction: column;
-  }
-  
-  .campaign-codex .sidebar {
-    width: 100%;
-    flex-direction: row;
-    height: auto;
-  }
-  
-  .campaign-codex .sidebar-header {
-    flex-shrink: 0;
-  }
-  
-  .campaign-codex .location-image {
-    width: 80px;
-    height: 60px;
-  }
-  
-  .campaign-codex .sidebar-tabs {
-    display: flex;
-    flex: 1;
-  }
-  
-  .campaign-codex .tab-item {
-    border-left: none;
-    border-bottom: 4px solid transparent;
-    justify-content: center;
-    flex: 1;
-  }
-  
-  .campaign-codex .tab-item.active {
-    border-left: none;
-    border-bottom-color: var(--cc-accent);
-  }
-  
-  .campaign-codex .sidebar-links {
-    display: none;
-  }
-  
-  .campaign-codex .entity-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .campaign-codex .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .campaign-codex .location-name {
-    font-size: 24px;
-  }
-  
-  .campaign-codex .tab-panel {
-    padding: 20px;
-  }
-  
-  .campaign-codex .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .campaign-codex .drop-zone {
-    padding: 30px 20px;
-  }
-  
-  .campaign-codex .entity-card {
-    padding: 15px;
-  }
-}
-
-/* Additional styles for NPC and Region sheets */
-
 /* NPC Sheet Specific Styles */
 .npc-sheet .actor-stats {
   margin-top: 15px;
@@ -1065,8 +1008,167 @@
   display: inline-block;
 }
 
-/* Responsive updates for new sheets */
+/* Campaign Codex Directory Buttons - Fixed */
+.campaign-codex-buttons {
+  border-top: 1px solid var(--color-border-light-tertiary);
+  padding: 6px 8px;
+  margin: 6px 0;
+  background: var(--color-bg-btn);
+}
+
+.campaign-codex-buttons .button-row {
+  display: flex;
+  gap: 3px;
+  justify-content: space-between;
+}
+
+.campaign-codex-buttons button {
+  flex: 1;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border-dark-secondary);
+  border-radius: 3px;
+  background: var(--color-bg-btn);
+  color: var(--color-text-dark-primary);
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+  white-space: nowrap;
+  min-height: 24px;
+  line-height: 1.2;
+}
+
+.campaign-codex-buttons button:hover {
+  background: var(--color-bg-btn-hover);
+  border-color: var(--color-border-highlight);
+  color: var(--color-text-light-heading);
+  transform: none;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+}
+
+.campaign-codex-buttons button:active {
+  background: var(--color-bg-btn-active);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.campaign-codex-buttons button i {
+  margin-right: 3px;
+  font-size: 9px;
+}
+
+/* Compact the journal directory to reduce space */
+#journal .directory-header {
+  margin-bottom: 4px;
+}
+
+#journal .directory-list {
+  margin-top: 0;
+}
+
+/* Ensure our buttons don't add excessive spacing */
+.campaign-codex-buttons + .directory-list {
+  margin-top: 4px;
+}
+
+/* Different button accent colors on hover */
+.campaign-codex-buttons .create-location-btn:hover {
+  background: #28a745 !important;
+  border-color: #1e7e34 !important;
+  color: white !important;
+}
+
+.campaign-codex-buttons .create-shop-btn:hover {
+  background: #6f42c1 !important;
+  border-color: #5a2d91 !important;
+  color: white !important;
+}
+
+.campaign-codex-buttons .create-npc-btn:hover {
+  background: #fd7e14 !important;
+  border-color: #e8590c !important;
+  color: white !important;
+}
+
+.campaign-codex-buttons .create-region-btn:hover {
+  background: #20c997 !important;
+  border-color: #198754 !important;
+  color: white !important;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .campaign-codex .sheet-body {
+    flex-direction: column;
+  }
+  
+  .campaign-codex .sidebar {
+    width: 100%;
+    flex-direction: row;
+    height: auto;
+  }
+  
+  .campaign-codex .sidebar-header {
+    flex-shrink: 0;
+  }
+  
+  .campaign-codex .location-image {
+    width: 80px;
+    height: 60px;
+  }
+  
+  .campaign-codex .sidebar-tabs {
+    display: flex;
+    flex: 1;
+  }
+  
+  .campaign-codex .tab-item {
+    border-left: none;
+    border-bottom: 4px solid transparent;
+    justify-content: center;
+    flex: 1;
+  }
+  
+  .campaign-codex .tab-item.active {
+    border-left: none;
+    border-bottom-color: var(--cc-accent);
+  }
+  
+  .campaign-codex .sidebar-links {
+    display: none;
+  }
+  
+  .campaign-codex .entity-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .campaign-codex .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
+  .campaign-codex .location-name {
+    font-size: 24px;
+  }
+  
+  .campaign-codex .tab-panel {
+    padding: 20px;
+  }
+  
+  .campaign-codex .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .campaign-codex .drop-zone {
+    padding: 30px 20px;
+  }
+  
+  .campaign-codex .entity-card {
+    padding: 15px;
+  }
+
+  /* Responsive updates for new sheets */
   .npc-sheet .actor-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1093,6 +1195,17 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
+  }
+}
+
+@media (max-width: 400px) {
+  .campaign-codex-buttons .button-row {
+    flex-direction: column;
+  }
+  
+  .campaign-codex-buttons button {
+    min-width: unset;
+    width: 100%;
   }
 }
 
@@ -1130,82 +1243,8 @@
 .campaign-codex .gap-large {
   gap: 25px;
 }
-/* Campaign Codex Directory Buttons */
-.campaign-codex-buttons {
-  border-top: 1px solid #888;
-  padding-top: 8px;
-  margin-top: 8px;
-}
 
-.campaign-codex-buttons .flexrow {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.campaign-codex-buttons button {
-  flex: 1;
-  min-width: 70px;
-  padding: 6px 8px;
-  border: 1px solid #999;
-  border-radius: 4px;
-  background: linear-gradient(to bottom, #f8f8f8, #e8e8e8);
-  color: #333;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.campaign-codex-buttons button:hover {
-  background: linear-gradient(to bottom, #d4af37, #b8941f);
-  color: white;
-  border-color: #b8941f;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.campaign-codex-buttons button:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.campaign-codex-buttons button i {
-  margin-right: 4px;
-  font-size: 10px;
-}
-
-/* Different button colors for visual distinction */
-.campaign-codex-buttons .create-location-btn:hover {
-  background: linear-gradient(to bottom, #28a745, #1e7e34);
-  border-color: #1e7e34;
-}
-
-.campaign-codex-buttons .create-shop-btn:hover {
-  background: linear-gradient(to bottom, #6f42c1, #5a2d91);
-  border-color: #5a2d91;
-}
-
-.campaign-codex-buttons .create-npc-btn:hover {
-  background: linear-gradient(to bottom, #fd7e14, #e8590c);
-  border-color: #e8590c;
-}
-
-.campaign-codex-buttons .create-region-btn:hover {
-  background: linear-gradient(to bottom, #20c997, #198754);
-  border-color: #198754;
-}
-
-/* Responsive design for smaller screens */
-@media (max-width: 400px) {
-  .campaign-codex-buttons .flexrow {
-    flex-direction: column;
-  }
-  
-  .campaign-codex-buttons button {
-    min-width: unset;
-    width: 100%;
-  }
+/* Debug border - remove this line once styling is working */
+.campaign-codex {
+  border: 3px solid red !important;
 }
