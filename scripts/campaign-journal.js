@@ -19,29 +19,34 @@ export class CampaignCodexJournal {
       }
     }
 
+    const npcData = {
+      actorId: actor ? actor.id : null,
+      history: "",
+      currentStatus: "",
+      relationships: [],
+      locations: [],
+      plotHooks: "",
+      gmNotes: "",
+      playerNotes: ""
+    };
+
     const journalData = {
       name: actor ? `${actor.name} - NPC Journal` : "New NPC Journal",
-      flags: {
-        "campaign-codex": {
-          actorId: actor ? actor.id : null,
-          npcData: {
-            history: "",
-            currentStatus: "",
-            relationships: [],
-            locations: [],
-            plotHooks: "",
-            gmNotes: "",
-            playerNotes: ""
+      pages: [
+        {
+          name: "NPC Overview",
+          type: "text",
+          text: { 
+            content: actor ? `<h2>${actor.name}</h2><p>Drag and drop actors and locations to build relationships and connections.</p>` : `<p>Link an actor and drag and drop other actors and locations to build relationships and connections.</p>`
           }
+        },
+        {
+          name: "campaign-codex-npc-data",
+          type: "text",
+          text: { content: JSON.stringify(npcData, null, 2) },
+          title: { show: false }
         }
-      },
-      pages: [{
-        name: "NPC Overview",
-        type: "text",
-        text: { 
-          content: actor ? `<h2>${actor.name}</h2><p>Drag and drop actors and locations to build relationships and connections.</p>` : `<p>Link an actor and drag and drop other actors and locations to build relationships and connections.</p>`
-        }
-      }]
+      ]
     };
 
     const journal = await JournalEntry.create(journalData);
@@ -57,9 +62,18 @@ export class CampaignCodexJournal {
    * @param {string} actorId - The actor ID to search for
    */
   findNPCJournal(actorId) {
-    return game.journal.find(j => 
-      j.getFlag("campaign-codex", "actorId") === actorId
-    );
+    return game.journal.find(j => {
+      const dataPage = j.pages.find(p => p.name === "campaign-codex-npc-data");
+      if (dataPage) {
+        try {
+          const data = JSON.parse(dataPage.text.content || "{}");
+          return data.actorId === actorId;
+        } catch (error) {
+          return false;
+        }
+      }
+      return false;
+    });
   }
 
   /**
