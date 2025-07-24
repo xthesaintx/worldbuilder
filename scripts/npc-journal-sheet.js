@@ -135,30 +135,37 @@ export class NPCJournalSheet extends JournalSheet {
   }
 
   _activateTabs(html) {
-    // Tab navigation
-    html.find('.tabs .item').click(event => {
+    // Tab navigation for side tabs
+    html.find('.side-tabs .tab-item').click(event => {
+      event.preventDefault();
       const tab = event.currentTarget.dataset.tab;
       this._onChangeTab(event, tab, html);
     });
 
     // Show first tab by default
-    const firstTab = html.find('.tabs .item').first();
-    if (firstTab.length) {
-      this._onChangeTab({currentTarget: firstTab[0]}, firstTab[0].dataset.tab, html);
-    }
+    this._showTab('overview', html);
   }
 
   _onChangeTab(event, tabName, html) {
-    // Convert html to jQuery if it isn't already
+    // Handle case where event might be null or undefined
+    if (!event || !event.currentTarget) {
+      this._showTab(tabName, html);
+      return;
+    }
+    
+    this._showTab(tabName, html);
+  }
+
+  _showTab(tabName, html) {
     const $html = html instanceof jQuery ? html : $(html);
     
-    // Remove active from all tabs and content
-    $html.find('.tabs .item').removeClass('active');
-    $html.find('.tab').removeClass('active');
+    // Remove active from all tabs and panels
+    $html.find('.side-tabs .tab-item').removeClass('active');
+    $html.find('.tab-panel').removeClass('active');
 
-    // Add active to clicked tab and corresponding content
-    $(event.currentTarget).addClass('active');
-    $html.find(`.tab[data-tab="${tabName}"]`).addClass('active');
+    // Add active to the correct tab and panel
+    $html.find(`.side-tabs .tab-item[data-tab="${tabName}"]`).addClass('active');
+    $html.find(`.tab-panel[data-tab="${tabName}"]`).addClass('active');
   }
 
   _onDragOver(event) {

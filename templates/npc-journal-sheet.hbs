@@ -1,181 +1,246 @@
-<form class="campaign-codex npc-journal flexcol" autocomplete="off">
+<div class="campaign-codex npc-journal">
   
   {{!-- Header with linked actor info --}}
-  <header class="sheet-header">
+  <header class="actor-header">
     {{#if linkedActor}}
-      <div class="linked-actor-header">
-        <img src="{{linkedActor.img}}" alt="{{linkedActor.name}}" class="actor-portrait">
-        <div class="actor-info">
-          <h1>{{linkedActor.name}}</h1>
+      <div class="actor-card">
+        <div class="actor-portrait-container">
+          <img src="{{linkedActor.img}}" alt="{{linkedActor.name}}" class="actor-portrait">
+          <button type="button" class="actor-link-btn open-actor" data-actor-id="{{linkedActor.id}}" title="Open Actor Sheet">
+            <i class="fas fa-external-link-alt"></i>
+          </button>
+        </div>
+        <div class="actor-details">
+          <h1 class="actor-name">{{linkedActor.name}}</h1>
           <div class="actor-stats">
-            <span class="stat">AC: {{linkedActor.system.attributes.ac.value}}</span>
-            <span class="stat">HP: {{linkedActor.system.attributes.hp.value}}/{{linkedActor.system.attributes.hp.max}}</span>
+            <div class="stat-badge ac">
+              <i class="fas fa-shield-alt"></i>
+              <span>{{linkedActor.system.attributes.ac.value}}</span>
+            </div>
+            <div class="stat-badge hp">
+              <i class="fas fa-heart"></i>
+              <span>{{linkedActor.system.attributes.hp.value}}/{{linkedActor.system.attributes.hp.max}}</span>
+            </div>
             {{#if linkedActor.system.details.cr}}
-              <span class="stat">CR: {{linkedActor.system.details.cr}}</span>
+              <div class="stat-badge cr">
+                <i class="fas fa-star"></i>
+                <span>CR {{linkedActor.system.details.cr}}</span>
+              </div>
             {{/if}}
           </div>
         </div>
-        <button type="button" class="open-actor" data-actor-id="{{linkedActor.id}}" title="Open Actor Sheet">
-          <i class="fas fa-external-link-alt"></i>
-        </button>
       </div>
     {{else}}
-      <div class="no-actor-header">
-        <h1>{{document.name}}</h1>
-        <button type="button" class="link-actor">
-          <i class="fas fa-link"></i> Link Actor
-        </button>
+      <div class="no-actor-card">
+        <div class="empty-portrait">
+          <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="no-actor-content">
+          <h1>{{document.name}}</h1>
+          <p>No linked actor</p>
+          <button type="button" class="link-actor-btn">
+            <i class="fas fa-link"></i>
+            Link Actor
+          </button>
+        </div>
       </div>
     {{/if}}
   </header>
 
-  {{!-- Navigation tabs --}}
-  <nav class="sheet-tabs tabs" data-group="primary">
-    <a class="item active" data-tab="overview">
-      <i class="fas fa-user"></i> Overview
-    </a>
-    <a class="item" data-tab="relationships">
-      <i class="fas fa-users"></i> Relationships
-    </a>
-    <a class="item" data-tab="locations">
-      <i class="fas fa-map-marker-alt"></i> Locations
-    </a>
-    <a class="item" data-tab="notes">
-      <i class="fas fa-sticky-note"></i> Notes
-    </a>
-  </nav>
+  <div class="content-wrapper">
+    {{!-- Side Navigation --}}
+    <nav class="side-tabs">
+      <a class="tab-item active" data-tab="overview" title="Overview">
+        <i class="fas fa-user"></i>
+        <span>Overview</span>
+      </a>
+      <a class="tab-item" data-tab="relationships" title="Relationships">
+        <i class="fas fa-users"></i>
+        <span>Relationships</span>
+      </a>
+      <a class="tab-item" data-tab="locations" title="Locations">
+        <i class="fas fa-map-marker-alt"></i>
+        <span>Locations</span>
+      </a>
+      <a class="tab-item" data-tab="notes" title="Notes">
+        <i class="fas fa-sticky-note"></i>
+        <span>Notes</span>
+      </a>
+    </nav>
 
-  {{!-- Tab content --}}
-  <section class="sheet-body">
-    
-    {{!-- Overview Tab --}}
-    <div class="tab active" data-group="primary" data-tab="overview">
-      <div class="form-group">
-        <label><i class="fas fa-scroll"></i> History & Background</label>
-        <textarea name="history" rows="6" placeholder="Write the character's history, background, and motivations...">{{npcData.history}}</textarea>
-      </div>
+    {{!-- Content Area --}}
+    <main class="tab-content">
       
-      <div class="form-group">
-        <label><i class="fas fa-clock"></i> Current Status</label>
-        <textarea name="currentStatus" rows="4" placeholder="What are they doing now? Current goals, recent events...">{{npcData.currentStatus}}</textarea>
-      </div>
-      
-      <div class="form-group">
-        <label><i class="fas fa-lightbulb"></i> Plot Hooks</label>
-        <textarea name="plotHooks" rows="4" placeholder="Story opportunities involving this character...">{{npcData.plotHooks}}</textarea>
-      </div>
-    </div>
-
-    {{!-- Relationships Tab --}}
-    <div class="tab" data-group="primary" data-tab="relationships">
-      <div class="drop-zone" data-drop-type="actor">
-        <div class="drop-content">
-          <i class="fas fa-user-plus"></i>
-          <h3>Add Relationships</h3>
-          <p>Drag NPCs from the sidebar here to create relationships</p>
+      {{!-- Overview Tab --}}
+      <section class="tab-panel active" data-tab="overview">
+        <div class="panel-header">
+          <h2><i class="fas fa-user"></i> Character Overview</h2>
         </div>
-      </div>
-      
-      {{#if relationships}}
-        <div class="relationships-list">
-          <h3><i class="fas fa-users"></i> Connected Characters</h3>
-          {{#each relationships}}
-            <div class="relationship-item">
-              <img src="{{actor.img}}" alt="{{actor.name}}" class="relationship-portrait">
-              <div class="relationship-info">
-                <h4>{{actor.name}}</h4>
-                <span class="relationship-type relationship-{{type}}">{{type}}</span>
-                {{#if description}}
-                  <p class="relationship-desc">{{description}}</p>
-                {{/if}}
-              </div>
-              <div class="relationship-controls">
-                <button type="button" class="control-btn open-actor" data-actor-id="{{actor.id}}" title="Open Actor">
-                  <i class="fas fa-external-link-alt"></i>
-                </button>
-                <button type="button" class="control-btn delete-relationship" data-relationship-id="{{id}}" title="Remove Relationship">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-            </div>
-          {{/each}}
-        </div>
-      {{/if}}
-    </div>
-
-    {{!-- Locations Tab --}}
-    <div class="tab" data-group="primary" data-tab="locations">
-      <div class="drop-zone" data-drop-type="journal">
-        <div class="drop-content">
-          <i class="fas fa-map-marker-alt"></i>
-          <h3>Add Location Connections</h3>
-          <p>Drag location journals here to create connections</p>
-        </div>
-      </div>
-      
-      {{#if locations}}
-        <div class="locations-list">
-          <h3><i class="fas fa-map"></i> Connected Locations</h3>
-          {{#each locations}}
-            <div class="location-item">
-              <div class="location-icon">
-                <i class="fas fa-map-marker-alt"></i>
-              </div>
-              <div class="location-info">
-                <h4>{{journal.name}}</h4>
-                <span class="location-type location-{{type}}">{{type}}</span>
-                {{#if notes}}
-                  <p class="location-notes">{{notes}}</p>
-                {{/if}}
-              </div>
-              <div class="location-controls">
-                <button type="button" class="control-btn open-journal" data-journal-id="{{journal.id}}" title="Open Journal">
-                  <i class="fas fa-external-link-alt"></i>
-                </button>
-                <button type="button" class="control-btn delete-location" data-location-id="{{id}}" title="Remove Connection">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-            </div>
-          {{/each}}
-        </div>
-      {{/if}}
-    </div>
-
-    {{!-- Notes Tab --}}
-    <div class="tab" data-group="primary" data-tab="notes">
-      {{#if canEdit}}
-        <div class="form-group">
-          <label><i class="fas fa-eye-slash"></i> GM Notes</label>
-          <textarea name="gmNotes" rows="8" placeholder="Private GM notes, secrets, future plans...">{{npcData.gmNotes}}</textarea>
-        </div>
-      {{/if}}
-      
-      {{#if showPlayerNotes}}
-        <div class="form-group">
-          <label><i class="fas fa-users"></i> Player Notes</label>
-          <textarea name="playerNotes" rows="6" placeholder="What the players have learned about this character...">{{npcData.playerNotes}}</textarea>
-        </div>
-      {{/if}}
-      
-      {{#unless showPlayerNotes}}
-        {{#unless canEdit}}
-          <div class="empty-state">
-            <i class="fas fa-sticky-note"></i>
-            <h3>No Notes Available</h3>
-            <p>Enable player notes in module settings to allow note-taking.</p>
+        <form class="content-form">
+          <div class="form-section">
+            <label class="form-label">
+              <i class="fas fa-scroll"></i>
+              History & Background
+            </label>
+            <textarea name="history" class="form-textarea" rows="6" placeholder="Character's history, background, and motivations...">{{npcData.history}}</textarea>
           </div>
-        {{/unless}}
-      {{/unless}}
-    </div>
-    
-  </section>
+          
+          <div class="form-section">
+            <label class="form-label">
+              <i class="fas fa-clock"></i>
+              Current Status
+            </label>
+            <textarea name="currentStatus" class="form-textarea" rows="4" placeholder="What are they doing now? Current goals, recent events...">{{npcData.currentStatus}}</textarea>
+          </div>
+          
+          <div class="form-section">
+            <label class="form-label">
+              <i class="fas fa-lightbulb"></i>
+              Plot Hooks
+            </label>
+            <textarea name="plotHooks" class="form-textarea" rows="4" placeholder="Story opportunities involving this character...">{{npcData.plotHooks}}</textarea>
+          </div>
+        </form>
+      </section>
 
-  {{!-- Footer with save button --}}
+      {{!-- Relationships Tab --}}
+      <section class="tab-panel" data-tab="relationships">
+        <div class="panel-header">
+          <h2><i class="fas fa-users"></i> Relationships</h2>
+        </div>
+        
+        <div class="drop-zone compact" data-drop-type="actor">
+          <i class="fas fa-user-plus"></i>
+          <span>Drag NPCs here to add relationships</span>
+        </div>
+        
+        {{#if relationships}}
+          <div class="relationships-grid">
+            {{#each relationships}}
+              <div class="relationship-card">
+                <div class="relationship-avatar">
+                  <img src="{{actor.img}}" alt="{{actor.name}}">
+                </div>
+                <div class="relationship-info">
+                  <h4 class="relationship-name">{{actor.name}}</h4>
+                  <span class="relationship-type type-{{type}}">{{type}}</span>
+                  {{#if description}}
+                    <p class="relationship-desc">{{description}}</p>
+                  {{/if}}
+                </div>
+                <div class="relationship-actions">
+                  <button type="button" class="action-btn open-actor" data-actor-id="{{actor.id}}" title="Open Actor">
+                    <i class="fas fa-external-link-alt"></i>
+                  </button>
+                  <button type="button" class="action-btn delete-relationship" data-relationship-id="{{id}}" title="Remove">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        {{else}}
+          <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <h3>No Relationships</h3>
+            <p>Drag NPC actors here to create relationships</p>
+          </div>
+        {{/if}}
+      </section>
+
+      {{!-- Locations Tab --}}
+      <section class="tab-panel" data-tab="locations">
+        <div class="panel-header">
+          <h2><i class="fas fa-map-marker-alt"></i> Locations</h2>
+        </div>
+        
+        <div class="drop-zone compact" data-drop-type="journal">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Drag journals here to add location connections</span>
+        </div>
+        
+        {{#if locations}}
+          <div class="locations-grid">
+            {{#each locations}}
+              <div class="location-card">
+                <div class="location-icon">
+                  <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="location-info">
+                  <h4 class="location-name">{{journal.name}}</h4>
+                  <span class="location-type type-{{type}}">{{type}}</span>
+                  {{#if notes}}
+                    <p class="location-notes">{{notes}}</p>
+                  {{/if}}
+                </div>
+                <div class="location-actions">
+                  <button type="button" class="action-btn open-journal" data-journal-id="{{journal.id}}" title="Open Journal">
+                    <i class="fas fa-external-link-alt"></i>
+                  </button>
+                  <button type="button" class="action-btn delete-location" data-location-id="{{id}}" title="Remove">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        {{else}}
+          <div class="empty-state">
+            <i class="fas fa-map"></i>
+            <h3>No Location Connections</h3>
+            <p>Drag journal entries here to create location connections</p>
+          </div>
+        {{/if}}
+      </section>
+
+      {{!-- Notes Tab --}}
+      <section class="tab-panel" data-tab="notes">
+        <div class="panel-header">
+          <h2><i class="fas fa-sticky-note"></i> Notes</h2>
+        </div>
+        
+        <form class="content-form">
+          {{#if canEdit}}
+            <div class="form-section">
+              <label class="form-label gm-only">
+                <i class="fas fa-eye-slash"></i>
+                GM Notes
+              </label>
+              <textarea name="gmNotes" class="form-textarea" rows="8" placeholder="Private GM notes, secrets, future plans...">{{npcData.gmNotes}}</textarea>
+            </div>
+          {{/if}}
+          
+          {{#if showPlayerNotes}}
+            <div class="form-section">
+              <label class="form-label">
+                <i class="fas fa-users"></i>
+                Player Notes
+              </label>
+              <textarea name="playerNotes" class="form-textarea" rows="6" placeholder="What the players have learned...">{{npcData.playerNotes}}</textarea>
+            </div>
+          {{/if}}
+          
+          {{#unless showPlayerNotes}}
+            {{#unless canEdit}}
+              <div class="empty-state">
+                <i class="fas fa-sticky-note"></i>
+                <h3>No Notes Available</h3>
+                <p>Enable player notes in module settings to allow note-taking.</p>
+              </div>
+            {{/unless}}
+          {{/unless}}
+        </form>
+      </section>
+      
+    </main>
+  </div>
+
+  {{!-- Footer --}}
   <footer class="sheet-footer">
-    <button type="button" class="save-npc-data">
-      <i class="fas fa-save"></i> Save Changes
+    <button type="button" class="save-btn save-npc-data">
+      <i class="fas fa-save"></i>
+      Save Changes
     </button>
   </footer>
 
-</form>
+</div>
