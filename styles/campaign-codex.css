@@ -267,3 +267,371 @@
 
 .campaign-codex .delete-relationship:hover,
 .campaign-codex .delete-location:hover,
+.campaign-codex .delete-link:hover {
+  background: var(--campaign-codex-danger) !important;
+  border-color: var(--campaign-codex-danger) !important;
+}
+
+/* World Lore Specific Styles */
+.world-lore .lore-category {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.world-lore .lore-category select {
+  width: auto;
+  min-width: 150px;
+}
+
+/* Connections */
+.world-lore .connections-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.world-lore .connections-header .drop-zone {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.world-lore .search-link {
+  background: var(--campaign-codex-accent);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.world-lore .search-link:hover {
+  background: #2c5aa0;
+}
+
+.world-lore .linked-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.world-lore .linked-entry {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: white;
+  border: 1px solid var(--campaign-codex-border);
+  border-radius: 8px;
+  transition: box-shadow 0.2s;
+}
+
+.world-lore .linked-entry:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.world-lore .entry-info {
+  flex: 1;
+}
+
+.world-lore .entry-info h4 {
+  margin: 0 0 5px 0;
+  color: var(--campaign-codex-primary);
+}
+
+.world-lore .entry-info i {
+  margin-right: 8px;
+  color: var(--campaign-codex-secondary);
+}
+
+.world-lore .link-description {
+  margin: 8px 0 0 0;
+  color: #666;
+  font-style: italic;
+}
+
+.world-lore .entry-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.world-lore .entry-controls button {
+  background: transparent;
+  border: 1px solid var(--campaign-codex-border);
+  padding: 5px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.world-lore .entry-controls button:hover {
+  background: var(--campaign-codex-accent);
+  color: white;
+  border-color: var(--campaign-codex-accent);
+}
+
+/* Tags */
+.world-lore .tags-section {
+  margin-bottom: 30px;
+}
+
+.world-lore .tags-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.world-lore .add-tag {
+  background: var(--campaign-codex-success);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background 0.2s;
+}
+
+.world-lore .add-tag:hover {
+  background: #2f855a;
+}
+
+.world-lore .tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.world-lore .tag {
+  display: inline-flex;
+  align-items: center;
+  background: var(--campaign-codex-accent);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-size: 0.85em;
+  gap: 6px;
+}
+
+.world-lore .remove-tag {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.world-lore .remove-tag:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.world-lore .no-tags {
+  color: var(--campaign-codex-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+  background: rgba(113, 128, 150, 0.05);
+  border-radius: 5px;
+}
+
+.world-lore .category-info {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--campaign-codex-border);
+}
+
+.world-lore .category-info h3 {
+  margin: 0 0 10px 0;
+  color: var(--campaign-codex-primary);
+}
+
+.world-lore .category-description {
+  color: var(--campaign-codex-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* GM Tools */
+.world-lore .gm-tools {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--campaign-codex-border);
+}
+
+.world-lore .gm-tools h3 {
+  margin: 0 0 15px 0;
+  color: var(--campaign-codex-primary);
+}
+
+.world-lore .tool-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.world-lore .tool-buttons button {
+  background: var(--campaign-codex-secondary);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.world-lore .tool-buttons button:hover {
+  background: #4a5568;
+}
+
+/* Footer */
+.campaign-codex .sheet-footer {
+  background: white;
+  border-top: 1px solid var(--campaign-codex-border);
+  padding: 15px;
+  text-align: center;
+}
+
+.campaign-codex .save-npc-data,
+.campaign-codex .save-lore-data {
+  background: var(--campaign-codex-success);
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.campaign-codex .save-npc-data:hover,
+.campaign-codex .save-lore-data:hover {
+  background: #2f855a;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .campaign-codex .linked-actor-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .campaign-codex .actor-stats {
+    justify-content: center;
+  }
+  
+  .campaign-codex .relationship-item,
+  .campaign-codex .location-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .campaign-codex .relationship-controls,
+  .campaign-codex .location-controls {
+    align-self: flex-end;
+  }
+  
+  .world-lore .connections-header {
+    flex-direction: column;
+  }
+  
+  .world-lore .tool-buttons {
+    flex-direction: column;
+  }
+}
+
+/* Scrollbars */
+.campaign-codex ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.campaign-codex ::-webkit-scrollbar-track {
+  background: var(--campaign-codex-bg);
+}
+
+.campaign-codex ::-webkit-scrollbar-thumb {
+  background: var(--campaign-codex-border);
+  border-radius: 4px;
+}
+
+.campaign-codex ::-webkit-scrollbar-thumb:hover {
+  background: var(--campaign-codex-secondary);
+}
+
+/* Animation for new items */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.campaign-codex .relationship-item,
+.campaign-codex .location-item,
+.campaign-codex .linked-entry {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Hints and help text */
+.campaign-codex .hint {
+  font-size: 0.85em;
+  color: var(--campaign-codex-secondary);
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* Checkbox styling */
+.campaign-codex input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+  transform: scale(1.2);
+}
+
+/* Dialog overrides for the module */
+.dialog.campaign-codex-dialog .dialog-content {
+  background: var(--campaign-codex-bg);
+}
+
+.dialog.campaign-codex-dialog .form-group {
+  margin-bottom: 15px;
+}
+
+.dialog.campaign-codex-dialog .form-group label {
+  color: var(--campaign-codex-primary);
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.dialog.campaign-codex-dialog select,
+.dialog.campaign-codex-dialog textarea,
+.dialog.campaign-codex-dialog input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--campaign-codex-border);
+  border-radius: 4px;
+}
+
+.dialog.campaign-codex-dialog select:focus,
+.dialog.campaign-codex-dialog textarea:focus,
+.dialog.campaign-codex-dialog input[type="text"]:focus {
+  outline: none;
+  border-color: var(--campaign-codex-accent);
+  box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+}
