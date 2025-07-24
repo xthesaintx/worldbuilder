@@ -10,40 +10,44 @@ export class WorldLoreSheet extends JournalSheet {
   }
 
   get template() {
-    return "modules/campaign-codex/templates/world-lore-sheet.hbs";
+    return "modules/campaign-codex/templates/world-lore-sheet.html";
   }
 
   async getData() {
     const data = await super.getData();
     
-    // Use try-catch to handle flag access safely
-    let loreData;
-    try {
-      loreData = this.document.getFlag("campaign-codex", "loreData") || {};
-    } catch (error) {
-      console.warn("Campaign Codex | Flag access error, initializing:", error);
-      loreData = {};
-      
-      // Initialize the flags for this journal entry
+    // Use the journal's pages to store our data instead of flags
+    let lorePage = this.document.pages.find(p => p.name === "campaign-codex-lore-data");
+    let loreData = {};
+    
+    if (lorePage) {
       try {
-        await this.document.setFlag("campaign-codex", "loreData", {
-          category: "General",
-          content: "",
-          linkedEntries: [],
-          tags: [],
-          playerVisible: true,
-          gmNotes: ""
-        });
-        loreData = {
-          category: "General",
-          content: "",
-          linkedEntries: [],
-          tags: [],
-          playerVisible: true,
-          gmNotes: ""
-        };
-      } catch (flagError) {
-        console.error("Campaign Codex | Could not initialize flags:", flagError);
+        loreData = JSON.parse(lorePage.text.content || "{}");
+      } catch (error) {
+        console.warn("Campaign Codex | Could not parse lore data:", error);
+        loreData = {};
+      }
+    } else {
+      // Create the data page if it doesn't exist
+      loreData = {
+        category: "General",
+        content: "",
+        linkedEntries: [],
+        tags: [],
+        playerVisible: true,
+        gmNotes: ""
+      };
+      
+      try {
+        await this.document.createEmbeddedDocuments("JournalEntryPage", [{
+          name: "campaign-codex-lore-data",
+          type: "text",
+          text: { content: JSON.stringify(loreData, null, 2) },
+          title: { show: false },
+          src: null
+        }]);
+      } catch (error) {
+        console.warn("Campaign Codex | Could not create lore data page:", error);
       }
     }
     
