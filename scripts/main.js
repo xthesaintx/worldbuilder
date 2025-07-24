@@ -4,6 +4,7 @@ import { ShopSheet } from './sheets/shop-sheet.js';
 import { NPCSheet } from './sheets/npc-sheet.js';
 import { RegionSheet } from './sheets/region-sheet.js';
 
+
 Hooks.once('init', async function() {
   console.log('Campaign Codex | Initializing v2.0');
   
@@ -196,3 +197,98 @@ Hooks.on('preDeleteJournalEntry', async (document, options, userId) => {
 Hooks.on('preDeleteActor', async (document, options, userId) => {
   await game.campaignCodex.cleanupActorRelationships(document);
 });
+
+
+// Add Campaign Codex creation buttons to Journal Directory
+Hooks.on('renderJournalDirectory', (app, html, data) => {
+  // Create the button container
+  const header = html.find('.directory-header');
+  
+  // Create Campaign Codex button group
+  const buttonGroup = $(`
+    <div class="campaign-codex-buttons" style="margin-top: 8px;">
+      <div class="flexrow" style="gap: 4px;">
+        <button class="create-location-btn" title="Create New Location">
+          <i class="fas fa-map-marker-alt"></i> Location
+        </button>
+        <button class="create-shop-btn" title="Create New Shop">
+          <i class="fas fa-store"></i> Shop
+        </button>
+        <button class="create-npc-btn" title="Create New NPC Journal">
+          <i class="fas fa-user"></i> NPC
+        </button>
+        <button class="create-region-btn" title="Create New Region">
+          <i class="fas fa-globe"></i> Region
+        </button>
+      </div>
+    </div>
+  `);
+
+  // Add the button group after the header
+  header.after(buttonGroup);
+
+  // Event listeners for the buttons
+  html.find('.create-location-btn').click(async () => {
+    const name = await promptForName("Location");
+    if (name) await game.campaignCodex.createLocationJournal(name);
+  });
+
+  html.find('.create-shop-btn').click(async () => {
+    const name = await promptForName("Shop");
+    if (name) await game.campaignCodex.createShopJournal(name);
+  });
+
+  html.find('.create-npc-btn').click(async () => {
+    const name = await promptForName("NPC Journal");
+    if (name) await game.campaignCodex.createNPCJournal(null, name);
+  });
+
+  html.find('.create-region-btn').click(async () => {
+    const name = await promptForName("Region");
+    if (name) await game.campaignCodex.createRegionJournal(name);
+  });
+});
+
+// Helper function to prompt for name with better UX
+async function promptForName(type) {
+  return new Promise((resolve) => {
+    new Dialog({
+      title: `Create New ${type}`,
+      content: `
+        <form>
+          <div class="form-group">
+            <label>Name:</label>
+            <input type="text" name="name" placeholder="Enter ${type.toLowerCase()} name..." autofocus />
+          </div>
+        </form>
+      `,
+      buttons: {
+        create: {
+          icon: '<i class="fas fa-check"></i>',
+          label: "Create",
+          callback: (html) => {
+            const name = html.find('[name="name"]').val().trim();
+            resolve(name || `New ${type}`);
+          }
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Cancel",
+          callback: () => resolve(null)
+        }
+      },
+      default: "create",
+      render: (html) => {
+        // Submit on enter key
+        html.find('input[name="name"]').focus().keypress((e) => {
+          if (e.which === 13) {
+            const name = e.target.value.trim();
+            html.closest('.dialog').find('.dialog-button.create').click();
+          }
+        });
+      }
+    }).render(true);
+  });
+}
+
+

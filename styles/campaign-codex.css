@@ -1130,3 +1130,82 @@
 .campaign-codex .gap-large {
   gap: 25px;
 }
+/* Campaign Codex Directory Buttons */
+.campaign-codex-buttons {
+  border-top: 1px solid #888;
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+.campaign-codex-buttons .flexrow {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.campaign-codex-buttons button {
+  flex: 1;
+  min-width: 70px;
+  padding: 6px 8px;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: linear-gradient(to bottom, #f8f8f8, #e8e8e8);
+  color: #333;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.campaign-codex-buttons button:hover {
+  background: linear-gradient(to bottom, #d4af37, #b8941f);
+  color: white;
+  border-color: #b8941f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.campaign-codex-buttons button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.campaign-codex-buttons button i {
+  margin-right: 4px;
+  font-size: 10px;
+}
+
+/* Different button colors for visual distinction */
+.campaign-codex-buttons .create-location-btn:hover {
+  background: linear-gradient(to bottom, #28a745, #1e7e34);
+  border-color: #1e7e34;
+}
+
+.campaign-codex-buttons .create-shop-btn:hover {
+  background: linear-gradient(to bottom, #6f42c1, #5a2d91);
+  border-color: #5a2d91;
+}
+
+.campaign-codex-buttons .create-npc-btn:hover {
+  background: linear-gradient(to bottom, #fd7e14, #e8590c);
+  border-color: #e8590c;
+}
+
+.campaign-codex-buttons .create-region-btn:hover {
+  background: linear-gradient(to bottom, #20c997, #198754);
+  border-color: #198754;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 400px) {
+  .campaign-codex-buttons .flexrow {
+    flex-direction: column;
+  }
+  
+  .campaign-codex-buttons button {
+    min-width: unset;
+    width: 100%;
+  }
+}
