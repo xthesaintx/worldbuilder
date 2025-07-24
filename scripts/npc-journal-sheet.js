@@ -10,40 +10,51 @@ export class NPCJournalSheet extends JournalSheet {
   }
 
   get template() {
-    return "modules/campaign-codex/templates/npc-journal-sheet.hbs";
+    return "modules/campaign-codex/templates/npc-journal-sheet.html";
   }
 
   async getData() {
     const data = await super.getData();
     
-    // Use try-catch to handle flag access safely
-    let actorId, npcData;
-    try {
-      actorId = this.document.getFlag("campaign-codex", "actorId");
-      npcData = this.document.getFlag("campaign-codex", "npcData") || {};
-    } catch (error) {
-      console.warn("Campaign Codex | Flag access error, initializing:", error);
-      actorId = null;
-      npcData = {};
-      
-      // Initialize the flags for this journal entry
+    // Use the journal's pages to store our data instead of flags
+    let npcPage = this.document.pages.find(p => p.name === "campaign-codex-npc-data");
+    let npcData = {};
+    
+    if (npcPage) {
       try {
-        await this.document.setFlag("campaign-codex", "npcData", {
-          history: "",
-          currentStatus: "",
-          relationships: [],
-          locations: [],
-          plotHooks: "",
-          gmNotes: "",
-          playerNotes: ""
-        });
-      } catch (flagError) {
-        console.error("Campaign Codex | Could not initialize flags:", flagError);
+        npcData = JSON.parse(npcPage.text.content || "{}");
+      } catch (error) {
+        console.warn("Campaign Codex | Could not parse NPC data:", error);
+        npcData = {};
+      }
+    } else {
+      // Create the data page if it doesn't exist
+      npcData = {
+        actorId: null,
+        history: "",
+        currentStatus: "",
+        relationships: [],
+        locations: [],
+        plotHooks: "",
+        gmNotes: "",
+        playerNotes: ""
+      };
+      
+      try {
+        await this.document.createEmbeddedDocuments("JournalEntryPage", [{
+          name: "campaign-codex-npc-data",
+          type: "text",
+          text: { content: JSON.stringify(npcData, null, 2) },
+          title: { show: false },
+          src: null
+        }]);
+      } catch (error) {
+        console.warn("Campaign Codex | Could not create NPC data page:", error);
       }
     }
     
     // Get linked actor
-    data.linkedActor = actorId ? game.actors.get(actorId) : null;
+    data.linkedActor = npcData.actorId ? game.actors.get(npcData.actorId) : null;
     
     // Process relationships
     data.relationships = await this.processRelationships(npcData.relationships || []);
@@ -280,15 +291,40 @@ export class NPCJournalSheet extends JournalSheet {
     const formData = new FormDataExtended(form);
     const data = formData.object;
 
-    await this.document.setFlag("campaign-codex", "npcData", {
+    // Get or create the data page
+    let npcPage = this.document.pages.find(p => p.name === "campaign-codex-npc-data");
+    let currentData = {};
+    
+    if (npcPage) {
+      try {
+        currentData = JSON.parse(npcPage.text.content || "{}");
+      } catch (error) {
+        console.warn("Campaign Codex | Could not parse existing NPC data:", error);
+      }
+    }
+
+    // Update the data
+    const updatedData = {
+      ...currentData,
       history: data.history || "",
       currentStatus: data.currentStatus || "",
       plotHooks: data.plotHooks || "",
       gmNotes: data.gmNotes || "",
-      playerNotes: data.playerNotes || "",
-      relationships: this.document.getFlag("campaign-codex", "npcData.relationships") || [],
-      locations: this.document.getFlag("campaign-codex", "npcData.locations") || []
-    });
+      playerNotes: data.playerNotes || ""
+    };
+
+    if (npcPage) {
+      await npcPage.update({
+        "text.content": JSON.stringify(updatedData, null, 2)
+      });
+    } else {
+      await this.document.createEmbeddedDocuments("JournalEntryPage", [{
+        name: "campaign-codex-npc-data",
+        type: "text",
+        text: { content: JSON.stringify(updatedData, null, 2) },
+        title: { show: false }
+      }]);
+    }
 
     ui.notifications.info("NPC data saved successfully!");
   }
