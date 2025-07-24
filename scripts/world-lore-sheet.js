@@ -15,7 +15,37 @@ export class WorldLoreSheet extends JournalSheet {
 
   async getData() {
     const data = await super.getData();
-    const loreData = this.document.getFlag("campaign-codex", "loreData") || {};
+    
+    // Use try-catch to handle flag access safely
+    let loreData;
+    try {
+      loreData = this.document.getFlag("campaign-codex", "loreData") || {};
+    } catch (error) {
+      console.warn("Campaign Codex | Flag access error, initializing:", error);
+      loreData = {};
+      
+      // Initialize the flags for this journal entry
+      try {
+        await this.document.setFlag("campaign-codex", "loreData", {
+          category: "General",
+          content: "",
+          linkedEntries: [],
+          tags: [],
+          playerVisible: true,
+          gmNotes: ""
+        });
+        loreData = {
+          category: "General",
+          content: "",
+          linkedEntries: [],
+          tags: [],
+          playerVisible: true,
+          gmNotes: ""
+        };
+      } catch (flagError) {
+        console.error("Campaign Codex | Could not initialize flags:", flagError);
+      }
+    }
     
     // Process linked entries
     data.linkedEntries = await this.processLinkedEntries(loreData.linkedEntries || []);
