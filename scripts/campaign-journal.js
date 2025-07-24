@@ -10,19 +10,20 @@ export class CampaignCodexJournal {
    * Create a new NPC journal entry from an actor
    * @param {Actor} actor - The actor to create a journal for
    */
-  async createNPCJournal(actor) {
-    const existingJournal = this.findNPCJournal(actor.id);
-    if (existingJournal) {
-      existingJournal.sheet.render(true);
-      return existingJournal;
+  async createNPCJournal(actor = null) {
+    if (actor) {
+      const existingJournal = this.findNPCJournal(actor.id);
+      if (existingJournal) {
+        existingJournal.sheet.render(true);
+        return existingJournal;
+      }
     }
 
     const journalData = {
-      name: `${actor.name} - NPC Journal`,
-      type: "campaign-npc",
+      name: actor ? `${actor.name} - NPC Journal` : "New NPC Journal",
       flags: {
         "campaign-codex": {
-          actorId: actor.id,
+          actorId: actor ? actor.id : null,
           npcData: {
             history: "",
             currentStatus: "",
@@ -38,13 +39,15 @@ export class CampaignCodexJournal {
         name: "NPC Overview",
         type: "text",
         text: { 
-          content: `<h2>${actor.name}</h2><p>Drag and drop actors and locations to build relationships and connections.</p>` 
+          content: actor ? `<h2>${actor.name}</h2><p>Drag and drop actors and locations to build relationships and connections.</p>` : `<p>Link an actor and drag and drop other actors and locations to build relationships and connections.</p>`
         }
       }]
     };
 
     const journal = await JournalEntry.create(journalData);
-    this.npcJournals.set(actor.id, journal);
+    if (actor) {
+      this.npcJournals.set(actor.id, journal);
+    }
     journal.sheet.render(true);
     return journal;
   }
@@ -55,7 +58,6 @@ export class CampaignCodexJournal {
    */
   findNPCJournal(actorId) {
     return game.journal.find(j => 
-      j.type === "campaign-npc" && 
       j.getFlag("campaign-codex", "actorId") === actorId
     );
   }
@@ -68,7 +70,6 @@ export class CampaignCodexJournal {
   async createWorldLore(name, category = "General") {
     const journalData = {
       name: name,
-      type: "world-lore",
       flags: {
         "campaign-codex": {
           loreData: {
@@ -181,7 +182,7 @@ export class CampaignCodexJournal {
     const regex = new RegExp(searchText, 'i');
 
     if (type === "all" || type === "npc") {
-      game.journal.filter(j => j.type === "campaign-npc").forEach(journal => {
+      game.journal.filter(j => j.getFlag("campaign-codex", "actorId")).forEach(journal => {
         const actor = game.actors.get(journal.getFlag("campaign-codex", "actorId"));
         if (actor && regex.test(actor.name)) {
           results.push({ type: "npc", journal, actor });
@@ -190,7 +191,7 @@ export class CampaignCodexJournal {
     }
 
     if (type === "all" || type === "lore") {
-      game.journal.filter(j => j.type === "world-lore").forEach(journal => {
+      game.journal.filter(j => j.getFlag("campaign-codex", "loreData")).forEach(journal => {
         if (regex.test(journal.name) || regex.test(journal.pages.contents[0]?.text?.content || "")) {
           results.push({ type: "lore", journal });
         }
