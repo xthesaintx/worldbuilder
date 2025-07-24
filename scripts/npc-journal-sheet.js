@@ -10,10 +10,181 @@ export class NPCJournalSheet extends JournalSheet {
   }
 
   get template() {
-    return "modules/campaign-codex/templates/npc-journal-sheet.hbs";
+    return "modules/campaign-codex/templates/npc-journal-sheet.html";
   }
 
-  async getData() {
+  async _renderInner(data) {
+    // Create inline template if external file doesn't exist
+    const templateContent = `
+      <form class="{{cssClass}} flexcol" autocomplete="off">
+        
+        {{!-- Header with linked actor info --}}
+        <header class="sheet-header">
+          {{#if linkedActor}}
+            <div class="linked-actor-header">
+              <img src="{{linkedActor.img}}" alt="{{linkedActor.name}}" class="actor-portrait">
+              <div class="actor-info">
+                <h1>{{linkedActor.name}}</h1>
+                <div class="actor-stats">
+                  <span class="stat">AC: {{linkedActor.system.attributes.ac.value}}</span>
+                  <span class="stat">HP: {{linkedActor.system.attributes.hp.value}}/{{linkedActor.system.attributes.hp.max}}</span>
+                  {{#if linkedActor.system.details.cr}}
+                    <span class="stat">CR: {{linkedActor.system.details.cr}}</span>
+                  {{/if}}
+                </div>
+              </div>
+              <button type="button" class="open-actor" data-actor-id="{{linkedActor.id}}" title="Open Actor Sheet">
+                <i class="fas fa-external-link-alt"></i>
+              </button>
+            </div>
+          {{else}}
+            <div class="no-actor-header">
+              <h1>{{document.name}}</h1>
+              <button type="button" class="link-actor">
+                <i class="fas fa-link"></i> Link Actor
+              </button>
+            </div>
+          {{/if}}
+        </header>
+
+        {{!-- Navigation tabs --}}
+        <nav class="sheet-tabs tabs" data-group="primary">
+          <a class="item" data-tab="overview">
+            <i class="fas fa-user"></i> Overview
+          </a>
+          <a class="item" data-tab="relationships">
+            <i class="fas fa-users"></i> Relationships
+          </a>
+          <a class="item" data-tab="locations">
+            <i class="fas fa-map-marker-alt"></i> Locations
+          </a>
+          <a class="item" data-tab="notes">
+            <i class="fas fa-sticky-note"></i> Notes
+          </a>
+        </nav>
+
+        {{!-- Tab content --}}
+        <section class="sheet-body">
+          
+          {{!-- Overview Tab --}}
+          <div class="tab" data-group="primary" data-tab="overview">
+            <div class="form-group">
+              <label>History & Background</label>
+              <textarea name="history" placeholder="Write the character's history, background, and motivations...">{{npcData.history}}</textarea>
+            </div>
+            
+            <div class="form-group">
+              <label>Current Status</label>
+              <textarea name="currentStatus" placeholder="What are they doing now? Current goals, recent events...">{{npcData.currentStatus}}</textarea>
+            </div>
+            
+            <div class="form-group">
+              <label>Plot Hooks</label>
+              <textarea name="plotHooks" placeholder="Story opportunities involving this character...">{{npcData.plotHooks}}</textarea>
+            </div>
+          </div>
+
+          {{!-- Relationships Tab --}}
+          <div class="tab" data-group="primary" data-tab="relationships">
+            <div class="drop-zone" data-drop-type="actor">
+              <p><i class="fas fa-user-plus"></i> Drag NPCs here to create relationships</p>
+            </div>
+            
+            {{#if relationships}}
+              <div class="relationships-list">
+                {{#each relationships}}
+                  <div class="relationship-item">
+                    <img src="{{actor.img}}" alt="{{actor.name}}" class="relationship-portrait">
+                    <div class="relationship-info">
+                      <h4>{{actor.name}}</h4>
+                      <span class="relationship-type">{{type}}</span>
+                      {{#if description}}
+                        <p class="relationship-desc">{{description}}</p>
+                      {{/if}}
+                    </div>
+                    <div class="relationship-controls">
+                      <button type="button" class="open-actor" data-actor-id="{{actor.id}}" title="Open Actor">
+                        <i class="fas fa-external-link-alt"></i>
+                      </button>
+                      <button type="button" class="delete-relationship" data-relationship-id="{{id}}" title="Remove Relationship">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            {{/if}}
+          </div>
+
+          {{!-- Locations Tab --}}
+          <div class="tab" data-group="primary" data-tab="locations">
+            <div class="drop-zone" data-drop-type="journal">
+              <p><i class="fas fa-map-marker-alt"></i> Drag location journals here to create connections</p>
+            </div>
+            
+            {{#if locations}}
+              <div class="locations-list">
+                {{#each locations}}
+                  <div class="location-item">
+                    <div class="location-info">
+                      <h4>{{journal.name}}</h4>
+                      <span class="location-type">{{type}}</span>
+                      {{#if notes}}
+                        <p class="location-notes">{{notes}}</p>
+                      {{/if}}
+                    </div>
+                    <div class="location-controls">
+                      <button type="button" class="open-journal" data-journal-id="{{journal.id}}" title="Open Journal">
+                        <i class="fas fa-external-link-alt"></i>
+                      </button>
+                      <button type="button" class="delete-location" data-location-id="{{id}}" title="Remove Connection">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            {{/if}}
+          </div>
+
+          {{!-- Notes Tab --}}
+          <div class="tab" data-group="primary" data-tab="notes">
+            {{#if canEdit}}
+              <div class="form-group">
+                <label>GM Notes</label>
+                <textarea name="gmNotes" placeholder="Private GM notes, secrets, future plans...">{{npcData.gmNotes}}</textarea>
+              </div>
+            {{/if}}
+            
+            {{#if showPlayerNotes}}
+              <div class="form-group">
+                <label>Player Notes</label>
+                <textarea name="playerNotes" placeholder="What the players have learned about this character...">{{npcData.playerNotes}}</textarea>
+              </div>
+            {{/if}}
+          </div>
+          
+        </section>
+
+        {{!-- Footer with save button --}}
+        <footer class="sheet-footer">
+          <button type="button" class="save-npc-data">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </footer>
+
+      </form>
+    `;
+
+    // Try to render with external template first, fall back to inline
+    try {
+      return await super._renderInner(data);
+    } catch (error) {
+      console.warn("Campaign Codex | Using inline template for NPC sheet");
+      const compiled = Handlebars.compile(templateContent);
+      return $(compiled(data));
+    }
+  }
     const data = await super.getData();
     
     // Use the journal's pages to store our data instead of flags
@@ -112,6 +283,9 @@ export class NPCJournalSheet extends JournalSheet {
   activateListeners(html) {
     super.activateListeners(html);
 
+    // Activate tabs
+    this._activateTabs(html);
+
     // Make the sheet a drop target
     html[0].addEventListener('drop', this._onDrop.bind(this));
     html[0].addEventListener('dragover', this._onDragOver.bind(this));
@@ -129,6 +303,30 @@ export class NPCJournalSheet extends JournalSheet {
 
     // Link actor button
     html.find('.link-actor').click(this._onLinkActor.bind(this));
+  }
+
+  _activateTabs(html) {
+    // Tab navigation
+    html.find('.tabs .item').click(event => {
+      const tab = event.currentTarget.dataset.tab;
+      this._onChangeTab(event, tab, html);
+    });
+
+    // Show first tab by default
+    const firstTab = html.find('.tabs .item').first();
+    if (firstTab.length) {
+      this._onChangeTab({currentTarget: firstTab[0]}, firstTab[0].dataset.tab, html);
+    }
+  }
+
+  _onChangeTab(event, tabName, html) {
+    // Remove active from all tabs and content
+    html.find('.tabs .item').removeClass('active');
+    html.find('.tab').removeClass('active');
+
+    // Add active to clicked tab and corresponding content
+    $(event.currentTarget).addClass('active');
+    html.find(`.tab[data-tab="${tabName}"]`).addClass('active');
   }
 
   _onDragOver(event) {
@@ -287,7 +485,9 @@ export class NPCJournalSheet extends JournalSheet {
 
   async _onSaveData(event) {
     event.preventDefault();
-    const form = event.currentTarget.closest('form');
+    
+    // Get form data from the sheet's form element
+    const form = this.element.find('form')[0];
     const formData = new FormDataExtended(form);
     const data = formData.object;
 
@@ -313,20 +513,35 @@ export class NPCJournalSheet extends JournalSheet {
       playerNotes: data.playerNotes || ""
     };
 
-    if (npcPage) {
-      await npcPage.update({
-        "text.content": JSON.stringify(updatedData, null, 2)
-      });
-    } else {
-      await this.document.createEmbeddedDocuments("JournalEntryPage", [{
-        name: "campaign-codex-npc-data",
-        type: "text",
-        text: { content: JSON.stringify(updatedData, null, 2) },
-        title: { show: false }
-      }]);
-    }
+    try {
+      if (npcPage) {
+        await npcPage.update({
+          "text.content": JSON.stringify(updatedData, null, 2)
+        });
+      } else {
+        await this.document.createEmbeddedDocuments("JournalEntryPage", [{
+          name: "campaign-codex-npc-data",
+          type: "text",
+          text: { content: JSON.stringify(updatedData, null, 2) },
+          title: { show: false }
+        }]);
+      }
 
-    ui.notifications.info("NPC data saved successfully!");
+      ui.notifications.info("NPC data saved successfully!");
+      
+      // Add visual feedback
+      const saveBtn = $(event.currentTarget);
+      saveBtn.addClass('success');
+      setTimeout(() => saveBtn.removeClass('success'), 2000);
+      
+    } catch (error) {
+      console.error("Campaign Codex | Error saving NPC data:", error);
+      ui.notifications.error("Failed to save NPC data!");
+      
+      const saveBtn = $(event.currentTarget);
+      saveBtn.addClass('error');
+      setTimeout(() => saveBtn.removeClass('error'), 2000);
+    }
   }
 
   async _onDeleteRelationship(event) {

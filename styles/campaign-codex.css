@@ -479,15 +479,47 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Success/Error states */
+/* Success/Error states for buttons */
 .campaign-codex .success {
-  border-color: var(--campaign-codex-success) !important;
-  box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.1) !important;
+  background: linear-gradient(135deg, var(--campaign-codex-success), #2f855a) !important;
+  box-shadow: 0 0 20px rgba(56, 161, 105, 0.5) !important;
+  transform: scale(1.02) !important;
 }
 
 .campaign-codex .error {
-  border-color: var(--campaign-codex-danger) !important;
-  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1) !important;
+  background: linear-gradient(135deg, var(--campaign-codex-danger), #c53030) !important;
+  box-shadow: 0 0 20px rgba(229, 62, 62, 0.5) !important;
+  transform: scale(1.02) !important;
+}
+
+/* Form styling improvements */
+.campaign-codex form {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.campaign-codex .sheet-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Tab content improvements */
+.campaign-codex .tab {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.campaign-codex .tab.active {
+  display: block;
+  opacity: 1;
+}
+
+/* Ensure tabs are clickable */
+.campaign-codex .sheet-tabs .item {
+  cursor: pointer;
+  user-select: none;
 } {
   background: var(--campaign-codex-bg);
   border: 1px solid var(--campaign-codex-border);

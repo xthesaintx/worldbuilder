@@ -10,7 +10,7 @@ export class WorldLoreSheet extends JournalSheet {
   }
 
   get template() {
-    return "modules/campaign-codex/templates/world-lore-sheet.hbs";
+    return "modules/campaign-codex/templates/world-lore-sheet.html";
   }
 
   async getData() {
@@ -109,6 +109,9 @@ export class WorldLoreSheet extends JournalSheet {
   activateListeners(html) {
     super.activateListeners(html);
 
+    // Activate tabs
+    this._activateTabs(html);
+
     // Make the sheet a drop target
     html[0].addEventListener('drop', this._onDrop.bind(this));
     html[0].addEventListener('dragover', this._onDragOver.bind(this));
@@ -128,6 +131,30 @@ export class WorldLoreSheet extends JournalSheet {
 
     // Search and link existing entries
     html.find('.search-link').click(this._onSearchLink.bind(this));
+  }
+
+  _activateTabs(html) {
+    // Tab navigation
+    html.find('.tabs .item').click(event => {
+      const tab = event.currentTarget.dataset.tab;
+      this._onChangeTab(event, tab, html);
+    });
+
+    // Show first tab by default
+    const firstTab = html.find('.tabs .item').first();
+    if (firstTab.length) {
+      this._onChangeTab({currentTarget: firstTab[0]}, firstTab[0].dataset.tab, html);
+    }
+  }
+
+  _onChangeTab(event, tabName, html) {
+    // Remove active from all tabs and content
+    html.find('.tabs .item').removeClass('active');
+    html.find('.tab').removeClass('active');
+
+    // Add active to clicked tab and corresponding content
+    $(event.currentTarget).addClass('active');
+    html.find(`.tab[data-tab="${tabName}"]`).addClass('active');
   }
 
   _onDragOver(event) {
@@ -202,24 +229,62 @@ export class WorldLoreSheet extends JournalSheet {
 
   async _onSaveData(event) {
     event.preventDefault();
-    const form = event.currentTarget.closest('form');
+    
+    // Get form data from the sheet's form element
+    const form = this.element.find('form')[0];
     const formData = new FormDataExtended(form);
     const data = formData.object;
 
-    // Get current tags
-    const currentTags = this.document.getFlag("campaign-codex", "loreData.tags") || [];
-    const currentLinkedEntries = this.document.getFlag("campaign-codex", "loreData.linkedEntries") || [];
+    // Get or create the data page
+    let lorePage = this.document.pages.find(p => p.name === "campaign-codex-lore-data");
+    let currentData = {};
+    
+    if (lorePage) {
+      try {
+        currentData = JSON.parse(lorePage.text.content || "{}");
+      } catch (error) {
+        console.warn("Campaign Codex | Could not parse existing lore data:", error);
+      }
+    }
 
-    await this.document.setFlag("campaign-codex", "loreData", {
+    // Update the data
+    const updatedData = {
+      ...currentData,
       category: data.category || "General",
       content: data.content || "",
-      tags: currentTags,
       playerVisible: data.playerVisible || false,
-      gmNotes: data.gmNotes || "",
-      linkedEntries: currentLinkedEntries
-    });
+      gmNotes: data.gmNotes || ""
+    };
 
-    ui.notifications.info("World lore saved successfully!");
+    try {
+      if (lorePage) {
+        await lorePage.update({
+          "text.content": JSON.stringify(updatedData, null, 2)
+        });
+      } else {
+        await this.document.createEmbeddedDocuments("JournalEntryPage", [{
+          name: "campaign-codex-lore-data",
+          type: "text",
+          text: { content: JSON.stringify(updatedData, null, 2) },
+          title: { show: false }
+        }]);
+      }
+
+      ui.notifications.info("World lore saved successfully!");
+      
+      // Add visual feedback
+      const saveBtn = $(event.currentTarget);
+      saveBtn.addClass('success');
+      setTimeout(() => saveBtn.removeClass('success'), 2000);
+      
+    } catch (error) {
+      console.error("Campaign Codex | Error saving lore data:", error);
+      ui.notifications.error("Failed to save lore data!");
+      
+      const saveBtn = $(event.currentTarget);
+      saveBtn.addClass('error');
+      setTimeout(() => saveBtn.removeClass('error'), 2000);
+    }
   }
 
   async _onAddTag(event) {
