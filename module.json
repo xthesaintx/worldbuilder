@@ -2,14 +2,13 @@
   "id": "campaign-codex",
   "title": "Campaign Codex",
   "description": "A comprehensive campaign journal for D&D 5e with NPC management, world lore, and interconnected storytelling tools.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "compatibility": {
     "minimum": "12",
-    "verified": "12.331"
   },
       "url": "https://github.com/xthesaintx/worldbuilder/",
   "manifest": "https://raw.githubusercontent.com/xthesaintx/worldbuilder/main/module.json",
-  "download": "https://github.com/xthesaintx/worldbuilder/archive/refs/tags/0.1.zip",
+  "download": "https://github.com/xthesaintx/worldbuilder/archive/refs/tags/0.2.zip",
   "readme": "https://github.com/xthesaintx/worldbuilder/blob/main/README.md",
   "authors": [
     {
@@ -40,16 +39,5 @@
         "compatibility": {}
       }
     ]
-  },
-  "url": "",
-  "manifest": "",
-  "download": "",
-  "license": "LICENSE",
-  "readme": "README.md",
-  "media": [
-    {
-      "type": "icon",
-      "url": "artwork/icon.webp"
-    }
-  ]
+  }
 }
