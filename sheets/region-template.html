@@ -1,0 +1,283 @@
+<div class="campaign-codex region-sheet">
+  
+  {{!-- Header Banner --}}
+  <header class="sheet-banner">
+    <div class="banner-overlay"></div>
+    <div class="banner-content">
+      <h1 class="location-name">{{document.name}}</h1>
+      <div class="location-type">Region</div>
+    </div>
+  </header>
+
+  <div class="sheet-body">
+    {{!-- Sidebar Navigation --}}
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <div class="location-image">
+          <img src="{{document.img}}" alt="{{document.name}}" onerror="this.src='icons/svg/globe.svg'">
+        </div>
+      </div>
+      
+      <ul class="sidebar-tabs">
+        <li class="tab-item active" data-tab="info">
+          <i class="fas fa-info-circle"></i>
+          <span>Info</span>
+        </li>
+        <li class="tab-item" data-tab="locations">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Locations</span>
+        </li>
+        <li class="tab-item" data-tab="npcs">
+          <i class="fas fa-users"></i>
+          <span>NPCs</span>
+        </li>
+        <li class="tab-item" data-tab="shops">
+          <i class="fas fa-store"></i>
+          <span>Shops</span>
+        </li>
+        <li class="tab-item" data-tab="notes">
+          <i class="fas fa-sticky-note"></i>
+          <span>Notes</span>
+        </li>
+      </ul>
+
+      {{!-- Links Section --}}
+      <div class="sidebar-links">
+        <h3>Quick Links</h3>
+        <div class="link-grid">
+          {{#each linkedLocations}}
+            <div class="link-card location-link" data-location-id="{{id}}">
+              <img src="{{img}}" alt="{{name}}">
+              <span class="link-name">{{name}}</span>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    </nav>
+
+    {{!-- Main Content Area --}}
+    <main class="main-content">
+      <form class="region-form">
+        
+        {{!-- Info Tab --}}
+        <section class="tab-panel active" data-tab="info">
+          <div class="content-header">
+            <h2><i class="fas fa-info-circle"></i> Region Information</h2>
+          </div>
+          
+          <div class="form-section">
+            <label class="form-label">
+              <i class="fas fa-align-left"></i>
+              Description
+            </label>
+            <textarea name="description" class="form-textarea" rows="8" placeholder="Describe this region...">{{regionData.description}}</textarea>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-map-marker-alt"></i></div>
+              <div class="stat-content">
+                <div class="stat-number">{{linkedLocations.length}}</div>
+                <div class="stat-label">Locations</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-users"></i></div>
+              <div class="stat-content">
+                <div class="stat-number">{{autoPopulatedNPCs.length}}</div>
+                <div class="stat-label">NPCs</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-store"></i></div>
+              <div class="stat-content">
+                <div class="stat-number">{{autoPopulatedShops.length}}</div>
+                <div class="stat-label">Shops</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {{!-- Locations Tab --}}
+        <section class="tab-panel" data-tab="locations">
+          <div class="content-header">
+            <h2><i class="fas fa-map-marker-alt"></i> Locations in this Region</h2>
+          </div>
+          
+          <div class="drop-zone" data-drop-type="location">
+            <div class="drop-content">
+              <i class="fas fa-map-marker-alt"></i>
+              <h3>Add Locations</h3>
+              <p>Drag location journals here to add them to this region</p>
+            </div>
+          </div>
+
+          {{#if linkedLocations}}
+            <div class="entity-grid">
+              {{#each linkedLocations}}
+                <div class="entity-card location-card">
+                  <div class="entity-image">
+                    <img src="{{img}}" alt="{{name}}">
+                  </div>
+                  <div class="entity-content">
+                    <h4 class="entity-name">{{name}}</h4>
+                    <div class="entity-meta">
+                      <span class="entity-stat">{{npcCount}} NPCs</span>
+                      <span class="entity-stat">{{shopCount}} Shops</span>
+                    </div>
+                  </div>
+                  <div class="entity-actions">
+                    <button type="button" class="action-btn open-location" data-location-id="{{id}}" title="Open Location">
+                      <i class="fas fa-external-link-alt"></i>
+                    </button>
+                    <button type="button" class="action-btn remove-location" data-location-id="{{id}}" title="Remove from Region">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="empty-state">
+              <i class="fas fa-map-marker-alt"></i>
+              <h3>No Locations</h3>
+              <p>Drag location journals here to populate this region</p>
+            </div>
+          {{/if}}
+        </section>
+
+        {{!-- NPCs Tab --}}
+        <section class="tab-panel" data-tab="npcs">
+          <div class="content-header">
+            <h2><i class="fas fa-users"></i> NPCs in this Region</h2>
+            <button type="button" class="refresh-btn refresh-npcs" title="Refresh auto-populated data">
+              <i class="fas fa-sync-alt"></i>
+              Refresh
+            </button>
+          </div>
+          
+          <div class="info-banner">
+            <i class="fas fa-info-circle"></i>
+            <p>NPCs are automatically populated from linked locations. Add locations to see NPCs appear here.</p>
+          </div>
+
+          {{#if autoPopulatedNPCs}}
+            <div class="entity-grid">
+              {{#each autoPopulatedNPCs}}
+                <div class="entity-card npc-card auto-populated">
+                  <div class="entity-image">
+                    <img src="{{img}}" alt="{{name}}">
+                  </div>
+                  <div class="entity-content">
+                    <h4 class="entity-name">{{name}}</h4>
+                    {{#if actor}}
+                      <div class="entity-meta">
+                        <span class="entity-type">{{actor.system.details.race}} {{actor.system.details.class}}</span>
+                      </div>
+                    {{/if}}
+                    <div class="entity-locations">
+                      <i class="fas fa-map-marker-alt"></i>
+                      {{#each locations}}
+                        <span class="location-tag">{{this}}</span>
+                      {{/each}}
+                    </div>
+                  </div>
+                  <div class="entity-actions">
+                    <button type="button" class="action-btn open-npc" data-npc-id="{{id}}" title="Open NPC Journal">
+                      <i class="fas fa-book-open"></i>
+                    </button>
+                    {{#if actor}}
+                      <button type="button" class="action-btn open-actor" data-actor-id="{{actor.id}}" title="Open Actor Sheet">
+                        <i class="fas fa-user"></i>
+                      </button>
+                    {{/if}}
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="empty-state">
+              <i class="fas fa-users"></i>
+              <h3>No NPCs</h3>
+              <p>Add locations with NPCs to see them populated here automatically</p>
+            </div>
+          {{/if}}
+        </section>
+
+        {{!-- Shops Tab --}}
+        <section class="tab-panel" data-tab="shops">
+          <div class="content-header">
+            <h2><i class="fas fa-store"></i> Shops in this Region</h2>
+            <button type="button" class="refresh-btn refresh-npcs" title="Refresh auto-populated data">
+              <i class="fas fa-sync-alt"></i>
+              Refresh
+            </button>
+          </div>
+          
+          <div class="info-banner">
+            <i class="fas fa-info-circle"></i>
+            <p>Shops are automatically populated from linked locations. Add locations to see shops appear here.</p>
+          </div>
+
+          {{#if autoPopulatedShops}}
+            <div class="entity-grid">
+              {{#each autoPopulatedShops}}
+                <div class="entity-card shop-card auto-populated">
+                  <div class="entity-image">
+                    <img src="{{img}}" alt="{{name}}">
+                  </div>
+                  <div class="entity-content">
+                    <h4 class="entity-name">{{name}}</h4>
+                    <div class="entity-meta">
+                      <span class="entity-type">Shop</span>
+                    </div>
+                    <div class="entity-locations">
+                      <i class="fas fa-map-marker-alt"></i>
+                      <span class="location-tag">{{location}}</span>
+                    </div>
+                  </div>
+                  <div class="entity-actions">
+                    <button type="button" class="action-btn open-shop" data-shop-id="{{id}}" title="Open Shop">
+                      <i class="fas fa-external-link-alt"></i>
+                    </button>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="empty-state">
+              <i class="fas fa-store"></i>
+              <h3>No Shops</h3>
+              <p>Add locations with shops to see them populated here automatically</p>
+            </div>
+          {{/if}}
+        </section>
+
+        {{!-- Notes Tab --}}
+        <section class="tab-panel" data-tab="notes">
+          <div class="content-header">
+            <h2><i class="fas fa-sticky-note"></i> GM Notes</h2>
+          </div>
+          
+          <div class="form-section">
+            <label class="form-label">
+              <i class="fas fa-eye-slash"></i>
+              Private Notes
+            </label>
+            <textarea name="notes" class="form-textarea" rows="12" placeholder="Private GM notes about this region...">{{regionData.notes}}</textarea>
+          </div>
+        </section>
+
+      </form>
+    </main>
+  </div>
+
+  {{!-- Footer --}}
+  <footer class="sheet-footer">
+    <button type="button" class="save-btn save-data">
+      <i class="fas fa-save"></i>
+      Save Changes
+    </button>
+  </footer>
+
+</div>

@@ -1,263 +1,65 @@
-// Add context menu options to actors
-Hooks.on('getActorDirectoryEntryContext', (html, options) => {
-  options.push({
-    name: "Create NPC Journal Entry",
-    icon: '<i class="fas fa-book"></i>',
-    condition: li => {
-      const actor = game.actors.get(li.data("documentId"));
-      return actor && actor.type === "npc";
-    },
-    callback: async li => {
-      const actor = game.actors.get(li.data("documentId"));
-      if (game.campaignCodex) {
-        const journal = await game.campaignCodex.createNPCJournal(actor);
-      } else {
-        // Fallback if campaignCodex isn't initialized
-        const journal = await createNPCJournalDirect(actor);
-      }
-    }
-  });
-});
-
-// Add journal entry creation buttons
-Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
-  options.unshift({
-    name: "New NPC Journal",
-    icon: '<i class="fas fa-user"></i>',
-    callback: async () => {
-      if (game.campaignCodex) {
-        const journal = await game.campaignCodex.createNPCJournal();
-      } else {
-        const journal = await createNPCJournalDirect();
-      }
-    }
-  });
-  
-  options.unshift({
-    name: "New World Lore",
-    icon: '<i class="fas fa-globe"></i>',
-    callback: async () => {
-      if (game.campaignCodex) {
-        const journal = await game.campaignCodex.createWorldLore("New Lore Entry");
-      } else {
-        const journal = await createWorldLoreDirect("New Lore Entry");
-      }
-    }
-  });
-  
-  // Add option to convert existing journal to NPC journal
-  options.push({
-    name: "Convert to NPC Journal",
-    icon: '<i class="fas fa-user-cog"></i>',
-    condition: li => {
-      const journal = game.journal.get(li.data("documentId"));
-      return journal && !journal.pages.find(p => p.name === "campaign-codex-npc-data");
-    },
-    callback: async li => {
-      const journal = game.journal.get(li.data("documentId"));
-      await convertToNPCJournal(journal);
-    }
-  });
-  
-  // Add option to convert existing journal to lore journal
-  options.push({
-    name: "Convert to World Lore",
-    icon: '<i class="fas fa-globe"></i>',
-    condition: li => {
-      const journal = game.journal.get(li.data("documentId"));
-      return journal && !journal.pages.find(p => p.name === "campaign-codex-lore-data");
-    },
-    callback: async li => {
-      const journal = game.journal.get(li.data("documentId"));
-      await convertToWorldLore(journal);
-    }
-  });
-});
-
-// Fallback functions for direct creation
-async function createNPCJournalDirect(actor = null) {
-  const npcData = {
-    actorId: actor ? actor.id : null,
-    history: "",
-    currentStatus: "",
-    relationships: [],
-    locations: [],
-    plotHooks: "",
-    gmNotes: "",
-    playerNotes: ""
-  };
-
-  const journalData = {
-    name: actor ? `${actor.name} - NPC Journal` : "New NPC Journal",
-    pages: [
-      {
-        name: "NPC Overview",
-        type: "text",
-        text: { 
-          content: actor ? `<h2>${actor.name}</h2><p>Drag and drop actors and locations to build relationships and connections.</p>` : `<p>Link an actor and drag and drop other actors and locations to build relationships and connections.</p>`
-        }
-      },
-      {
-        name: "campaign-codex-npc-data",
-        type: "text",
-        text: { content: JSON.stringify(npcData, null, 2) },
-        title: { show: false }
-      }
-    ]
-  };
-
-  const journal = await JournalEntry.create(journalData);
-  
-  // Force our custom sheet
-  journal._sheet = null;
-  if (journal.sheet) journal.sheet.close();
-  const sheet = new NPCJournalSheet(journal);
-  sheet.render(true);
-  
-  return journal;
-}
-
-async function createWorldLoreDirect(name) {
-  const loreData = {
-    category: "General",
-    content: "",
-    linkedEntries: [],
-    tags: [],
-    playerVisible: true,
-    gmNotes: ""
-  };
-
-  const journalData = {
-    name: name,
-    pages: [
-      {
-        name: "Lore Content",
-        type: "text",
-        text: { content: "" }
-      },
-      {
-        name: "campaign-codex-lore-data",
-        type: "text",
-        text: { content: JSON.stringify(loreData, null, 2) },
-        title: { show: false }
-      }
-    ]
-  };
-
-  const journal = await JournalEntry.create(journalData);
-  
-  // Force our custom sheet
-  journal._sheet = null;
-  if (journal.sheet) journal.sheet.close();
-  const sheet = new WorldLoreSheet(journal);
-  sheet.render(true);
-  
-  return journal;
-}
-
-async function convertToNPCJournal(journal) {
-  // Add our data page
-  await journal.createEmbeddedDocuments("JournalEntryPage", [{
-    name: "campaign-codex-npc-data",
-    type: "text",
-    text: { content: JSON.stringify({
-      actorId: null,
-      history: "",
-      currentStatus: "",
-      relationships: [],
-      locations: [],
-      plotHooks: "",
-      gmNotes: "",
-      playerNotes: ""
-    }, null, 2) },
-    title: { show: false }
-  }]);
-  
-  // Force our sheet
-  journal._sheet = null;
-  if (journal.sheet) journal.sheet.close();
-  const sheet = new NPCJournalSheet(journal);
-  sheet.render(true);
-}
-
-async function convertToWorldLore(journal) {
-  // Add our data page
-  await journal.createEmbeddedDocuments("JournalEntryPage", [{
-    name: "campaign-codex-lore-data",
-    type: "text",
-    text: { content: JSON.stringify({
-      category: "General",
-      content: "",
-      linkedEntries: [],
-      tags: [],
-      playerVisible: true,
-      gmNotes: ""
-    }, null, 2) },
-    title: { show: false }
-  }]);
-  
-  // Force our sheet
-  journal._sheet = null;
-  if (journal.sheet) journal.sheet.close();
-  const sheet = new WorldLoreSheet(journal);
-  sheet.render(true);
-}import { CampaignCodexJournal } from './campaign-journal.js';
-import { NPCJournalSheet } from './npc-journal-sheet.js';
-import { WorldLoreSheet } from './world-lore-sheet.js';
+import { CampaignManager } from './campaign-manager.js';
+import { LocationSheet } from './sheets/location-sheet.js';
+import { ShopSheet } from './sheets/shop-sheet.js';
+import { NPCSheet } from './sheets/npc-sheet.js';
+import { RegionSheet } from './sheets/region-sheet.js';
 
 Hooks.once('init', async function() {
-  console.log('Campaign Codex | Initializing');
+  console.log('Campaign Codex | Initializing v2.0');
   
-  // Register sheet classes for journal entries
-  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", NPCJournalSheet, {
+  // Register sheet classes
+  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", LocationSheet, {
     makeDefault: false,
-    label: "Campaign Codex: NPC Journal"
+    label: "Campaign Codex: Location"
   });
 
-  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", WorldLoreSheet, {
+  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", ShopSheet, {
     makeDefault: false,
-    label: "Campaign Codex: World Lore"
+    label: "Campaign Codex: Shop"
   });
 
-  console.log('Campaign Codex | Sheets registered');
+  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", NPCSheet, {
+    makeDefault: false,
+    label: "Campaign Codex: NPC"
+  });
+
+  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", RegionSheet, {
+    makeDefault: false,
+    label: "Campaign Codex: Region"
+  });
 
   // Register settings
   game.settings.register("campaign-codex", "showPlayerNotes", {
     name: "Show Player Notes Section",
-    hint: "Allow players to add their own notes to NPCs they've met",
+    hint: "Allow players to add their own notes",
     scope: "world",
     config: true,
     type: Boolean,
     default: false
   });
 
-  // Add custom CSS classes for drag and drop
-  document.documentElement.style.setProperty('--campaign-codex-primary', '#4a5568');
-  document.documentElement.style.setProperty('--campaign-codex-secondary', '#718096');
+  console.log('Campaign Codex | Sheets registered');
 });
 
 Hooks.once('ready', async function() {
   console.log('Campaign Codex | Ready');
   
-  // Initialize the journal interface
-  game.campaignCodex = new CampaignCodexJournal();
-  
-  // Log registered sheets for debugging
-  console.log('Campaign Codex | Module ready, sheets should be available');
+  // Initialize the campaign manager
+  game.campaignCodex = new CampaignManager();
 });
 
 // Add context menu options to actors
 Hooks.on('getActorDirectoryEntryContext', (html, options) => {
   options.push({
-    name: "Create NPC Journal Entry",
-    icon: '<i class="fas fa-book"></i>',
+    name: "Create NPC Journal",
+    icon: '<i class="fas fa-user"></i>',
     condition: li => {
       const actor = game.actors.get(li.data("documentId"));
       return actor && actor.type === "npc";
     },
-    callback: li => {
+    callback: async li => {
       const actor = game.actors.get(li.data("documentId"));
-      game.campaignCodex.createNPCJournal(actor);
+      await game.campaignCodex.createNPCJournal(actor);
     }
   });
 });
@@ -265,122 +67,132 @@ Hooks.on('getActorDirectoryEntryContext', (html, options) => {
 // Add journal entry creation buttons
 Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
   options.unshift({
-    name: "New NPC Journal",
-    icon: '<i class="fas fa-user"></i>',
-    callback: async () => {
-      const journal = await game.campaignCodex.createNPCJournal();
-      // Manually set the sheet class
-      journal._sheet = null;
-      const sheet = new NPCJournalSheet(journal);
-      sheet.render(true);
-    }
+    name: "New Location",
+    icon: '<i class="fas fa-map-marker-alt"></i>',
+    callback: () => game.campaignCodex.createLocationJournal()
   });
   
   options.unshift({
-    name: "New World Lore",
-    icon: '<i class="fas fa-globe"></i>',
-    callback: async () => {
-      const journal = await game.campaignCodex.createWorldLore("New Lore Entry");
-      // Manually set the sheet class
-      journal._sheet = null;
-      const sheet = new WorldLoreSheet(journal);
-      sheet.render(true);
-    }    
+    name: "New Shop",
+    icon: '<i class="fas fa-store"></i>',
+    callback: () => game.campaignCodex.createShopJournal()
   });
   
-  // Add option to convert existing journal to NPC journal
+  options.unshift({
+    name: "New NPC Journal",
+    icon: '<i class="fas fa-user"></i>',
+    callback: () => game.campaignCodex.createNPCJournal()
+  });
+  
+  options.unshift({
+    name: "New Region",
+    icon: '<i class="fas fa-globe"></i>',
+    callback: () => game.campaignCodex.createRegionJournal()
+  });
+
+  // Conversion options
+  options.push({
+    name: "Convert to Location",
+    icon: '<i class="fas fa-map-marker-alt"></i>',
+    condition: li => {
+      const journal = game.journal.get(li.data("documentId"));
+      return journal && !journal.getFlag("campaign-codex", "type");
+    },
+    callback: async li => {
+      const journal = game.journal.get(li.data("documentId"));
+      await game.campaignCodex.convertToLocation(journal);
+    }
+  });
+
+  options.push({
+    name: "Convert to Shop",
+    icon: '<i class="fas fa-store"></i>',
+    condition: li => {
+      const journal = game.journal.get(li.data("documentId"));
+      return journal && !journal.getFlag("campaign-codex", "type");
+    },
+    callback: async li => {
+      const journal = game.journal.get(li.data("documentId"));
+      await game.campaignCodex.convertToShop(journal);
+    }
+  });
+
   options.push({
     name: "Convert to NPC Journal",
-    icon: '<i class="fas fa-user-cog"></i>',
+    icon: '<i class="fas fa-user"></i>',
     condition: li => {
       const journal = game.journal.get(li.data("documentId"));
-      return journal && !journal.pages.find(p => p.name === "campaign-codex-npc-data");
+      return journal && !journal.getFlag("campaign-codex", "type");
     },
     callback: async li => {
       const journal = game.journal.get(li.data("documentId"));
-      // Add our data page
-      await journal.createEmbeddedDocuments("JournalEntryPage", [{
-        name: "campaign-codex-npc-data",
-        type: "text",
-        text: { content: JSON.stringify({
-          actorId: null,
-          history: "",
-          currentStatus: "",
-          relationships: [],
-          locations: [],
-          plotHooks: "",
-          gmNotes: "",
-          playerNotes: ""
-        }, null, 2) },
-        title: { show: false }
-      }]);
-      
-      // Force our sheet
-      journal._sheet = null;
-      if (journal.sheet) journal.sheet.close();
-      const sheet = new NPCJournalSheet(journal);
-      sheet.render(true);
+      await game.campaignCodex.convertToNPC(journal);
     }
   });
-  
-  // Add option to convert existing journal to lore journal
+
   options.push({
-    name: "Convert to World Lore",
+    name: "Convert to Region",
     icon: '<i class="fas fa-globe"></i>',
     condition: li => {
       const journal = game.journal.get(li.data("documentId"));
-      return journal && !journal.pages.find(p => p.name === "campaign-codex-lore-data");
+      return journal && !journal.getFlag("campaign-codex", "type");
     },
     callback: async li => {
       const journal = game.journal.get(li.data("documentId"));
-      // Add our data page
-      await journal.createEmbeddedDocuments("JournalEntryPage", [{
-        name: "campaign-codex-lore-data",
-        type: "text",
-        text: { content: JSON.stringify({
-          category: "General",
-          content: "",
-          linkedEntries: [],
-          tags: [],
-          playerVisible: true,
-          gmNotes: ""
-        }, null, 2) },
-        title: { show: false }
-      }]);
-      
-      // Force our sheet
-      journal._sheet = null;
-      if (journal.sheet) journal.sheet.close();
-      const sheet = new WorldLoreSheet(journal);
-      sheet.render(true);
+      await game.campaignCodex.convertToRegion(journal);
     }
   });
 });
 
-// Automatically use custom sheets for our journal types (simplified)
+// Auto-select appropriate sheet based on flags
 Hooks.on('renderJournalEntry', (journal, html, data) => {
-  // Only auto-switch if not already using our sheets
-  const hasNPCData = journal.pages.find(p => p.name === "campaign-codex-npc-data");
-  const hasLoreData = journal.pages.find(p => p.name === "campaign-codex-lore-data");
-  
-  if (hasNPCData && !(journal.sheet instanceof NPCJournalSheet)) {
-    // Close current sheet and open with our sheet
+  const journalType = journal.getFlag("campaign-codex", "type");
+  if (!journalType) return;
+
+  const currentSheetName = journal.sheet.constructor.name;
+  let targetSheet = null;
+
+  switch (journalType) {
+    case "location":
+      if (currentSheetName !== "LocationSheet") targetSheet = LocationSheet;
+      break;
+    case "shop":
+      if (currentSheetName !== "ShopSheet") targetSheet = ShopSheet;
+      break;
+    case "npc":
+      if (currentSheetName !== "NPCSheet") targetSheet = NPCSheet;
+      break;
+    case "region":
+      if (currentSheetName !== "RegionSheet") targetSheet = RegionSheet;
+      break;
+  }
+
+  if (targetSheet) {
     setTimeout(() => {
       journal.sheet.close();
-      new NPCJournalSheet(journal).render(true);
-    }, 100);
-  } else if (hasLoreData && !(journal.sheet instanceof WorldLoreSheet)) {
-    // Close current sheet and open with our sheet
-    setTimeout(() => {
-      journal.sheet.close();
-      new WorldLoreSheet(journal).render(true);
+      new targetSheet(journal).render(true);
     }, 100);
   }
 });
 
-// Handle drag and drop functionality
-Hooks.on('dropCanvasData', async (canvas, data) => {
-  if (data.type === "Actor" && canvas.activeSheet?.constructor.name === "NPCJournalSheet") {
-    canvas.activeSheet.handleActorDrop(data);
-  }
+// Handle bidirectional relationship updates
+Hooks.on('updateJournalEntry', async (document, changes, options, userId) => {
+  if (game.user.id !== userId) return; // Only handle our own updates
+  
+  const type = document.getFlag("campaign-codex", "type");
+  if (!type) return;
+
+  await game.campaignCodex.handleRelationshipUpdates(document, changes, type);
+});
+
+// Cleanup relationships when documents are deleted
+Hooks.on('preDeleteJournalEntry', async (document, options, userId) => {
+  const type = document.getFlag("campaign-codex", "type");
+  if (!type) return;
+
+  await game.campaignCodex.cleanupRelationships(document, type);
+});
+
+Hooks.on('preDeleteActor', async (document, options, userId) => {
+  await game.campaignCodex.cleanupActorRelationships(document);
 });

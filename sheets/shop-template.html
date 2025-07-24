@@ -1,0 +1,315 @@
+<div class="campaign-codex shop-sheet">
+  
+  {{!-- Header Banner --}}
+  <header class="sheet-banner">
+    <div class="banner-overlay"></div>
+    <div class="banner-content">
+      <h1 class="location-name">{{document.name}}</h1>
+      <div class="location-type">Shop</div>
+    </div>
+  </header>
+
+  <div class="sheet-body">
+    {{!-- Sidebar Navigation --}}
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <div class="location-image">
+          <img src="{{document.img}}" alt="{{document.name}}" onerror="this.src='icons/svg/item-bag.svg'">
+        </div>
+        {{#if linkedLocation}}
+          <div class="location-info">
+            <span class="location-label">Located in:</span>
+            <span class="location-name">{{linkedLocation.name}}</span>
+          </div>
+        {{/if}}
+      </div>
+      
+      <ul class="sidebar-tabs">
+        <li class="tab-item active" data-tab="info">
+          <i class="fas fa-info-circle"></i>
+          <span>Info</span>
+        </li>
+        <li class="tab-item" data-tab="inventory">
+          <i class="fas fa-boxes"></i>
+          <span>Inventory</span>
+        </li>
+        <li class="tab-item" data-tab="npcs">
+          <i class="fas fa-users"></i>
+          <span>NPCs</span>
+        </li>
+        <li class="tab-item" data-tab="notes">
+          <i class="fas fa-sticky-note"></i>
+          <span>Notes</span>
+        </li>
+      </ul>
+
+      {{!-- Links Section --}}
+      <div class="sidebar-links">
+        <h3>Quick Links</h3>
+        <div class="link-grid">
+          {{#if linkedLocation}}
+            <div class="link-card location-link" data-location-id="{{linkedLocation.id}}">
+              <img src="{{linkedLocation.img}}" alt="{{linkedLocation.name}}">
+              <span class="link-name">{{linkedLocation.name}}</span>
+            </div>
+          {{/if}}
+          {{#each linkedNPCs}}
+            <div class="link-card npc-link" data-npc-id="{{id}}">
+              <img src="{{img}}" alt="{{name}}">
+              <span class="link-name">{{name}}</span>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    </nav>
+
+    {{!-- Main Content Area --}}
+    <main class="main-content">
+      <form class="shop-form">
+        
+        {{!-- Info Tab --}}
+        <section class="tab-panel active" data-tab="info">
+          <div class="content-header">
+            <h2><i class="fas fa-info-circle"></i> Shop Information</h2>
+          </div>
+          
+          <div class="form-section">
+            <label class="form-label">
+              <i class="fas fa-align-left"></i>
+              Description
+            </label>
+            <textarea name="description" class="form-textarea" rows="8" placeholder="Describe this shop...">{{shopData.description}}</textarea>
+          </div>
+
+          {{!-- Location Link Section --}}
+          <div class="form-section location-link-section">
+            <label class="form-label">
+              <i class="fas fa-map-marker-alt"></i>
+              Location
+            </label>
+            {{#if linkedLocation}}
+              <div class="linked-location-card">
+                <div class="location-image">
+                  <img src="{{linkedLocation.img}}" alt="{{linkedLocation.name}}">
+                </div>
+                <div class="location-content">
+                  <h4 class="location-name">{{linkedLocation.name}}</h4>
+                  <div class="location-meta">
+                    <span class="location-type">Location</span>
+                  </div>
+                </div>
+                <div class="location-actions">
+                  <button type="button" class="action-btn open-location" data-location-id="{{linkedLocation.id}}" title="Open Location">
+                    <i class="fas fa-external-link-alt"></i>
+                  </button>
+                  <button type="button" class="action-btn remove-location" title="Remove Location">
+                    <i class="fas fa-unlink"></i>
+                  </button>
+                </div>
+              </div>
+            {{else}}
+              <div class="drop-zone" data-drop-type="location">
+                <div class="drop-content">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <h3>Set Location</h3>
+                  <p>Drag a location journal here to set where this shop is located</p>
+                </div>
+              </div>
+            {{/if}}
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-boxes"></i></div>
+              <div class="stat-content">
+                <div class="stat-number">{{inventory.length}}</div>
+                <div class="stat-label">Items</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-users"></i></div>
+              <div class="stat-content">
+                <div class="stat-number">{{linkedNPCs.length}}</div>
+                <div class="stat-label">NPCs</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+              <div class="stat-content">
+                <div class="stat-number">{{shopData.markup}}x</div>
+                <div class="stat-label">Markup</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {{!-- Inventory Tab --}}
+        <section class="tab-panel" data-tab="inventory">
+          <div class="content-header">
+            <h2><i class="fas fa-boxes"></i> Shop Inventory</h2>
+          </div>
+
+          {{!-- Markup Control --}}
+          <div class="markup-control">
+            <h3><i class="fas fa-percentage"></i> Global Price Markup</h3>
+            <div class="markup-input-group">
+              <input type="number" class="markup-input" value="{{shopData.markup}}" min="0" max="10" step="0.1">
+              <span class="markup-label">x base price</span>
+            </div>
+            <p class="markup-help">Items without custom prices will use base price × markup</p>
+          </div>
+          
+          <div class="drop-zone" data-drop-type="item">
+            <div class="drop-content">
+              <i class="fas fa-plus-circle"></i>
+              <h3>Add Items</h3>
+              <p>Drag items from the items directory to add them to inventory</p>
+            </div>
+          </div>
+
+          {{#if inventory}}
+            <div class="inventory-table">
+              <div class="table-header">
+                <div>Image</div>
+                <div>Item Name</div>
+                <div>Base Price</div>
+                <div>Quantity</div>
+                <div>Final Price</div>
+                <div>Actions</div>
+              </div>
+              {{#each inventory}}
+                <div class="inventory-item">
+                  <div class="item-image">
+                    <img src="{{img}}" alt="{{name}}">
+                  </div>
+                  <div class="item-details">
+                    <div class="item-name">{{name}}</div>
+                    {{#if description}}
+                      <div class="item-description">{{description}}</div>
+                    {{/if}}
+                    {{#if weight}}
+                      <div class="item-weight">{{weight}} lbs</div>
+                    {{/if}}
+                  </div>
+                  <div class="item-base-price">
+                    {{basePrice}} {{currency}}
+                  </div>
+                  <div class="quantity-control">
+                    <button type="button" class="quantity-btn quantity-decrease" data-item-id="{{itemId}}">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                    <input type="number" class="quantity-input" data-item-id="{{itemId}}" value="{{quantity}}" min="0">
+                    <button type="button" class="quantity-btn quantity-increase" data-item-id="{{itemId}}">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                  <div class="item-final-price">
+                    <input type="number" class="price-input" data-item-id="{{itemId}}" value="{{finalPrice}}" step="0.01" min="0">
+                    <span class="price-currency">{{currency}}</span>
+                  </div>
+                  <div class="item-actions">
+                    <button type="button" class="action-btn open-item" data-item-id="{{itemId}}" title="Open Item">
+                      <i class="fas fa-external-link-alt"></i>
+                    </button>
+                    <button type="button" class="action-btn remove-item" data-item-id="{{itemId}}" title="Remove Item">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="empty-state">
+              <i class="fas fa-boxes"></i>
+              <h3>No Items</h3>
+              <p>Drag items from the items directory to stock this shop</p>
+            </div>
+          {{/if}}
+        </section>
+
+        {{!-- NPCs Tab --}}
+        <section class="tab-panel" data-tab="npcs">
+          <div class="content-header">
+            <h2><i class="fas fa-users"></i> Shop NPCs</h2>
+          </div>
+          
+          <div class="drop-zone" data-drop-type="npc">
+            <div class="drop-content">
+              <i class="fas fa-user-plus"></i>
+              <h3>Add NPCs</h3>
+              <p>Drag NPCs or actors here to associate them with this shop</p>
+            </div>
+          </div>
+
+          {{#if linkedNPCs}}
+            <div class="entity-grid">
+              {{#each linkedNPCs}}
+                <div class="entity-card npc-card">
+                  <div class="entity-image">
+                    <img src="{{img}}" alt="{{name}}">
+                  </div>
+                  <div class="entity-content">
+                    <h4 class="entity-name">{{name}}</h4>
+                    {{#if actor}}
+                      <div class="entity-meta">
+                        <span class="entity-type">{{actor.system.details.race}} {{actor.system.details.class}}</span>
+                      </div>
+                    {{else}}
+                      <div class="entity-meta">
+                        <span class="entity-type">NPC</span>
+                      </div>
+                    {{/if}}
+                  </div>
+                  <div class="entity-actions">
+                    <button type="button" class="action-btn open-npc" data-npc-id="{{id}}" title="Open NPC Journal">
+                      <i class="fas fa-book-open"></i>
+                    </button>
+                    {{#if actor}}
+                      <button type="button" class="action-btn open-actor" data-actor-id="{{actor.id}}" title="Open Actor Sheet">
+                        <i class="fas fa-user"></i>
+                      </button>
+                    {{/if}}
+                    <button type="button" class="action-btn remove-npc" data-npc-id="{{id}}" title="Remove from Shop">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="empty-state">
+              <i class="fas fa-users"></i>
+              <h3>No NPCs</h3>
+              <p>Drag NPCs here to staff this shop</p>
+            </div>
+          {{/if}}
+        </section>
+
+        {{!-- Notes Tab --}}
+        <section class="tab-panel" data-tab="notes">
+          <div class="content-header">
+            <h2><i class="fas fa-sticky-note"></i> GM Notes</h2>
+          </div>
+          
+          <div class="form-section">
+            <label class="form-label">
+              <i class="fas fa-eye-slash"></i>
+              Private Notes
+            </label>
+            <textarea name="notes" class="form-textarea" rows="12" placeholder="Private GM notes about this shop...">{{shopData.notes}}</textarea>
+          </div>
+        </section>
+
+      </form>
+    </main>
+  </div>
+
+  {{!-- Footer --}}
+  <footer class="sheet-footer">
+    <button type="button" class="save-btn save-data">
+      <i class="fas fa-save"></i>
+      Save Changes
+    </button>
+  </footer>
+
+</div>

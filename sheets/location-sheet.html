@@ -1,0 +1,224 @@
+<div class="campaign-codex location-sheet">
+  
+  {{!-- Header Banner --}}
+  <header class="sheet-banner">
+    <div class="banner-overlay"></div>
+    <div class="banner-content">
+      <h1 class="location-name">{{document.name}}</h1>
+      <div class="location-type">Location</div>
+    </div>
+  </header>
+
+  <div class="sheet-body">
+    {{!-- Sidebar Navigation --}}
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <div class="location-image">
+          <img src="{{document.img}}" alt="{{document.name}}" onerror="this.src='icons/svg/direction.svg'">
+        </div>
+      </div>
+      
+      <ul class="sidebar-tabs">
+        <li class="tab-item active" data-tab="info">
+          <i class="fas fa-info-circle"></i>
+          <span>Info</span>
+        </li>
+        <li class="tab-item" data-tab="npcs">
+          <i class="fas fa-users"></i>
+          <span>NPCs</span>
+        </li>
+        <li class="tab-item" data-tab="shops">
+          <i class="fas fa-store"></i>
+          <span>Shops</span>
+        </li>
+        <li class="tab-item" data-tab="notes">
+          <i class="fas fa-sticky-note"></i>
+          <span>Notes</span>
+        </li>
+      </ul>
+
+      {{!-- Links Section --}}
+      <div class="sidebar-links">
+        <h3>Quick Links</h3>
+        <div class="link-grid">
+          {{#each linkedNPCs}}
+            <div class="link-card npc-link" data-npc-id="{{id}}">
+              <img src="{{img}}" alt="{{name}}">
+              <span class="link-name">{{name}}</span>
+            </div>
+          {{/each}}
+          {{#each linkedShops}}
+            <div class="link-card shop-link" data-shop-id="{{id}}">
+              <img src="{{img}}" alt="{{name}}">
+              <span class="link-name">{{name}}</span>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    </nav>
+
+    {{!-- Main Content Area --}}
+    <main class="main-content">
+      <form class="location-form">
+        
+        {{!-- Info Tab --}}
+        <section class="tab-panel active" data-tab="info">
+          <div class="content-header">
+            <h2><i class="fas fa-info-circle"></i> Location Information</h2>
+          </div>
+          
+          <div class="form-section">
+            <label class="form-label">
+              <i class="fas fa-align-left"></i>
+              Description
+            </label>
+            <textarea name="description" class="form-textarea" rows="8" placeholder="Describe this location...">{{locationData.description}}</textarea>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-users"></i></div>
+              <div class="stat-content">
+                <div class="stat-number">{{linkedNPCs.length}}</div>
+                <div class="stat-label">NPCs</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon"><i class="fas fa-store"></i></div>
+              <div class="stat-content">
+                <div class="stat-number">{{linkedShops.length}}</div>
+                <div class="stat-label">Shops</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {{!-- NPCs Tab --}}
+        <section class="tab-panel" data-tab="npcs">
+          <div class="content-header">
+            <h2><i class="fas fa-users"></i> NPCs at this Location</h2>
+          </div>
+          
+          <div class="drop-zone" data-drop-type="npc">
+            <div class="drop-content">
+              <i class="fas fa-user-plus"></i>
+              <h3>Add NPCs</h3>
+              <p>Drag NPCs or actors here to add them to this location</p>
+            </div>
+          </div>
+
+          {{#if linkedNPCs}}
+            <div class="entity-grid">
+              {{#each linkedNPCs}}
+                <div class="entity-card npc-card">
+                  <div class="entity-image">
+                    <img src="{{img}}" alt="{{name}}">
+                  </div>
+                  <div class="entity-content">
+                    <h4 class="entity-name">{{name}}</h4>
+                    {{#if actor}}
+                      <div class="entity-meta">
+                        <span class="entity-type">{{actor.system.details.race}} {{actor.system.details.class}}</span>
+                      </div>
+                    {{/if}}
+                  </div>
+                  <div class="entity-actions">
+                    <button type="button" class="action-btn open-npc" data-npc-id="{{id}}" title="Open NPC Journal">
+                      <i class="fas fa-book-open"></i>
+                    </button>
+                    {{#if actor}}
+                      <button type="button" class="action-btn open-actor" data-actor-id="{{actor.id}}" title="Open Actor Sheet">
+                        <i class="fas fa-user"></i>
+                      </button>
+                    {{/if}}
+                    <button type="button" class="action-btn remove-npc" data-npc-id="{{id}}" title="Remove from Location">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="empty-state">
+              <i class="fas fa-users"></i>
+              <h3>No NPCs</h3>
+              <p>Drag NPCs here to populate this location</p>
+            </div>
+          {{/if}}
+        </section>
+
+        {{!-- Shops Tab --}}
+        <section class="tab-panel" data-tab="shops">
+          <div class="content-header">
+            <h2><i class="fas fa-store"></i> Shops at this Location</h2>
+          </div>
+          
+          <div class="drop-zone" data-drop-type="shop">
+            <div class="drop-content">
+              <i class="fas fa-store"></i>
+              <h3>Add Shops</h3>
+              <p>Drag shop journals here to add them to this location</p>
+            </div>
+          </div>
+
+          {{#if linkedShops}}
+            <div class="entity-grid">
+              {{#each linkedShops}}
+                <div class="entity-card shop-card">
+                  <div class="entity-image">
+                    <img src="{{img}}" alt="{{name}}">
+                  </div>
+                  <div class="entity-content">
+                    <h4 class="entity-name">{{name}}</h4>
+                    <div class="entity-meta">
+                      <span class="entity-type">Shop</span>
+                    </div>
+                  </div>
+                  <div class="entity-actions">
+                    <button type="button" class="action-btn open-shop" data-shop-id="{{id}}" title="Open Shop">
+                      <i class="fas fa-external-link-alt"></i>
+                    </button>
+                    <button type="button" class="action-btn remove-shop" data-shop-id="{{id}}" title="Remove from Location">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="empty-state">
+              <i class="fas fa-store"></i>
+              <h3>No Shops</h3>
+              <p>Drag shop journals here to add commerce to this location</p>
+            </div>
+          {{/if}}
+        </section>
+
+        {{!-- Notes Tab --}}
+        <section class="tab-panel" data-tab="notes">
+          <div class="content-header">
+            <h2><i class="fas fa-sticky-note"></i> GM Notes</h2>
+          </div>
+          
+          <div class="form-section">
+            <label class="form-label">
+              <i class="fas fa-eye-slash"></i>
+              Private Notes
+            </label>
+            <textarea name="notes" class="form-textarea" rows="12" placeholder="Private GM notes about this location...">{{locationData.notes}}</textarea>
+          </div>
+        </section>
+
+      </form>
+    </main>
+  </div>
+
+  {{!-- Footer --}}
+  <footer class="sheet-footer">
+    <button type="button" class="save-btn save-data">
+      <i class="fas fa-save"></i>
+      Save Changes
+    </button>
+  </footer>
+
+</div>
