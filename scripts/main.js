@@ -39,8 +39,8 @@ Hooks.once('ready', async function() {
   // Initialize the journal interface
   game.campaignCodex = new CampaignCodexJournal();
   
-  // Log available sheets for debugging
-  console.log('Campaign Codex | Available journal sheets:', Object.keys(DocumentSheetConfig.get(JournalEntry)));
+  // Log registered sheets for debugging
+  console.log('Campaign Codex | Module ready, sheets should be available');
 });
 
 // Add context menu options to actors
@@ -64,16 +64,92 @@ Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
   options.unshift({
     name: "New NPC Journal",
     icon: '<i class="fas fa-user"></i>',
-    callback: () => {
-      game.campaignCodex.createNPCJournal();
+    callback: async () => {
+      const journal = await game.campaignCodex.createNPCJournal();
+      // Manually set the sheet class
+      journal._sheet = null;
+      const sheet = new NPCJournalSheet(journal);
+      sheet.render(true);
     }
   });
   
   options.unshift({
     name: "New World Lore",
     icon: '<i class="fas fa-globe"></i>',
-    callback: () => {
-      game.campaignCodex.createWorldLore("New Lore Entry");
+    callback: async () => {
+      const journal = await game.campaignCodex.createWorldLore("New Lore Entry");
+      // Manually set the sheet class
+      journal._sheet = null;
+      const sheet = new WorldLoreSheet(journal);
+      sheet.render(true);
+    }    
+  });
+  
+  // Add option to convert existing journal to NPC journal
+  options.push({
+    name: "Convert to NPC Journal",
+    icon: '<i class="fas fa-user-cog"></i>',
+    condition: li => {
+      const journal = game.journal.get(li.data("documentId"));
+      return journal && !journal.pages.find(p => p.name === "campaign-codex-npc-data");
+    },
+    callback: async li => {
+      const journal = game.journal.get(li.data("documentId"));
+      // Add our data page
+      await journal.createEmbeddedDocuments("JournalEntryPage", [{
+        name: "campaign-codex-npc-data",
+        type: "text",
+        text: { content: JSON.stringify({
+          actorId: null,
+          history: "",
+          currentStatus: "",
+          relationships: [],
+          locations: [],
+          plotHooks: "",
+          gmNotes: "",
+          playerNotes: ""
+        }, null, 2) },
+        title: { show: false }
+      }]);
+      
+      // Force our sheet
+      journal._sheet = null;
+      if (journal.sheet) journal.sheet.close();
+      const sheet = new NPCJournalSheet(journal);
+      sheet.render(true);
+    }
+  });
+  
+  // Add option to convert existing journal to lore journal
+  options.push({
+    name: "Convert to World Lore",
+    icon: '<i class="fas fa-globe"></i>',
+    condition: li => {
+      const journal = game.journal.get(li.data("documentId"));
+      return journal && !journal.pages.find(p => p.name === "campaign-codex-lore-data");
+    },
+    callback: async li => {
+      const journal = game.journal.get(li.data("documentId"));
+      // Add our data page
+      await journal.createEmbeddedDocuments("JournalEntryPage", [{
+        name: "campaign-codex-lore-data",
+        type: "text",
+        text: { content: JSON.stringify({
+          category: "General",
+          content: "",
+          linkedEntries: [],
+          tags: [],
+          playerVisible: true,
+          gmNotes: ""
+        }, null, 2) },
+        title: { show: false }
+      }]);
+      
+      // Force our sheet
+      journal._sheet = null;
+      if (journal.sheet) journal.sheet.close();
+      const sheet = new WorldLoreSheet(journal);
+      sheet.render(true);
     }
   });
 });
