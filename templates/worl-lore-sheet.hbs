@@ -1,0 +1,188 @@
+<form class="campaign-codex world-lore flexcol" autocomplete="off">
+  
+  {{!-- Header --}}
+  <header class="sheet-header">
+    <div class="lore-header">
+      <h1><i class="fas fa-globe"></i> {{document.name}}</h1>
+      <div class="lore-category">
+        <label>Category:</label>
+        <select name="category">
+          {{#each categories}}
+            <option value="{{this}}" {{#eq this ../loreData.category}}selected{{/eq}}>{{this}}</option>
+          {{/each}}
+        </select>
+      </div>
+    </div>
+  </header>
+
+  {{!-- Navigation tabs --}}
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item active" data-tab="content">
+      <i class="fas fa-scroll"></i> Content
+    </a>
+    <a class="item" data-tab="connections">
+      <i class="fas fa-link"></i> Connections
+    </a>
+    <a class="item" data-tab="organization">
+      <i class="fas fa-tags"></i> Organization
+    </a>
+    {{#if isGM}}
+      <a class="item" data-tab="gmnotes">
+        <i class="fas fa-eye-slash"></i> GM Notes
+      </a>
+    {{/if}}
+  </nav>
+
+  {{!-- Tab content --}}
+  <section class="sheet-body">
+    
+    {{!-- Content Tab --}}
+    <div class="tab active" data-group="primary" data-tab="content">
+      <div class="form-group">
+        <label><i class="fas fa-feather-alt"></i> Lore Content</label>
+        <textarea name="content" class="lore-content" rows="12" placeholder="Enter the lore content here...">{{loreData.content}}</textarea>
+      </div>
+      
+      <div class="form-group">
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="playerVisible" {{#if loreData.playerVisible}}checked{{/if}}>
+            <span class="checkmark"></span>
+            <i class="fas fa-eye"></i> Visible to Players
+          </label>
+          <p class="hint">Uncheck to keep this lore GM-only</p>
+        </div>
+      </div>
+    </div>
+
+    {{!-- Connections Tab --}}
+    <div class="tab" data-group="primary" data-tab="connections">
+      <div class="connections-header">
+        <div class="drop-zone" data-drop-type="any">
+          <div class="drop-content">
+            <i class="fas fa-link"></i>
+            <h3>Add Connections</h3>
+            <p>Drag journals or NPCs here to create connections</p>
+          </div>
+        </div>
+        <button type="button" class="search-link">
+          <i class="fas fa-search"></i> Search & Link
+        </button>
+      </div>
+      
+      {{#if linkedEntries}}
+        <div class="linked-entries">
+          <h3><i class="fas fa-project-diagram"></i> Connected Entries</h3>
+          {{#each linkedEntries}}
+            <div class="linked-entry">
+              <div class="entry-icon">
+                {{#eq type "journal"}}
+                  <i class="fas fa-book"></i>
+                {{else}}
+                  <i class="fas fa-user"></i>
+                {{/eq}}
+              </div>
+              <div class="entry-info">
+                <h4>{{document.name}}</h4>
+                {{#if description}}
+                  <p class="link-description">{{description}}</p>
+                {{/if}}
+              </div>
+              <div class="entry-controls">
+                <button type="button" class="control-btn open-document" data-document-id="{{document.id}}" data-document-type="{{type}}" title="Open Document">
+                  <i class="fas fa-external-link-alt"></i>
+                </button>
+                <button type="button" class="control-btn delete-link" data-link-id="{{linkId}}" title="Remove Connection">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      {{/if}}
+    </div>
+
+    {{!-- Organization Tab --}}
+    <div class="tab" data-group="primary" data-tab="organization">
+      <div class="tags-section">
+        <div class="tags-header">
+          <label><i class="fas fa-tags"></i> Tags</label>
+          <button type="button" class="add-tag">
+            <i class="fas fa-plus"></i> Add Tag
+          </button>
+        </div>
+        
+        {{#if loreData.tags}}
+          <div class="tags-list">
+            {{#each loreData.tags}}
+              <span class="tag">
+                {{this}}
+                <button type="button" class="remove-tag" data-tag="{{this}}">
+                  <i class="fas fa-times"></i>
+                </button>
+              </span>
+            {{/each}}
+          </div>
+        {{else}}
+          <div class="empty-state">
+            <i class="fas fa-tags"></i>
+            <h3>No Tags Assigned</h3>
+            <p>Tags help organize and search your lore entries.</p>
+          </div>
+        {{/if}}
+      </div>
+      
+      <div class="category-info">
+        <h3><i class="fas fa-folder"></i> Category: {{loreData.category}}</h3>
+        <p class="category-description">
+          {{#eq loreData.category "Geography"}}
+            Information about places, regions, landmarks, and physical locations.
+          {{else}}{{#eq loreData.category "History"}}
+            Historical events, timelines, and past occurrences that shape the world.
+          {{else}}{{#eq loreData.category "Organizations"}}
+            Guilds, factions, governments, religions, and other organized groups.
+          {{else}}{{#eq loreData.category "Culture"}}
+            Languages, customs, traditions, holidays, and cultural practices.
+          {{else}}{{#eq loreData.category "Magic & Mysteries"}}
+            Magical phenomena, ancient artifacts, unexplained mysteries.
+          {{else}}{{#eq loreData.category "Pantheon"}}
+            Gods, deities, divine domains, and religious information.
+          {{else}}
+            General world lore and miscellaneous information.
+          {{/eq}}{{/eq}}{{/eq}}{{/eq}}{{/eq}}{{/eq}}
+        </p>
+      </div>
+    </div>
+
+    {{!-- GM Notes Tab --}}
+    {{#if isGM}}
+      <div class="tab" data-group="primary" data-tab="gmnotes">
+        <div class="form-group">
+          <label><i class="fas fa-user-secret"></i> GM-Only Notes</label>
+          <textarea name="gmNotes" class="gm-notes" rows="10" placeholder="Private GM notes, secret information, future plot developments...">{{loreData.gmNotes}}</textarea>
+        </div>
+        
+        <div class="gm-tools">
+          <h3><i class="fas fa-tools"></i> GM Tools</h3>
+          <div class="tool-buttons">
+            <button type="button" class="create-handout">
+              <i class="fas fa-file-alt"></i> Create Player Handout
+            </button>
+            <button type="button" class="duplicate-entry">
+              <i class="fas fa-copy"></i> Duplicate Entry
+            </button>
+          </div>
+        </div>
+      </div>
+    {{/if}}
+    
+  </section>
+
+  {{!-- Footer with save button --}}
+  <footer class="sheet-footer">
+    <button type="button" class="save-lore-data">
+      <i class="fas fa-save"></i> Save Changes
+    </button>
+  </footer>
+
+</form>
