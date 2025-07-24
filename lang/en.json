@@ -1,0 +1,179 @@
+{
+  "campaign-codex": {
+    "npc-entry": "NPC Journal Entry",
+    "world-lore": "World Lore Entry",
+    
+    "settings": {
+      "showPlayerNotes": {
+        "name": "Show Player Notes Section",
+        "hint": "Allow players to add their own notes to NPCs they've met"
+      }
+    },
+    
+    "labels": {
+      "history": "History & Background",
+      "currentStatus": "Current Status", 
+      "relationships": "Relationships",
+      "locations": "Locations",
+      "plotHooks": "Plot Hooks",
+      "gmNotes": "GM Notes",
+      "playerNotes": "Player Notes",
+      "category": "Category",
+      "content": "Content",
+      "tags": "Tags",
+      "connections": "Connections",
+      "organization": "Organization",
+      "playerVisible": "Visible to Players"
+    },
+    
+    "placeholders": {
+      "history": "Write the character's history, background, and motivations...",
+      "currentStatus": "What are they doing now? Current goals, recent events...",
+      "plotHooks": "Story opportunities involving this character...",
+      "gmNotes": "Private GM notes, secrets, future plans...",
+      "playerNotes": "What the players have learned about this character...",
+      "loreContent": "Enter the lore content here...",
+      "gmLoreNotes": "Private GM notes, secret information, future plot developments...",
+      "linkDescription": "How is this related to the lore entry?",
+      "relationshipDescription": "Brief description of the relationship...",
+      "locationNotes": "Additional details about this connection..."
+    },
+    
+    "buttons": {
+      "save": "Save Changes",
+      "linkActor": "Link Actor",
+      "addTag": "Add Tag",
+      "searchLink": "Search & Link",
+      "createHandout": "Create Player Handout",
+      "duplicateEntry": "Duplicate Entry",
+      "openDocument": "Open Document",
+      "removeConnection": "Remove Connection",
+      "removeRelationship": "Remove Relationship"
+    },
+    
+    "dropzones": {
+      "actors": "Drag NPCs here to create relationships",
+      "journals": "Drag location journals here to create connections",
+      "any": "Drag journals or NPCs here to create connections"
+    },
+    
+    "relationshipTypes": {
+      "ally": "Ally",
+      "enemy": "Enemy", 
+      "friend": "Friend",
+      "rival": "Rival",
+      "family": "Family",
+      "employer": "Employer",
+      "employee": "Employee",
+      "acquaintance": "Acquaintance",
+      "spouse": "Spouse",
+      "parent": "Parent",
+      "child": "Child"
+    },
+    
+    "connectionTypes": {
+      "lives": "Lives Here",
+      "works": "Works Here", 
+      "owns": "Owns This",
+      "frequents": "Frequents",
+      "avoids": "Avoids",
+      "born": "Born Here",
+      "hideout": "Secret Hideout"
+    },
+    
+    "categories": {
+      "general": "General",
+      "geography": "Geography", 
+      "history": "History",
+      "organizations": "Organizations",
+      "culture": "Culture",
+      "magic": "Magic & Mysteries",
+      "pantheon": "Pantheon",
+      "politics": "Politics",
+      "economics": "Economics",
+      "npcs": "NPCs",
+      "locations": "Locations"
+    },
+    
+    "categoryDescriptions": {
+      "geography": "Information about places, regions, landmarks, and physical locations.",
+      "history": "Historical events, timelines, and past occurrences that shape the world.",
+      "organizations": "Guilds, factions, governments, religions, and other organized groups.",
+      "culture": "Languages, customs, traditions, holidays, and cultural practices.",
+      "magic": "Magical phenomena, ancient artifacts, unexplained mysteries.",
+      "pantheon": "Gods, deities, divine domains, and religious information.",
+      "politics": "Political systems, rulers, laws, and governmental structures.",
+      "economics": "Trade, commerce, currencies, and economic systems.",
+      "npcs": "Important non-player characters and their stories.",
+      "locations": "Detailed information about specific places and locations.",
+      "general": "General world lore and miscellaneous information."
+    },
+    
+    "dialogs": {
+      "addRelationship": {
+        "title": "Add Relationship",
+        "relationshipType": "Relationship Type:",
+        "description": "Description:"
+      },
+      "addLocation": {
+        "title": "Add Location Connection", 
+        "connectionType": "Connection Type:",
+        "notes": "Notes:"
+      },
+      "addTag": {
+        "title": "Add Tag",
+        "tagName": "Tag Name:",
+        "placeholder": "Enter tag name..."
+      },
+      "linkActor": {
+        "title": "Link Actor",
+        "selectActor": "Select NPC Actor:",
+        "chooseActor": "Choose an actor..."
+      },
+      "linkDocument": {
+        "title": "Link Document",
+        "linking": "Linking:",
+        "connectionDescription": "Description of Connection:"
+      },
+      "searchLink": {
+        "title": "Search and Link",
+        "searchPlaceholder": "Type to filter...",
+        "description": "Description:",
+        "descriptionPlaceholder": "How is this related?"
+      }
+    },
+    
+    "notifications": {
+      "npcSaved": "NPC data saved successfully!",
+      "loreSaved": "World lore saved successfully!",
+      "relationshipAdded": "Relationship added successfully!",
+      "connectionAdded": "Location connection added successfully!",
+      "linkAdded": "Document link added successfully!",
+      "tagAdded": "Tag added successfully!",
+      "itemRemoved": "Item removed successfully!"
+    },
+    
+    "contextMenu": {
+      "createNPCJournal": "Create NPC Journal Entry",
+      "newNPCJournal": "New NPC Journal",
+      "newWorldLore": "New World Lore"
+    },
+    
+    "tabs": {
+      "overview": "Overview",
+      "relationships": "Relationships", 
+      "locations": "Locations",
+      "notes": "Notes",
+      "content": "Content",
+      "links": "Connections",
+      "organization": "Organization",
+      "gmnotes": "GM Notes"
+    },
+    
+    "messages": {
+      "noTags": "No tags assigned. Tags help organize and search your lore.",
+      "dragActors": "Drag and drop actors and locations to build relationships and connections.",
+      "playerVisibleHint": "Uncheck to keep this lore GM-only"
+    }
+  }
+}
