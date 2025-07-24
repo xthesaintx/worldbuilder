@@ -5,25 +5,17 @@ import { WorldLoreSheet } from './world-lore-sheet.js';
 Hooks.once('init', async function() {
   console.log('Campaign Codex | Initializing');
   
-  // Register custom journal entry types
-  CONFIG.JournalEntry.documentClass.TYPES = foundry.utils.mergeObject(
-    CONFIG.JournalEntry.documentClass.TYPES, 
-    {
-      "campaign-npc": "campaign-codex.npc-entry",
-      "world-lore": "campaign-codex.world-lore"
-    }
-  );
+  // Register custom journal entry sheet types (v12 approach)
+  // We'll use flags to identify our custom journal types instead of document types
 
-  // Register sheet classes
+  // Register sheet classes for journal entries with our custom flags
   DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", NPCJournalSheet, {
-    types: ["campaign-npc"],
-    makeDefault: true,
+    makeDefault: false,
     label: "Campaign Codex: NPC Journal"
   });
 
   DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", WorldLoreSheet, {
-    types: ["world-lore"],
-    makeDefault: true,
+    makeDefault: false,
     label: "Campaign Codex: World Lore"
   });
 
@@ -71,15 +63,7 @@ Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
     name: "New NPC Journal",
     icon: '<i class="fas fa-user"></i>',
     callback: () => {
-      JournalEntry.create({
-        name: "New NPC Entry",
-        type: "campaign-npc",
-        pages: [{
-          name: "NPC Details",
-          type: "text",
-          text: { content: "" }
-        }]
-      });
+      game.campaignCodex.createNPCJournal();
     }
   });
   
@@ -87,17 +71,24 @@ Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
     name: "New World Lore",
     icon: '<i class="fas fa-globe"></i>',
     callback: () => {
-      JournalEntry.create({
-        name: "New Lore Entry",
-        type: "world-lore",
-        pages: [{
-          name: "Lore Details",
-          type: "text", 
-          text: { content: "" }
-        }]
-      });
+      game.campaignCodex.createWorldLore("New Lore Entry");
     }
   });
+});
+
+// Hook to determine which sheet to use for journal entries
+Hooks.on('getJournalEntrySheetClass', (journalEntry, sheetClasses) => {
+  // Check if this is an NPC journal entry
+  if (journalEntry.getFlag("campaign-codex", "actorId")) {
+    return NPCJournalSheet;
+  }
+  
+  // Check if this is a world lore entry
+  if (journalEntry.getFlag("campaign-codex", "loreData")) {
+    return WorldLoreSheet;
+  }
+  
+  return null; // Use default sheet
 });
 
 // Handle drag and drop functionality
