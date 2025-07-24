@@ -1,6 +1,6 @@
 {
-  "id": "worldbuilder",
-  "title": "worldbuilder",
+  "id": "campaign-codex",
+  "title": "campaign-codex",
   "version": "1.0.7",
   "esmodules": ["scripts/main.js"],
   "compatibility": {
