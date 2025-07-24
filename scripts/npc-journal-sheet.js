@@ -10,7 +10,7 @@ export class NPCJournalSheet extends JournalSheet {
   }
 
   get template() {
-    return "modules/campaign-codex/templates/npc-journal-sheet.html";
+    return "modules/campaign-codex/templates/npc-journal-sheet.hbs";
   }
 
   async getData() {
