@@ -1,0 +1,269 @@
+/* Campaign Codex Styles */
+
+:root {
+  --campaign-codex-primary: #4a5568;
+  --campaign-codex-secondary: #718096;
+  --campaign-codex-accent: #3182ce;
+  --campaign-codex-success: #38a169;
+  --campaign-codex-warning: #d69e2e;
+  --campaign-codex-danger: #e53e3e;
+  --campaign-codex-bg: #f7fafc;
+  --campaign-codex-border: #e2e8f0;
+}
+
+/* Base Sheet Styling */
+.campaign-codex {
+  background: var(--campaign-codex-bg);
+  border: 1px solid var(--campaign-codex-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.campaign-codex .window-header {
+  background: linear-gradient(135deg, var(--campaign-codex-primary), var(--campaign-codex-secondary));
+  color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+/* NPC Journal Specific Styles */
+.npc-journal .linked-actor-header {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: white;
+  border-bottom: 2px solid var(--campaign-codex-border);
+  gap: 15px;
+}
+
+.npc-journal .actor-portrait {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid var(--campaign-codex-accent);
+  object-fit: cover;
+}
+
+.npc-journal .actor-info h1 {
+  margin: 0;
+  color: var(--campaign-codex-primary);
+  font-size: 1.5em;
+}
+
+.npc-journal .actor-stats {
+  display: flex;
+  gap: 15px;
+  margin-top: 5px;
+}
+
+.npc-journal .stat {
+  background: var(--campaign-codex-accent);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.9em;
+  font-weight: bold;
+}
+
+.npc-journal .no-actor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: white;
+  border-bottom: 2px solid var(--campaign-codex-border);
+}
+
+.npc-journal .link-actor {
+  background: var(--campaign-codex-accent);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.npc-journal .link-actor:hover {
+  background: #2c5aa0;
+}
+
+/* Tabs */
+.campaign-codex .sheet-tabs {
+  background: white;
+  border-bottom: 1px solid var(--campaign-codex-border);
+  padding: 0;
+}
+
+.campaign-codex .sheet-tabs .item {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--campaign-codex-secondary);
+  padding: 12px 20px;
+  transition: all 0.2s;
+}
+
+.campaign-codex .sheet-tabs .item:hover {
+  background: rgba(49, 130, 206, 0.1);
+  color: var(--campaign-codex-accent);
+}
+
+.campaign-codex .sheet-tabs .item.active {
+  color: var(--campaign-codex-accent);
+  border-bottom-color: var(--campaign-codex-accent);
+  background: rgba(49, 130, 206, 0.05);
+}
+
+/* Form Elements */
+.campaign-codex .form-group {
+  margin-bottom: 20px;
+}
+
+.campaign-codex .form-group label {
+  display: block;
+  font-weight: bold;
+  color: var(--campaign-codex-primary);
+  margin-bottom: 5px;
+}
+
+.campaign-codex textarea, 
+.campaign-codex input[type="text"], 
+.campaign-codex select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--campaign-codex-border);
+  border-radius: 5px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.campaign-codex textarea:focus, 
+.campaign-codex input[type="text"]:focus, 
+.campaign-codex select:focus {
+  outline: none;
+  border-color: var(--campaign-codex-accent);
+  box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+}
+
+.campaign-codex textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.campaign-codex .lore-content,
+.campaign-codex .gm-notes {
+  min-height: 200px;
+}
+
+/* Drop Zones */
+.campaign-codex .drop-zone {
+  border: 2px dashed var(--campaign-codex-border);
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  margin-bottom: 20px;
+  background: rgba(49, 130, 206, 0.02);
+  color: var(--campaign-codex-secondary);
+  transition: all 0.2s;
+}
+
+.campaign-codex .drop-zone.drag-over {
+  border-color: var(--campaign-codex-accent);
+  background: rgba(49, 130, 206, 0.1);
+  color: var(--campaign-codex-accent);
+}
+
+.campaign-codex .drop-zone i {
+  font-size: 2em;
+  margin-right: 10px;
+  opacity: 0.7;
+}
+
+/* Relationship Items */
+.campaign-codex .relationships-list,
+.campaign-codex .locations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.campaign-codex .relationship-item,
+.campaign-codex .location-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: white;
+  border: 1px solid var(--campaign-codex-border);
+  border-radius: 8px;
+  transition: box-shadow 0.2s;
+}
+
+.campaign-codex .relationship-item:hover,
+.campaign-codex .location-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.campaign-codex .relationship-portrait {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--campaign-codex-border);
+  object-fit: cover;
+  margin-right: 15px;
+}
+
+.campaign-codex .relationship-info,
+.campaign-codex .location-info {
+  flex: 1;
+}
+
+.campaign-codex .relationship-info h4,
+.campaign-codex .location-info h4 {
+  margin: 0 0 5px 0;
+  color: var(--campaign-codex-primary);
+}
+
+.campaign-codex .relationship-type,
+.campaign-codex .location-type {
+  display: inline-block;
+  background: var(--campaign-codex-secondary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.campaign-codex .relationship-desc,
+.campaign-codex .location-notes {
+  margin: 8px 0 0 0;
+  color: #666;
+  font-style: italic;
+}
+
+.campaign-codex .relationship-controls,
+.campaign-codex .location-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.campaign-codex .relationship-controls button,
+.campaign-codex .location-controls button {
+  background: transparent;
+  border: 1px solid var(--campaign-codex-border);
+  padding: 5px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.campaign-codex .relationship-controls button:hover,
+.campaign-codex .location-controls button:hover {
+  background: var(--campaign-codex-accent);
+  color: white;
+  border-color: var(--campaign-codex-accent);
+}
+
+.campaign-codex .delete-relationship:hover,
+.campaign-codex .delete-location:hover,
