@@ -15,8 +15,32 @@ export class NPCJournalSheet extends JournalSheet {
 
   async getData() {
     const data = await super.getData();
-    const actorId = this.document.getFlag("campaign-codex", "actorId");
-    const npcData = this.document.getFlag("campaign-codex", "npcData") || {};
+    
+    // Use try-catch to handle flag access safely
+    let actorId, npcData;
+    try {
+      actorId = this.document.getFlag("campaign-codex", "actorId");
+      npcData = this.document.getFlag("campaign-codex", "npcData") || {};
+    } catch (error) {
+      console.warn("Campaign Codex | Flag access error, initializing:", error);
+      actorId = null;
+      npcData = {};
+      
+      // Initialize the flags for this journal entry
+      try {
+        await this.document.setFlag("campaign-codex", "npcData", {
+          history: "",
+          currentStatus: "",
+          relationships: [],
+          locations: [],
+          plotHooks: "",
+          gmNotes: "",
+          playerNotes: ""
+        });
+      } catch (flagError) {
+        console.error("Campaign Codex | Could not initialize flags:", flagError);
+      }
+    }
     
     // Get linked actor
     data.linkedActor = actorId ? game.actors.get(actorId) : null;
