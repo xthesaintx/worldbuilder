@@ -7,56 +7,72 @@ import { RegionSheet } from './sheets/region-sheet.js';
 Hooks.once('init', async function() {
   console.log('Campaign Codex | Initializing v2.0');
   
-  // Register sheet classes
-  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", LocationSheet, {
-    makeDefault: false,
-    label: "Campaign Codex: Location"
-  });
+  try {
+    // Register sheet classes for Foundry v12
+    DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", LocationSheet, {
+      types: ["base"],
+      makeDefault: false,
+      label: "Campaign Codex: Location"
+    });
 
-  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", ShopSheet, {
-    makeDefault: false,
-    label: "Campaign Codex: Shop"
-  });
+    DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", ShopSheet, {
+      types: ["base"],
+      makeDefault: false,  
+      label: "Campaign Codex: Shop"
+    });
 
-  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", NPCSheet, {
-    makeDefault: false,
-    label: "Campaign Codex: NPC"
-  });
+    DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", NPCSheet, {
+      types: ["base"],
+      makeDefault: false,
+      label: "Campaign Codex: NPC"
+    });
 
-  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", RegionSheet, {
-    makeDefault: false,
-    label: "Campaign Codex: Region"
-  });
+    DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", RegionSheet, {
+      types: ["base"],
+      makeDefault: false,
+      label: "Campaign Codex: Region"
+    });
+
+    console.log('Campaign Codex | Sheets registered successfully');
+  } catch (error) {
+    console.error('Campaign Codex | Error registering sheets:', error);
+  }
 
   // Register settings
-  game.settings.register("campaign-codex", "showPlayerNotes", {
-    name: "Show Player Notes Section",
-    hint: "Allow players to add their own notes",
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: false
-  });
+  try {
+    game.settings.register("campaign-codex", "showPlayerNotes", {
+      name: "Show Player Notes Section",
+      hint: "Allow players to add their own notes",
+      scope: "world",
+      config: true,
+      type: Boolean,
+      default: false
+    });
 
-  game.settings.register("campaign-codex", "useOrganizedFolders", {
-    name: "Organize in Folders",
-    hint: "Automatically create and organize Campaign Codex journals in folders",
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: true
-  });
+    game.settings.register("campaign-codex", "useOrganizedFolders", {
+      name: "Organize in Folders",
+      hint: "Automatically create and organize Campaign Codex journals in folders",
+      scope: "world",
+      config: true,
+      type: Boolean,
+      default: true
+    });
 
-  game.settings.register("campaign-codex", "autoSave", {
-    name: "Auto-Save Changes",
-    hint: "Automatically save changes as you type (recommended)",
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: true
-  });
+    game.settings.register("campaign-codex", "autoSave", {
+      name: "Auto-Save Changes",
+      hint: "Automatically save changes as you type (recommended)",
+      scope: "world",
+      config: true,
+      type: Boolean,
+      default: true
+    });
 
-  console.log('Campaign Codex | Settings and sheets registered');
+    console.log('Campaign Codex | Settings registered successfully');
+  } catch (error) {
+    console.error('Campaign Codex | Error registering settings:', error);
+  }
+
+  console.log('Campaign Codex | Initialization complete');
 });
 
 Hooks.once('ready', async function() {
