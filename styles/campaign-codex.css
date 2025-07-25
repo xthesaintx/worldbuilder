@@ -461,11 +461,11 @@
 /* Modern Header */
 .campaign-codex .window-header {
   background: linear-gradient(135deg, var(--cc-primary) 0%, var(--cc-primary-light) 100%) !important;
-  border-bottom: none !important;
+  /*border-bottom: none !important;
   padding: 1rem 1.5rem !important;
   color: white !important;
   position: relative !important;
-  overflow: hidden !important;
+  overflow: hidden !important;*/
 }
 
 .campaign-codex .window-header::before {
@@ -480,18 +480,18 @@
 }
 
 .campaign-codex .window-header .window-title {
-  color: white !important;
+/*  color: white !important;
   font-weight: 600 !important;
   font-size: 1.125rem !important;
   text-shadow: none !important;
   position: relative !important;
-  z-index: 1 !important;
+  z-index: 1 !important;*/
 }
 
 .campaign-codex .window-header .header-button {
   color: rgba(255, 255, 255, 0.8) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  background: rgba(255, 255, 255, 0.1) !important;
+  /*background: rgba(255, 255, 255, 0.1) !important;*/
   border-radius: var(--cc-radius-sm) !important;
   backdrop-filter: blur(10px) !important;
   transition: var(--cc-transition) !important;
