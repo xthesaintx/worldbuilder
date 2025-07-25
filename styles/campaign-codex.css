@@ -1,11 +1,11 @@
-/* Campaign Codex - Complete Fixed CSS */
+/* Campaign Codex - Improved Design */
 
 :root {
   --cc-header-bg: #8b1538;
   --cc-header-overlay: rgba(139, 21, 56, 0.9);
   --cc-sidebar-bg: #2a2a2a;
   --cc-sidebar-text: #ffffff;
-  --cc-main-bg: #f5f5f5;
+  --cc-main-bg: #f8f9fa;
   --cc-main-text: #2a2a2a;
   --cc-accent: #d4af37;
   --cc-success: #28a745;
@@ -13,15 +13,16 @@
   --cc-danger: #dc3545;
   --cc-border: #444444;
   --cc-card-bg: #ffffff;
-  --cc-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --cc-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --cc-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --cc-shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.12);
+  --cc-border-light: #e9ecef;
 }
 
 /* Force Campaign Codex styles with higher specificity */
 .application.window-app.sheet.journal-sheet.campaign-codex {
   background: var(--cc-main-bg) !important;
-  border: none !important;
-  border-radius: 0 !important;
+  border: 1px solid #ddd !important;
+  border-radius: 8px !important;
   box-shadow: var(--cc-shadow-lg) !important;
   overflow: hidden !important;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
@@ -30,12 +31,34 @@
   flex-direction: column !important;
 }
 
-/* Force hide Foundry's default header */
+/* Show Foundry's default header but style it */
 .application.window-app.sheet.journal-sheet.campaign-codex .window-header {
-  display: none !important;
+  display: flex !important;
+  background: var(--cc-header-bg) !important;
+  border-bottom: none !important;
+  padding: 8px 12px !important;
+  color: white !important;
 }
 
-/* Base Sheet Styling with high specificity */
+.campaign-codex .window-header .window-title {
+  color: white !important;
+  font-weight: 600 !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+.campaign-codex .window-header .header-button {
+  color: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.campaign-codex .window-header .header-button:hover {
+  color: white !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Base Sheet Styling */
 .campaign-codex {
   background: var(--cc-main-bg);
   border: none;
@@ -48,23 +71,15 @@
   flex-direction: column;
 }
 
-.campaign-codex .window-header {
-  display: none; /* Hide Foundry's default header */
-}
-
-/* Header Banner - Force styling */
+/* Header Banner */
 .campaign-codex .sheet-banner {
   background: linear-gradient(135deg, var(--cc-header-bg) 0%, #a91b47 100%) !important;
-  background-image: url('modules/campaign-codex/assets/banner-texture.jpg') !important;
-  background-blend-mode: overlay !important;
-  background-size: cover !important;
-  background-position: center !important;
-  height: 120px !important;
+  height: 80px !important;
   position: relative !important;
   display: flex !important;
   align-items: center !important;
-  padding: 0 40px !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+  padding: 0 30px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 .campaign-codex .banner-overlay {
@@ -83,37 +98,37 @@
 }
 
 .campaign-codex .location-name {
-  font-size: 32px !important;
-  font-weight: bold !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
   margin: 0 !important;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5) !important;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5) !important;
   text-transform: uppercase !important;
-  letter-spacing: 2px !important;
+  letter-spacing: 1px !important;
 }
 
 .campaign-codex .location-type {
-  font-size: 14px !important;
+  font-size: 12px !important;
   opacity: 0.9 !important;
   text-transform: uppercase !important;
   letter-spacing: 1px !important;
-  margin-top: 5px !important;
+  margin-top: 4px !important;
 }
 
-/* Sheet Body - Force layout */
+/* Sheet Body */
 .campaign-codex .sheet-body {
   display: flex !important;
   flex: 1 !important;
   min-height: 0 !important;
 }
 
-/* Sidebar - Force styling */
+/* Sidebar */
 .campaign-codex .sidebar {
-  width: 280px !important;
+  width: 260px !important;
   background: var(--cc-sidebar-bg) !important;
   color: var(--cc-sidebar-text) !important;
   display: flex !important;
   flex-direction: column !important;
-  border-right: 2px solid var(--cc-border) !important;
+  border-right: 1px solid var(--cc-border-light) !important;
 }
 
 .campaign-codex .sidebar-header {
@@ -122,13 +137,21 @@
 }
 
 .campaign-codex .location-image {
-  width: 160px;
-  height: 120px;
+  width: 140px;
+  height: 100px;
   border-radius: 8px;
   overflow: hidden;
   background: var(--cc-border);
-  margin: 0 auto;
+  margin: 0 auto 12px auto;
   box-shadow: var(--cc-shadow);
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.campaign-codex .location-image:hover {
+  box-shadow: var(--cc-shadow-lg);
+  transform: translateY(-1px);
 }
 
 .campaign-codex .location-image img {
@@ -137,7 +160,45 @@
   object-fit: cover;
 }
 
-/* Sidebar Tabs - Force styling */
+.campaign-codex .location-image::after {
+  content: "📷";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-size: 14px;
+}
+
+.campaign-codex .location-image:hover::after {
+  opacity: 1;
+}
+
+/* Image change button */
+.campaign-codex .image-change-btn {
+  background: var(--cc-accent);
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  cursor: pointer;
+  margin: 0 auto;
+  display: block;
+  transition: all 0.2s ease;
+}
+
+.campaign-codex .image-change-btn:hover {
+  background: #b8941f;
+  transform: translateY(-1px);
+}
+
+/* Sidebar Tabs */
 .campaign-codex .sidebar-tabs {
   list-style: none !important;
   margin: 0 !important;
@@ -148,62 +209,63 @@
 .campaign-codex .tab-item {
   display: flex !important;
   align-items: center !important;
-  gap: 12px !important;
-  padding: 16px 20px !important;
+  gap: 10px !important;
+  padding: 12px 20px !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
-  border-left: 4px solid transparent !important;
+  border-left: 3px solid transparent !important;
   color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 13px !important;
 }
 
 .campaign-codex .tab-item:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   color: white !important;
   border-left-color: var(--cc-accent) !important;
 }
 
 .campaign-codex .tab-item.active {
-  background: rgba(212, 175, 55, 0.2) !important;
+  background: rgba(212, 175, 55, 0.15) !important;
   color: var(--cc-accent) !important;
   border-left-color: var(--cc-accent) !important;
   font-weight: 600 !important;
 }
 
 .campaign-codex .tab-item i {
-  font-size: 16px;
-  width: 20px;
+  font-size: 14px;
+  width: 16px;
   text-align: center;
 }
 
 /* Sidebar Links */
 .campaign-codex .sidebar-links {
   flex: 1;
-  padding: 20px;
+  padding: 16px;
   overflow-y: auto;
 }
 
 .campaign-codex .sidebar-links h3 {
   color: var(--cc-accent);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin: 0 0 15px 0;
+  margin: 0 0 12px 0;
   border-bottom: 1px solid var(--cc-border);
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
 
 .campaign-codex .link-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 
 .campaign-codex .link-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px;
+  padding: 6px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 6px;
   cursor: pointer;
@@ -213,19 +275,19 @@
 
 .campaign-codex .link-card:hover {
   background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .campaign-codex .link-card img {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .campaign-codex .link-name {
-  font-size: 10px;
+  font-size: 9px;
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.2;
   max-width: 100%;
@@ -234,7 +296,7 @@
   white-space: nowrap;
 }
 
-/* Main Content - Force styling */
+/* Main Content */
 .campaign-codex .main-content {
   flex: 1 !important;
   background: var(--cc-main-bg) !important;
@@ -245,7 +307,7 @@
 /* Tab Panels */
 .campaign-codex .tab-panel {
   display: none;
-  padding: 30px;
+  padding: 24px;
 }
 
 .campaign-codex .tab-panel.active {
@@ -253,17 +315,19 @@
 }
 
 .campaign-codex .content-header {
-  margin-bottom: 30px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--cc-border-light);
+  padding-bottom: 12px;
 }
 
 .campaign-codex .content-header h2 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--cc-main-text);
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .campaign-codex .content-header i {
@@ -272,34 +336,34 @@
 
 /* Forms */
 .campaign-codex .form-section {
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .campaign-codex .form-label {
   display: block;
   font-weight: 600;
   color: var(--cc-main-text);
-  margin-bottom: 8px;
-  font-size: 14px;
+  margin-bottom: 6px;
+  font-size: 13px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .campaign-codex .form-label i {
   color: var(--cc-accent);
-  width: 16px;
+  width: 14px;
 }
 
 .campaign-codex .form-textarea,
 .campaign-codex .form-input {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
   font-family: inherit;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.4;
   resize: vertical;
   transition: all 0.2s ease;
   background: white;
@@ -309,38 +373,44 @@
 .campaign-codex .form-input:focus {
   outline: none;
   border-color: var(--cc-accent);
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.1);
 }
 
 /* Stats Grid */
 .campaign-codex .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
 }
 
 .campaign-codex .stat-card {
   background: var(--cc-card-bg);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 10px;
+  padding: 16px;
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
   box-shadow: var(--cc-shadow);
-  border-left: 4px solid var(--cc-accent);
+  border-left: 3px solid var(--cc-accent);
+  transition: all 0.2s ease;
+}
+
+.campaign-codex .stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--cc-shadow-lg);
 }
 
 .campaign-codex .stat-icon {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--cc-accent), #b8941f);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .campaign-codex .stat-content {
@@ -348,14 +418,14 @@
 }
 
 .campaign-codex .stat-number {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: bold;
   color: var(--cc-main-text);
   line-height: 1;
 }
 
 .campaign-codex .stat-label {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -364,11 +434,11 @@
 
 /* Drop Zones */
 .campaign-codex .drop-zone {
-  border: 3px dashed #ccc;
-  border-radius: 12px;
-  padding: 40px;
+  border: 2px dashed #ddd;
+  border-radius: 10px;
+  padding: 32px;
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
   background: white;
   transition: all 0.3s ease;
 }
@@ -376,46 +446,46 @@
 .campaign-codex .drop-zone:hover,
 .campaign-codex .drop-zone.drag-over {
   border-color: var(--cc-accent);
-  background: rgba(212, 175, 55, 0.05);
+  background: rgba(212, 175, 55, 0.03);
 }
 
 .campaign-codex .drop-content i {
-  font-size: 48px;
+  font-size: 40px;
   color: var(--cc-accent);
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   opacity: 0.7;
 }
 
 .campaign-codex .drop-content h3 {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--cc-main-text);
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
 }
 
 .campaign-codex .drop-content p {
   color: #666;
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* Entity Grid */
 .campaign-codex .entity-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .campaign-codex .entity-card {
   background: var(--cc-card-bg);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 10px;
+  padding: 16px;
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
   box-shadow: var(--cc-shadow);
   transition: all 0.2s ease;
-  border: 1px solid #eee;
+  border: 1px solid var(--cc-border-light);
 }
 
 .campaign-codex .entity-card:hover {
@@ -425,8 +495,8 @@
 }
 
 .campaign-codex .entity-image {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
@@ -445,806 +515,44 @@
 }
 
 .campaign-codex .entity-name {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--cc-main-text);
-  margin: 0 0 4px 0;
+  margin: 0 0 3px 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .campaign-codex .entity-meta {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
 }
 
 .campaign-codex .entity-type {
   background: var(--cc-accent);
   color: white;
-  padding: 2px 8px;
-  border-radius: 12px;
+  padding: 1px 6px;
+  border-radius: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-size: 9px;
 }
 
 .campaign-codex .entity-actions {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .campaign-codex .action-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: 1px solid #ddd;
   background: white;
-  border-radius: 6px;
+  border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #666;
-}
-
-.campaign-codex .action-btn:hover {
-  background: var(--cc-accent);
-  color: white;
-  border-color: var(--cc-accent);
-  transform: scale(1.1);
-}
-
-.campaign-codex .action-btn:hover.remove-npc,
-.campaign-codx .action-btn:hover.remove-shop,
-.campaign-codex .action-btn:hover.remove-item {
-  background: var(--cc-danger);
-  border-color: var(--cc-danger);
-}
-
-/* Empty States */
-.campaign-codex .empty-state {
-  text-align: center;
-  padding: 60px 30px;
-  color: #999;
-}
-
-.campaign-codex .empty-state i {
-  font-size: 64px;
-  margin-bottom: 20px;
-  opacity: 0.3;
-  color: var(--cc-accent);
-}
-
-.campaign-codex .empty-state h3 {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0 0 10px 0;
-  color: #666;
-}
-
-.campaign-codex .empty-state p {
-  margin: 0;
-  font-size: 14px;
-}
-
-/* Footer */
-.campaign-codex .sheet-footer {
-  background: var(--cc-sidebar-bg);
-  border-top: 1px solid var(--cc-border);
-  padding: 20px 30px;
-  display: flex;
-  justify-content: center;
-}
-
-.campaign-codex .save-btn {
-  background: linear-gradient(135deg, var(--cc-success), #218838);
-  color: white;
-  border: none;
-  padding: 12px 30px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: var(--cc-shadow);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.campaign-codex .save-btn:hover {
-  background: linear-gradient(135deg, #218838, #1e7e34);
-  transform: translateY(-1px);
-  box-shadow: var(--cc-shadow-lg);
-}
-
-.campaign-codex .save-btn.success {
-  background: linear-gradient(135deg, var(--cc-success), #20c997);
-  box-shadow: 0 0 20px rgba(40, 167, 69, 0.4);
-}
-
-.campaign-codex .save-btn.error {
-  background: linear-gradient(135deg, var(--cc-danger), #c82333);
-  box-shadow: 0 0 20px rgba(220, 53, 69, 0.4);
-}
-
-/* Shop-specific styles */
-.shop-sheet .markup-control {
-  background: var(--cc-card-bg);
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 30px;
-  box-shadow: var(--cc-shadow);
-  border-left: 4px solid var(--cc-accent);
-}
-
-.shop-sheet .markup-control h3 {
-  margin: 0 0 15px 0;
-  color: var(--cc-main-text);
-  font-size: 16px;
-}
-
-.shop-sheet .markup-input {
-  width: 120px;
-  padding: 8px 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.shop-sheet .inventory-table {
-  background: var(--cc-card-bg);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: var(--cc-shadow);
-}
-
-.shop-sheet .table-header {
-  background: var(--cc-sidebar-bg);
-  color: white;
-  padding: 15px 20px;
-  font-weight: 600;
-  display: grid;
-  grid-template-columns: 60px 1fr 100px 80px 80px 100px;
-  gap: 15px;
-  align-items: center;
-}
-
-.shop-sheet .inventory-item {
-  padding: 15px 20px;
-  display: grid;
-  grid-template-columns: 60px 1fr 100px 80px 80px 100px;
-  gap: 15px;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-  transition: background 0.2s ease;
-}
-
-.shop-sheet .inventory-item:hover {
-  background: rgba(212, 175, 55, 0.05);
-}
-
-.shop-sheet .item-image {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #f0f0f0;
-}
-
-.shop-sheet .item-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.shop-sheet .item-name {
-  font-weight: 600;
-  color: var(--cc-main-text);
-}
-
-.shop-sheet .quantity-control {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.shop-sheet .quantity-btn {
-  width: 24px;
-  height: 24px;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  transition: all 0.2s ease;
-}
-
-.shop-sheet .quantity-btn:hover {
-  background: var(--cc-accent);
-  color: white;
-  border-color: var(--cc-accent);
-}
-
-.shop-sheet .quantity-input {
-  width: 40px;
-  text-align: center;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 4px;
-}
-
-.shop-sheet .price-display {
-  font-weight: 600;
-  color: var(--cc-accent);
-}
-
-/* NPC Sheet Specific Styles */
-.npc-sheet .actor-stats {
-  margin-top: 15px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  font-size: 12px;
-}
-
-.npc-sheet .stat-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-}
-
-.npc-sheet .stat-row:last-child {
-  margin-bottom: 0;
-}
-
-.npc-sheet .stat-label {
-  color: var(--cc-accent);
-  font-weight: 600;
-}
-
-.npc-sheet .stat-value {
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
-}
-
-.npc-sheet .actor-link-section .linked-actor-card {
-  background: var(--cc-card-bg);
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: var(--cc-shadow);
-  border-left: 4px solid var(--cc-accent);
-  margin-bottom: 20px;
-}
-
-.npc-sheet .actor-image {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: #f0f0f0;
-  border: 3px solid var(--cc-accent);
-}
-
-.npc-sheet .actor-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.npc-sheet .actor-content {
-  flex: 1;
-}
-
-.npc-sheet .actor-name {
-  font-size: 20px;
-  font-weight: bold;
-  color: var(--cc-main-text);
-  margin: 0 0 8px 0;
-}
-
-.npc-sheet .actor-details {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 10px;
-}
-
-.npc-sheet .actor-race-class {
-  color: #666;
-  font-weight: 500;
-}
-
-.npc-sheet .actor-level {
-  color: var(--cc-accent);
-  font-weight: 600;
-}
-
-.npc-sheet .actor-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-}
-
-.npc-sheet .stat-item {
-  text-align: center;
-  padding: 8px;
-  background: rgba(212, 175, 55, 0.1);
-  border-radius: 6px;
-}
-
-.npc-sheet .stat-item .stat-label {
-  display: block;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #666;
-  margin-bottom: 2px;
-}
-
-.npc-sheet .stat-item .stat-value {
-  display: block;
-  font-size: 16px;
-  font-weight: bold;
-  color: var(--cc-main-text);
-}
-
-.npc-sheet .actor-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Shop Sheet Specific Styles */
-.shop-sheet .location-info {
-  margin-top: 10px;
-  text-align: center;
-  font-size: 12px;
-}
-
-.shop-sheet .location-label {
-  color: rgba(255, 255, 255, 0.7);
-  display: block;
-  margin-bottom: 2px;
-}
-
-.shop-sheet .location-name {
-  color: var(--cc-accent);
-  font-weight: 600;
-}
-
-.shop-sheet .linked-location-card {
-  background: var(--cc-card-bg);
-  border-radius: 12px;
-  padding: 15px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  box-shadow: var(--cc-shadow);
-  border-left: 4px solid var(--cc-accent);
-}
-
-.shop-sheet .linked-location-card .location-image {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-  background: #f0f0f0;
-}
-
-.shop-sheet .linked-location-card .location-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.shop-sheet .markup-input-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.shop-sheet .markup-label {
-  color: #666;
-  font-weight: 500;
-}
-
-.shop-sheet .markup-help {
-  font-size: 12px;
-  color: #666;
-  margin: 8px 0 0 0;
-  font-style: italic;
-}
-
-.shop-sheet .item-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.shop-sheet .item-description {
-  font-size: 12px;
-  color: #666;
-  margin-top: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.shop-sheet .item-weight {
-  font-size: 11px;
-  color: #999;
-  margin-top: 2px;
-}
-
-.shop-sheet .item-base-price,
-.shop-sheet .item-final-price {
-  text-align: center;
-  font-weight: 600;
-}
-
-.shop-sheet .item-final-price {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  justify-content: center;
-}
-
-.shop-sheet .price-currency {
-  font-size: 12px;
-  color: #666;
-}
-
-/* Region Sheet Specific Styles */
-.region-sheet .info-banner {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 25px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.region-sheet .info-banner i {
-  color: var(--cc-accent);
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.region-sheet .info-banner p {
-  margin: 0;
-  color: #666;
-  font-size: 14px;
-}
-
-.region-sheet .refresh-btn {
-  background: var(--cc-accent);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.region-sheet .refresh-btn:hover {
-  background: #b8941f;
-  transform: translateY(-1px);
-}
-
-.region-sheet .content-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.region-sheet .auto-populated {
-  border-left-color: #28a745;
-  background: rgba(40, 167, 69, 0.02);
-}
-
-.region-sheet .entity-locations {
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.region-sheet .entity-locations i {
-  color: var(--cc-accent);
-  font-size: 12px;
-}
-
-.region-sheet .location-tag {
-  background: rgba(212, 175, 55, 0.2);
-  color: var(--cc-accent);
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.region-sheet .entity-stat {
-  background: #f0f0f0;
-  color: #666;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 600;
-  margin-right: 5px;
-}
-
-/* Shared Enhancements */
-.campaign-codex .location-link-section {
-  margin-bottom: 25px;
-}
-
-.campaign-codex .entity-stat {
-  display: inline-block;
-}
-
-/* Campaign Codex Directory Buttons - Fixed */
-.campaign-codex-buttons {
-  border-top: 1px solid var(--color-border-light-tertiary);
-  padding: 6px 8px;
-  margin: 6px 0;
-  background: var(--color-bg-btn);
-}
-
-.campaign-codex-buttons .button-row {
-  display: flex;
-  gap: 3px;
-  justify-content: space-between;
-}
-
-.campaign-codex-buttons button {
-  flex: 1;
-  padding: 4px 6px;
-  border: 1px solid var(--color-border-dark-secondary);
-  border-radius: 3px;
-  background: var(--color-bg-btn);
-  color: var(--color-text-dark-primary);
-  font-size: 10px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-align: center;
-  white-space: nowrap;
-  min-height: 24px;
-  line-height: 1.2;
-}
-
-.campaign-codex-buttons button:hover {
-  background: var(--color-bg-btn-hover);
-  border-color: var(--color-border-highlight);
-  color: var(--color-text-light-heading);
-  transform: none;
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
-}
-
-.campaign-codex-buttons button:active {
-  background: var(--color-bg-btn-active);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.campaign-codex-buttons button i {
-  margin-right: 3px;
-  font-size: 9px;
-}
-
-/* Compact the journal directory to reduce space */
-#journal .directory-header {
-  margin-bottom: 4px;
-}
-
-#journal .directory-list {
-  margin-top: 0;
-}
-
-/* Ensure our buttons don't add excessive spacing */
-.campaign-codex-buttons + .directory-list {
-  margin-top: 4px;
-}
-
-/* Different button accent colors on hover */
-.campaign-codex-buttons .create-location-btn:hover {
-  background: #28a745 !important;
-  border-color: #1e7e34 !important;
-  color: white !important;
-}
-
-.campaign-codex-buttons .create-shop-btn:hover {
-  background: #6f42c1 !important;
-  border-color: #5a2d91 !important;
-  color: white !important;
-}
-
-.campaign-codex-buttons .create-npc-btn:hover {
-  background: #fd7e14 !important;
-  border-color: #e8590c !important;
-  color: white !important;
-}
-
-.campaign-codex-buttons .create-region-btn:hover {
-  background: #20c997 !important;
-  border-color: #198754 !important;
-  color: white !important;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .campaign-codex .sheet-body {
-    flex-direction: column;
-  }
-  
-  .campaign-codex .sidebar {
-    width: 100%;
-    flex-direction: row;
-    height: auto;
-  }
-  
-  .campaign-codex .sidebar-header {
-    flex-shrink: 0;
-  }
-  
-  .campaign-codex .location-image {
-    width: 80px;
-    height: 60px;
-  }
-  
-  .campaign-codex .sidebar-tabs {
-    display: flex;
-    flex: 1;
-  }
-  
-  .campaign-codex .tab-item {
-    border-left: none;
-    border-bottom: 4px solid transparent;
-    justify-content: center;
-    flex: 1;
-  }
-  
-  .campaign-codex .tab-item.active {
-    border-left: none;
-    border-bottom-color: var(--cc-accent);
-  }
-  
-  .campaign-codex .sidebar-links {
-    display: none;
-  }
-  
-  .campaign-codex .entity-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .campaign-codex .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .campaign-codex .location-name {
-    font-size: 24px;
-  }
-  
-  .campaign-codex .tab-panel {
-    padding: 20px;
-  }
-  
-  .campaign-codex .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .campaign-codex .drop-zone {
-    padding: 30px 20px;
-  }
-  
-  .campaign-codex .entity-card {
-    padding: 15px;
-  }
-
-  /* Responsive updates for new sheets */
-  .npc-sheet .actor-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .npc-sheet .linked-actor-card {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .npc-sheet .actor-details {
-    justify-content: center;
-  }
-  
-  .shop-sheet .inventory-item {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  
-  .shop-sheet .table-header {
-    display: none;
-  }
-  
-  .region-sheet .content-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-}
-
-@media (max-width: 400px) {
-  .campaign-codex-buttons .button-row {
-    flex-direction: column;
-  }
-  
-  .campaign-codex-buttons button {
-    min-width: unset;
-    width: 100%;
-  }
-}
-
-/* Additional utility classes */
-.campaign-codex .text-center {
-  text-align: center;
-}
-
-.campaign-codex .text-muted {
-  color: #666;
-}
-
-.campaign-codex .font-weight-bold {
-  font-weight: 600;
-}
-
-.campaign-codex .small-text {
-  font-size: 12px;
-}
-
-.campaign-codex .flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.campaign-codex .gap-small {
-  gap: 8px;
-}
-
-.campaign-codex .gap-medium {
-  gap: 15px;
-}
-
-.campaign-codex .gap-large {
-  gap: 25px;
-}
-
-/* Debug border - remove this line once styling is working */
-.campaign-codex {
-  border: 3px solid red !important;
-}
+  cursor: pointer

@@ -13,25 +13,28 @@
     {{!-- Sidebar Navigation --}}
     <nav class="sidebar">
       <div class="sidebar-header">
-        <div class="location-image">
+        <div class="location-image" title="Click to change image">
           <img src="{{document.img}}" alt="{{document.name}}" onerror="this.src='icons/svg/direction.svg'">
         </div>
+        <button class="image-change-btn" type="button">
+          <i class="fas fa-camera"></i> Change Image
+        </button>
       </div>
       
       <ul class="sidebar-tabs">
-        <li class="tab-item active" data-tab="info">
+        <li class="tab-item {{#if (eq currentTab 'info')}}active{{/if}}" data-tab="info">
           <i class="fas fa-info-circle"></i>
           <span>Info</span>
         </li>
-        <li class="tab-item" data-tab="npcs">
+        <li class="tab-item {{#if (eq currentTab 'npcs')}}active{{/if}}" data-tab="npcs">
           <i class="fas fa-users"></i>
           <span>NPCs</span>
         </li>
-        <li class="tab-item" data-tab="shops">
+        <li class="tab-item {{#if (eq currentTab 'shops')}}active{{/if}}" data-tab="shops">
           <i class="fas fa-store"></i>
           <span>Shops</span>
         </li>
-        <li class="tab-item" data-tab="notes">
+        <li class="tab-item {{#if (eq currentTab 'notes')}}active{{/if}}" data-tab="notes">
           <i class="fas fa-sticky-note"></i>
           <span>Notes</span>
         </li>
@@ -62,7 +65,7 @@
       <form class="location-form">
         
         {{!-- Info Tab --}}
-        <section class="tab-panel active" data-tab="info">
+        <section class="tab-panel {{#if (eq currentTab 'info')}}active{{/if}}" data-tab="info">
           <div class="content-header">
             <h2><i class="fas fa-info-circle"></i> Location Information</h2>
           </div>
@@ -94,7 +97,7 @@
         </section>
 
         {{!-- NPCs Tab --}}
-        <section class="tab-panel" data-tab="npcs">
+        <section class="tab-panel {{#if (eq currentTab 'npcs')}}active{{/if}}" data-tab="npcs">
           <div class="content-header">
             <h2><i class="fas fa-users"></i> NPCs at this Location</h2>
           </div>
@@ -148,7 +151,7 @@
         </section>
 
         {{!-- Shops Tab --}}
-        <section class="tab-panel" data-tab="shops">
+        <section class="tab-panel {{#if (eq currentTab 'shops')}}active{{/if}}" data-tab="shops">
           <div class="content-header">
             <h2><i class="fas fa-store"></i> Shops at this Location</h2>
           </div>
@@ -195,7 +198,7 @@
         </section>
 
         {{!-- Notes Tab --}}
-        <section class="tab-panel" data-tab="notes">
+        <section class="tab-panel {{#if (eq currentTab 'notes')}}active{{/if}}" data-tab="notes">
           <div class="content-header">
             <h2><i class="fas fa-sticky-note"></i> GM Notes</h2>
           </div>
@@ -217,7 +220,7 @@
   <footer class="sheet-footer">
     <button type="button" class="save-btn save-data">
       <i class="fas fa-save"></i>
-      Save Changes
+      Save
     </button>
   </footer>
 

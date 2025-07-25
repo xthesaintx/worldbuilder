@@ -38,6 +38,15 @@ Hooks.once('init', async function() {
     default: false
   });
 
+  game.settings.register("campaign-codex", "useOrganizedFolders", {
+    name: "Organize in Folders",
+    hint: "Automatically create and organize Campaign Codex journals in folders",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true
+  });
+
   console.log('Campaign Codex | Sheets registered');
 });
 
@@ -46,7 +55,66 @@ Hooks.once('ready', async function() {
   
   // Initialize the campaign manager
   game.campaignCodex = new CampaignManager();
+  
+  // Create organization folders if setting is enabled
+  if (game.settings.get("campaign-codex", "useOrganizedFolders")) {
+    await ensureCampaignCodexFolders();
+  }
 });
+
+// Ensure Campaign Codex folders exist
+async function ensureCampaignCodexFolders() {
+  const folderNames = {
+    "Campaign Codex - Locations": "location",
+    "Campaign Codex - Shops": "shop", 
+    "Campaign Codex - NPCs": "npc",
+    "Campaign Codex - Regions": "region"
+  };
+
+  for (const [folderName, type] of Object.entries(folderNames)) {
+    let folder = game.folders.find(f => f.name === folderName && f.type === "JournalEntry");
+    
+    if (!folder) {
+      await Folder.create({
+        name: folderName,
+        type: "JournalEntry",
+        color: getFolderColor(type),
+        flags: {
+          "campaign-codex": {
+            type: type,
+            autoOrganize: true
+          }
+        }
+      });
+      console.log(`Campaign Codex | Created folder: ${folderName}`);
+    }
+  }
+}
+
+function getFolderColor(type) {
+  const colors = {
+    location: "#28a745",
+    shop: "#6f42c1", 
+    npc: "#fd7e14",
+    region: "#20c997"
+  };
+  return colors[type] || "#999999";
+}
+
+// Get appropriate folder for document type
+function getCampaignCodexFolder(type) {
+  if (!game.settings.get("campaign-codex", "useOrganizedFolders")) return null;
+  
+  const folderNames = {
+    location: "Campaign Codex - Locations",
+    shop: "Campaign Codex - Shops",
+    npc: "Campaign Codex - NPCs", 
+    region: "Campaign Codex - Regions"
+  };
+  
+  const folderName = folderNames[type];
+  return game.folders.find(f => f.name === folderName && f.type === "JournalEntry");
+}
 
 // Add context menu options to actors
 Hooks.on('getActorDirectoryEntryContext', (html, options) => {
@@ -88,6 +156,13 @@ Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
     name: "New Region",
     icon: '<i class="fas fa-globe"></i>',
     callback: () => game.campaignCodex.createRegionJournal()
+  });
+
+  // Add world overview option
+  options.unshift({
+    name: "📋 Campaign Overview",
+    icon: '<i class="fas fa-globe"></i>',
+    callback: () => createCampaignOverview()
   });
 
   // Conversion options
@@ -144,12 +219,71 @@ Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
   });
 });
 
-// Fixed: Force correct sheet to open immediately upon creation
+// Create campaign overview journal
+async function createCampaignOverview() {
+  const locations = game.journal.filter(j => j.getFlag("campaign-codex", "type") === "location");
+  const shops = game.journal.filter(j => j.getFlag("campaign-codex", "type") === "shop");
+  const npcs = game.journal.filter(j => j.getFlag("campaign-codex", "type") === "npc");
+  const regions = game.journal.filter(j => j.getFlag("campaign-codex", "type") === "region");
+
+  const content = `
+    <h1>🌍 Campaign World Overview</h1>
+    
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0;">
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
+        <h3><i class="fas fa-map-marker-alt"></i> Locations (${locations.length})</h3>
+        ${locations.map(l => `<p>📍 @UUID[${l.uuid}]{${l.name}}</p>`).join('')}
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #6f42c1;">
+        <h3><i class="fas fa-store"></i> Shops (${shops.length})</h3>
+        ${shops.map(s => `<p>🏪 @UUID[${s.uuid}]{${s.name}}</p>`).join('')}
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #fd7e14;">
+        <h3><i class="fas fa-users"></i> NPCs (${npcs.length})</h3>
+        ${npcs.map(n => `<p>👤 @UUID[${n.uuid}]{${n.name}}</p>`).join('')}
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #20c997;">
+        <h3><i class="fas fa-globe"></i> Regions (${regions.length})</h3>
+        ${regions.map(r => `<p>🗺️ @UUID[${r.uuid}]{${r.name}}</p>`).join('')}
+      </div>
+    </div>
+    
+    <hr>
+    <p><em>This overview is automatically generated and updates when you recreate it.</em></p>
+  `;
+
+  const journalData = {
+    name: "📋 Campaign World Overview",
+    pages: [{
+      name: "Overview",
+      type: "text",
+      text: { content: content }
+    }]
+  };
+
+  // Delete existing overview if it exists
+  const existing = game.journal.find(j => j.name === "📋 Campaign World Overview");
+  if (existing) await existing.delete();
+
+  const overview = await JournalEntry.create(journalData);
+  overview.sheet.render(true);
+}
+
+// Fixed: Force correct sheet to open immediately upon creation and preserve active tab
 Hooks.on('createJournalEntry', async (document, options, userId) => {
   if (game.user.id !== userId) return;
   
   const journalType = document.getFlag("campaign-codex", "type");
   if (!journalType) return;
+
+  // Move to appropriate folder
+  const folder = getCampaignCodexFolder(journalType);
+  if (folder) {
+    await document.update({ folder: folder.id });
+  }
 
   // Wait a moment for the document to be fully created
   setTimeout(() => {
@@ -175,7 +309,11 @@ Hooks.on('createJournalEntry', async (document, options, userId) => {
       if (document.sheet.rendered) {
         document.sheet.close();
       }
-      new targetSheet(document).render(true);
+      const sheet = new targetSheet(document);
+      sheet.render(true);
+      
+      // Store the sheet reference to maintain state
+      document._campaignCodexSheet = sheet;
     }
   }, 100);
 });
@@ -206,7 +344,9 @@ Hooks.on('renderJournalEntry', (journal, html, data) => {
   if (targetSheet) {
     setTimeout(() => {
       journal.sheet.close();
-      new targetSheet(journal).render(true);
+      const sheet = new targetSheet(journal);
+      sheet.render(true);
+      journal._campaignCodexSheet = sheet;
     }, 100);
   }
 });
@@ -236,9 +376,9 @@ Hooks.on('renderJournalDirectory', (app, html, data) => {
     </div>
   `);
 
-  // Insert after the header but before the directory list
-  const directoryList = html.find('.directory-header');
-  directoryList.append(buttonGroup);
+  // Insert into the directory header as you specified
+  const directoryHeader = html.find('.directory-header');
+  directoryHeader.append(buttonGroup);
 
   // Event listeners for the buttons
   html.find('.create-location-btn').click(async () => {
@@ -325,3 +465,6 @@ Hooks.on('preDeleteJournalEntry', async (document, options, userId) => {
 Hooks.on('preDeleteActor', async (document, options, userId) => {
   await game.campaignCodex.cleanupActorRelationships(document);
 });
+
+// Export folder management functions for use in campaign manager
+window.getCampaignCodexFolder = getCampaignCodexFolder;

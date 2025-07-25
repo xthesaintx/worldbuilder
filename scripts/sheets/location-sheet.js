@@ -1,10 +1,16 @@
 export class LocationSheet extends JournalSheet {
+  constructor(document, options = {}) {
+    super(document, options);
+    this._currentTab = 'info'; // Track current tab
+  }
+
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ["sheet", "journal-sheet", "campaign-codex", "location-sheet"],
       width: 900,
       height: 700,
       resizable: true,
+      dragDrop: [{ dragSelector: ".item", dropSelector: null }],
       tabs: [{ navSelector: ".sidebar-tabs", contentSelector: ".main-content", initial: "info" }]
     });
   }
@@ -28,6 +34,7 @@ export class LocationSheet extends JournalSheet {
     };
 
     data.canEdit = this.document.canUserModify(game.user, "update");
+    data.currentTab = this._currentTab; // Pass current tab to template
     
     return data;
   }
@@ -68,12 +75,16 @@ export class LocationSheet extends JournalSheet {
   activateListeners(html) {
     super.activateListeners(html);
 
-    // Activate tabs
+    // Activate tabs and preserve state
     this._activateTabs(html);
 
     // Make the sheet a drop target
     html[0].addEventListener('drop', this._onDrop.bind(this));
     html[0].addEventListener('dragover', this._onDragOver.bind(this));
+
+    // Image change functionality
+    html.find('.location-image').click(this._onImageClick.bind(this));
+    html.find('.image-change-btn').click(this._onImageClick.bind(this));
 
     // Save button
     html.find('.save-data').click(this._onSaveData.bind(this));
@@ -93,11 +104,12 @@ export class LocationSheet extends JournalSheet {
     html.find('.sidebar-tabs .tab-item').click(event => {
       event.preventDefault();
       const tab = event.currentTarget.dataset.tab;
+      this._currentTab = tab; // Store current tab
       this._showTab(tab, html);
     });
 
-    // Show first tab by default
-    this._showTab('info', html);
+    // Show current tab (preserves state)
+    this._showTab(this._currentTab, html);
   }
 
   _showTab(tabName, html) {
@@ -110,6 +122,22 @@ export class LocationSheet extends JournalSheet {
     // Add active to the correct tab and panel
     $html.find(`.sidebar-tabs .tab-item[data-tab="${tabName}"]`).addClass('active');
     $html.find(`.tab-panel[data-tab="${tabName}"]`).addClass('active');
+  }
+
+  async _onImageClick(event) {
+    event.preventDefault();
+    
+    const current = this.document.img;
+    const fp = new FilePicker({
+      type: "image",
+      current: current,
+      callback: async (path) => {
+        await this.document.update({ img: path });
+        this.render(false); // Re-render without changing tab
+      }
+    });
+    
+    return fp.browse();
   }
 
   _onDragOver(event) {
@@ -142,10 +170,10 @@ export class LocationSheet extends JournalSheet {
     
     if (journalType === "npc") {
       await game.campaignCodex.linkLocationToNPC(this.document, journal);
-      this.render();
+      this.render(false); // Preserve current tab
     } else if (journalType === "shop") {
       await game.campaignCodex.linkLocationToShop(this.document, journal);
-      this.render();
+      this.render(false); // Preserve current tab
     }
   }
 
@@ -166,7 +194,7 @@ export class LocationSheet extends JournalSheet {
 
     // Link the location to the NPC journal
     await game.campaignCodex.linkLocationToNPC(this.document, npcJournal);
-    this.render();
+    this.render(false); // Preserve current tab
   }
 
   async _onSaveData(event) {
@@ -185,7 +213,7 @@ export class LocationSheet extends JournalSheet {
 
     try {
       await this.document.setFlag("campaign-codex", "data", updatedData);
-      ui.notifications.info("Location data saved successfully!");
+      ui.notifications.info("Location saved successfully!");
       
       const saveBtn = $(event.currentTarget);
       saveBtn.addClass('success');
@@ -208,7 +236,7 @@ export class LocationSheet extends JournalSheet {
     currentData.linkedNPCs = (currentData.linkedNPCs || []).filter(id => id !== npcId);
     await this.document.setFlag("campaign-codex", "data", currentData);
     
-    this.render();
+    this.render(false); // Preserve current tab
   }
 
   async _onRemoveShop(event) {
@@ -218,7 +246,7 @@ export class LocationSheet extends JournalSheet {
     currentData.linkedShops = (currentData.linkedShops || []).filter(id => id !== shopId);
     await this.document.setFlag("campaign-codex", "data", currentData);
     
-    this.render();
+    this.render(false); // Preserve current tab
   }
 
   _onOpenNPC(event) {
@@ -237,5 +265,22 @@ export class LocationSheet extends JournalSheet {
     const actorId = event.currentTarget.dataset.actorId;
     const actor = game.actors.get(actorId);
     if (actor) actor.sheet.render(true);
+  }
+
+  // Override render to preserve tab state
+  async render(force = false, options = {}) {
+    // Store current tab before render
+    const currentTab = this._currentTab;
+    
+    const result = await super.render(force, options);
+    
+    // Restore tab after render
+    if (this._element && currentTab) {
+      setTimeout(() => {
+        this._showTab(currentTab, this._element);
+      }, 50);
+    }
+    
+    return result;
   }
 }
