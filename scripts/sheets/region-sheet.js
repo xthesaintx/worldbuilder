@@ -1,10 +1,18 @@
 export class RegionSheet extends JournalSheet {
+  constructor(document, options = {}) {
+    super(document, options);
+    this._currentTab = 'info';
+    this._autoSaveTimeout = null;
+    this._isDragging = false;
+  }
+
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ["sheet", "journal-sheet", "campaign-codex", "region-sheet"],
       width: 900,
       height: 700,
       resizable: true,
+      dragDrop: [{ dragSelector: null, dropSelector: null }],
       tabs: [{ navSelector: ".sidebar-tabs", contentSelector: ".main-content", initial: "info" }]
     });
   }
@@ -17,18 +25,17 @@ export class RegionSheet extends JournalSheet {
     const data = await super.getData();
     const regionData = this.document.getFlag("campaign-codex", "data") || {};
     
-    // Get linked documents
     data.linkedLocations = await this._getLinkedLocations(regionData.linkedLocations || []);
     data.autoPopulatedNPCs = await this._getAutoPopulatedNPCs(regionData.linkedLocations || []);
     data.autoPopulatedShops = await this._getAutoPopulatedShops(regionData.linkedLocations || []);
     
-    // Region specific data
     data.regionData = {
       description: regionData.description || "",
       notes: regionData.notes || ""
     };
 
     data.canEdit = this.document.canUserModify(game.user, "update");
+    data.currentTab = this._currentTab;
     
     return data;
   }
@@ -77,7 +84,6 @@ export class RegionSheet extends JournalSheet {
             locations: [location.name]
           });
         } else {
-          // Add this location to the NPC's location list
           const npc = npcMap.get(npcId);
           if (!npc.locations.includes(location.name)) {
             npc.locations.push(location.name);
@@ -120,15 +126,9 @@ export class RegionSheet extends JournalSheet {
   activateListeners(html) {
     super.activateListeners(html);
 
-    // Activate tabs
     this._activateTabs(html);
-
-    // Make the sheet a drop target
-    html[0].addEventListener('drop', this._onDrop.bind(this));
-    html[0].addEventListener('dragover', this._onDragOver.bind(this));
-
-    // Save button
-    html.find('.save-data').click(this._onSaveData.bind(this));
+    this._setupDragAndDrop(html);
+    this._setupAutoSave(html);
 
     // Remove buttons
     html.find('.remove-location').click(this._onRemoveLocation.bind(this));
@@ -144,32 +144,111 @@ export class RegionSheet extends JournalSheet {
   }
 
   _activateTabs(html) {
-    // Tab navigation for sidebar tabs
     html.find('.sidebar-tabs .tab-item').click(event => {
       event.preventDefault();
       const tab = event.currentTarget.dataset.tab;
+      this._currentTab = tab;
       this._showTab(tab, html);
     });
 
-    // Show first tab by default
-    this._showTab('info', html);
+    this._showTab(this._currentTab, html);
   }
 
   _showTab(tabName, html) {
     const $html = html instanceof jQuery ? html : $(html);
     
-    // Remove active from all tabs and panels
     $html.find('.sidebar-tabs .tab-item').removeClass('active');
     $html.find('.tab-panel').removeClass('active');
 
-    // Add active to the correct tab and panel
     $html.find(`.sidebar-tabs .tab-item[data-tab="${tabName}"]`).addClass('active');
     $html.find(`.tab-panel[data-tab="${tabName}"]`).addClass('active');
   }
 
-  _onDragOver(event) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "link";
+  _setupDragAndDrop(html) {
+    const mainContent = html.find('.main-content')[0];
+    
+    mainContent.addEventListener('dragenter', (event) => {
+      event.preventDefault();
+      this._isDragging = true;
+      mainContent.classList.add('drag-active');
+    });
+
+    mainContent.addEventListener('dragleave', (event) => {
+      event.preventDefault();
+      if (!mainContent.contains(event.relatedTarget)) {
+        this._isDragging = false;
+        mainContent.classList.remove('drag-active');
+      }
+    });
+
+    mainContent.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "link";
+    });
+
+    mainContent.addEventListener('drop', (event) => {
+      event.preventDefault();
+      this._isDragging = false;
+      mainContent.classList.remove('drag-active');
+      this._onDrop(event);
+    });
+  }
+
+  _setupAutoSave(html) {
+    html.find('textarea, input').on('input', (event) => {
+      this._scheduleAutoSave();
+    });
+  }
+
+  _scheduleAutoSave() {
+    if (this._autoSaveTimeout) {
+      clearTimeout(this._autoSaveTimeout);
+    }
+
+    this._autoSaveTimeout = setTimeout(() => {
+      this._performAutoSave();
+    }, 1000);
+  }
+
+  async _performAutoSave() {
+    const form = this.element.find('form')[0];
+    if (!form) return;
+
+    const formData = new FormDataExtended(form);
+    const data = formData.object;
+
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const updatedData = {
+      ...currentData,
+      description: data.description || "",
+      notes: data.notes || ""
+    };
+
+    try {
+      await this.document.setFlag("campaign-codex", "data", updatedData);
+      this._showAutoSaveIndicator("Saved");
+    } catch (error) {
+      console.error("Campaign Codex | Auto-save failed:", error);
+      this._showAutoSaveIndicator("Save failed", true);
+    }
+  }
+
+  _showAutoSaveIndicator(message, isError = false) {
+    const existing = document.querySelector('.auto-save-indicator');
+    if (existing) existing.remove();
+
+    const indicator = document.createElement('div');
+    indicator.className = 'auto-save-indicator';
+    indicator.textContent = message;
+    if (isError) indicator.style.backgroundColor = 'var(--cc-danger)';
+
+    document.body.appendChild(indicator);
+
+    setTimeout(() => indicator.classList.add('show'), 10);
+    setTimeout(() => {
+      indicator.classList.remove('show');
+      setTimeout(() => indicator.remove(), 200);
+    }, 2000);
   }
 
   async _onDrop(event) {
@@ -195,39 +274,7 @@ export class RegionSheet extends JournalSheet {
     
     if (journalType === "location") {
       await game.campaignCodex.linkRegionToLocation(this.document, journal);
-      this.render();
-    }
-  }
-
-  async _onSaveData(event) {
-    event.preventDefault();
-    
-    const form = this.element.find('form')[0];
-    const formData = new FormDataExtended(form);
-    const data = formData.object;
-
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const updatedData = {
-      ...currentData,
-      description: data.description || "",
-      notes: data.notes || ""
-    };
-
-    try {
-      await this.document.setFlag("campaign-codex", "data", updatedData);
-      ui.notifications.info("Region data saved successfully!");
-      
-      const saveBtn = $(event.currentTarget);
-      saveBtn.addClass('success');
-      setTimeout(() => saveBtn.removeClass('success'), 2000);
-      
-    } catch (error) {
-      console.error("Campaign Codex | Error saving region data:", error);
-      ui.notifications.error("Failed to save region data!");
-      
-      const saveBtn = $(event.currentTarget);
-      saveBtn.addClass('error');
-      setTimeout(() => saveBtn.removeClass('error'), 2000);
+      this.render(false);
     }
   }
 
@@ -238,7 +285,7 @@ export class RegionSheet extends JournalSheet {
     currentData.linkedLocations = (currentData.linkedLocations || []).filter(id => id !== locationId);
     await this.document.setFlag("campaign-codex", "data", currentData);
     
-    this.render();
+    this.render(false);
   }
 
   _onOpenLocation(event) {
@@ -266,8 +313,27 @@ export class RegionSheet extends JournalSheet {
   }
 
   async _onRefreshNPCs(event) {
-    // Force refresh of auto-populated data
-    this.render();
-    ui.notifications.info("Region data refreshed!");
+    this.render(false);
+    this._showAutoSaveIndicator("Refreshed");
+  }
+
+  async render(force = false, options = {}) {
+    const currentTab = this._currentTab;
+    const result = await super.render(force, options);
+    
+    if (this._element && currentTab) {
+      setTimeout(() => {
+        this._showTab(currentTab, this._element);
+      }, 50);
+    }
+    
+    return result;
+  }
+
+  close(options = {}) {
+    if (this._autoSaveTimeout) {
+      clearTimeout(this._autoSaveTimeout);
+    }
+    return super.close(options);
   }
 }

@@ -1,7 +1,9 @@
 export class LocationSheet extends JournalSheet {
   constructor(document, options = {}) {
     super(document, options);
-    this._currentTab = 'info'; // Track current tab
+    this._currentTab = 'info';
+    this._autoSaveTimeout = null;
+    this._isDragging = false;
   }
 
   static get defaultOptions() {
@@ -10,7 +12,7 @@ export class LocationSheet extends JournalSheet {
       width: 900,
       height: 700,
       resizable: true,
-      dragDrop: [{ dragSelector: ".item", dropSelector: null }],
+      dragDrop: [{ dragSelector: null, dropSelector: null }],
       tabs: [{ navSelector: ".sidebar-tabs", contentSelector: ".main-content", initial: "info" }]
     });
   }
@@ -23,18 +25,16 @@ export class LocationSheet extends JournalSheet {
     const data = await super.getData();
     const locationData = this.document.getFlag("campaign-codex", "data") || {};
     
-    // Get linked documents
     data.linkedNPCs = await this._getLinkedNPCs(locationData.linkedNPCs || []);
     data.linkedShops = await this._getLinkedShops(locationData.linkedShops || []);
     
-    // Location specific data
     data.locationData = {
       description: locationData.description || "",
       notes: locationData.notes || ""
     };
 
     data.canEdit = this.document.canUserModify(game.user, "update");
-    data.currentTab = this._currentTab; // Pass current tab to template
+    data.currentTab = this._currentTab;
     
     return data;
   }
@@ -75,19 +75,13 @@ export class LocationSheet extends JournalSheet {
   activateListeners(html) {
     super.activateListeners(html);
 
-    // Activate tabs and preserve state
     this._activateTabs(html);
-
-    // Make the sheet a drop target
-    html[0].addEventListener('drop', this._onDrop.bind(this));
-    html[0].addEventListener('dragover', this._onDragOver.bind(this));
+    this._setupDragAndDrop(html);
+    this._setupAutoSave(html);
 
     // Image change functionality
     html.find('.location-image').click(this._onImageClick.bind(this));
     html.find('.image-change-btn').click(this._onImageClick.bind(this));
-
-    // Save button
-    html.find('.save-data').click(this._onSaveData.bind(this));
 
     // Remove buttons
     html.find('.remove-npc').click(this._onRemoveNPC.bind(this));
@@ -100,28 +94,111 @@ export class LocationSheet extends JournalSheet {
   }
 
   _activateTabs(html) {
-    // Tab navigation for sidebar tabs
     html.find('.sidebar-tabs .tab-item').click(event => {
       event.preventDefault();
       const tab = event.currentTarget.dataset.tab;
-      this._currentTab = tab; // Store current tab
+      this._currentTab = tab;
       this._showTab(tab, html);
     });
 
-    // Show current tab (preserves state)
     this._showTab(this._currentTab, html);
   }
 
   _showTab(tabName, html) {
     const $html = html instanceof jQuery ? html : $(html);
     
-    // Remove active from all tabs and panels
     $html.find('.sidebar-tabs .tab-item').removeClass('active');
     $html.find('.tab-panel').removeClass('active');
 
-    // Add active to the correct tab and panel
     $html.find(`.sidebar-tabs .tab-item[data-tab="${tabName}"]`).addClass('active');
     $html.find(`.tab-panel[data-tab="${tabName}"]`).addClass('active');
+  }
+
+  _setupDragAndDrop(html) {
+    const mainContent = html.find('.main-content')[0];
+    
+    mainContent.addEventListener('dragenter', (event) => {
+      event.preventDefault();
+      this._isDragging = true;
+      mainContent.classList.add('drag-active');
+    });
+
+    mainContent.addEventListener('dragleave', (event) => {
+      event.preventDefault();
+      if (!mainContent.contains(event.relatedTarget)) {
+        this._isDragging = false;
+        mainContent.classList.remove('drag-active');
+      }
+    });
+
+    mainContent.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "link";
+    });
+
+    mainContent.addEventListener('drop', (event) => {
+      event.preventDefault();
+      this._isDragging = false;
+      mainContent.classList.remove('drag-active');
+      this._onDrop(event);
+    });
+  }
+
+  _setupAutoSave(html) {
+    html.find('textarea, input').on('input', (event) => {
+      this._scheduleAutoSave();
+    });
+  }
+
+  _scheduleAutoSave() {
+    if (this._autoSaveTimeout) {
+      clearTimeout(this._autoSaveTimeout);
+    }
+
+    this._autoSaveTimeout = setTimeout(() => {
+      this._performAutoSave();
+    }, 1000);
+  }
+
+  async _performAutoSave() {
+    const form = this.element.find('form')[0];
+    if (!form) return;
+
+    const formData = new FormDataExtended(form);
+    const data = formData.object;
+
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const updatedData = {
+      ...currentData,
+      description: data.description || "",
+      notes: data.notes || ""
+    };
+
+    try {
+      await this.document.setFlag("campaign-codex", "data", updatedData);
+      this._showAutoSaveIndicator("Saved");
+    } catch (error) {
+      console.error("Campaign Codex | Auto-save failed:", error);
+      this._showAutoSaveIndicator("Save failed", true);
+    }
+  }
+
+  _showAutoSaveIndicator(message, isError = false) {
+    const existing = document.querySelector('.auto-save-indicator');
+    if (existing) existing.remove();
+
+    const indicator = document.createElement('div');
+    indicator.className = 'auto-save-indicator';
+    indicator.textContent = message;
+    if (isError) indicator.style.backgroundColor = 'var(--cc-danger)';
+
+    document.body.appendChild(indicator);
+
+    setTimeout(() => indicator.classList.add('show'), 10);
+    setTimeout(() => {
+      indicator.classList.remove('show');
+      setTimeout(() => indicator.remove(), 200);
+    }, 2000);
   }
 
   async _onImageClick(event) {
@@ -133,16 +210,11 @@ export class LocationSheet extends JournalSheet {
       current: current,
       callback: async (path) => {
         await this.document.update({ img: path });
-        this.render(false); // Re-render without changing tab
+        this.render(false);
       }
     });
     
     return fp.browse();
-  }
-
-  _onDragOver(event) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "link";
   }
 
   async _onDrop(event) {
@@ -170,10 +242,10 @@ export class LocationSheet extends JournalSheet {
     
     if (journalType === "npc") {
       await game.campaignCodex.linkLocationToNPC(this.document, journal);
-      this.render(false); // Preserve current tab
+      this.render(false);
     } else if (journalType === "shop") {
       await game.campaignCodex.linkLocationToShop(this.document, journal);
-      this.render(false); // Preserve current tab
+      this.render(false);
     }
   }
 
@@ -181,52 +253,17 @@ export class LocationSheet extends JournalSheet {
     const actor = await fromUuid(data.uuid);
     if (!actor || actor.type !== "npc") return;
 
-    // Check if there's already an NPC journal for this actor
     let npcJournal = game.journal.find(j => {
       const npcData = j.getFlag("campaign-codex", "data");
       return npcData && npcData.linkedActor === actor.id;
     });
 
-    // If no journal exists, create one
     if (!npcJournal) {
       npcJournal = await game.campaignCodex.createNPCJournal(actor);
     }
 
-    // Link the location to the NPC journal
     await game.campaignCodex.linkLocationToNPC(this.document, npcJournal);
-    this.render(false); // Preserve current tab
-  }
-
-  async _onSaveData(event) {
-    event.preventDefault();
-    
-    const form = this.element.find('form')[0];
-    const formData = new FormDataExtended(form);
-    const data = formData.object;
-
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const updatedData = {
-      ...currentData,
-      description: data.description || "",
-      notes: data.notes || ""
-    };
-
-    try {
-      await this.document.setFlag("campaign-codex", "data", updatedData);
-      ui.notifications.info("Location saved successfully!");
-      
-      const saveBtn = $(event.currentTarget);
-      saveBtn.addClass('success');
-      setTimeout(() => saveBtn.removeClass('success'), 2000);
-      
-    } catch (error) {
-      console.error("Campaign Codex | Error saving location data:", error);
-      ui.notifications.error("Failed to save location data!");
-      
-      const saveBtn = $(event.currentTarget);
-      saveBtn.addClass('error');
-      setTimeout(() => saveBtn.removeClass('error'), 2000);
-    }
+    this.render(false);
   }
 
   async _onRemoveNPC(event) {
@@ -236,7 +273,7 @@ export class LocationSheet extends JournalSheet {
     currentData.linkedNPCs = (currentData.linkedNPCs || []).filter(id => id !== npcId);
     await this.document.setFlag("campaign-codex", "data", currentData);
     
-    this.render(false); // Preserve current tab
+    this.render(false);
   }
 
   async _onRemoveShop(event) {
@@ -246,7 +283,7 @@ export class LocationSheet extends JournalSheet {
     currentData.linkedShops = (currentData.linkedShops || []).filter(id => id !== shopId);
     await this.document.setFlag("campaign-codex", "data", currentData);
     
-    this.render(false); // Preserve current tab
+    this.render(false);
   }
 
   _onOpenNPC(event) {
@@ -267,14 +304,10 @@ export class LocationSheet extends JournalSheet {
     if (actor) actor.sheet.render(true);
   }
 
-  // Override render to preserve tab state
   async render(force = false, options = {}) {
-    // Store current tab before render
     const currentTab = this._currentTab;
-    
     const result = await super.render(force, options);
     
-    // Restore tab after render
     if (this._element && currentTab) {
       setTimeout(() => {
         this._showTab(currentTab, this._element);
@@ -283,4 +316,10 @@ export class LocationSheet extends JournalSheet {
     
     return result;
   }
-}
+
+  close(options = {}) {
+    if (this._autoSaveTimeout) {
+      clearTimeout(this._autoSaveTimeout);
+    }
+    return super.close(options);
+  }

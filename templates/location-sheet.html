@@ -1,14 +1,5 @@
 <div class="campaign-codex location-sheet">
   
-  {{!-- Header Banner --}}
-  <header class="sheet-banner">
-    <div class="banner-overlay"></div>
-    <div class="banner-content">
-      <h1 class="location-name">{{document.name}}</h1>
-      <div class="location-type">Location</div>
-    </div>
-  </header>
-
   <div class="sheet-body">
     {{!-- Sidebar Navigation --}}
     <nav class="sidebar">
@@ -75,7 +66,7 @@
               <i class="fas fa-align-left"></i>
               Description
             </label>
-            <textarea name="description" class="form-textarea" rows="8" placeholder="Describe this location...">{{locationData.description}}</textarea>
+            <textarea name="description" class="form-textarea" rows="6" placeholder="Describe this location...">{{locationData.description}}</textarea>
           </div>
 
           <div class="stats-grid">
@@ -100,14 +91,6 @@
         <section class="tab-panel {{#if (eq currentTab 'npcs')}}active{{/if}}" data-tab="npcs">
           <div class="content-header">
             <h2><i class="fas fa-users"></i> NPCs at this Location</h2>
-          </div>
-          
-          <div class="drop-zone" data-drop-type="npc">
-            <div class="drop-content">
-              <i class="fas fa-user-plus"></i>
-              <h3>Add NPCs</h3>
-              <p>Drag NPCs or actors here to add them to this location</p>
-            </div>
           </div>
 
           {{#if linkedNPCs}}
@@ -145,7 +128,7 @@
             <div class="empty-state">
               <i class="fas fa-users"></i>
               <h3>No NPCs</h3>
-              <p>Drag NPCs here to populate this location</p>
+              <p>Drag NPCs anywhere on this sheet to populate this location</p>
             </div>
           {{/if}}
         </section>
@@ -154,14 +137,6 @@
         <section class="tab-panel {{#if (eq currentTab 'shops')}}active{{/if}}" data-tab="shops">
           <div class="content-header">
             <h2><i class="fas fa-store"></i> Shops at this Location</h2>
-          </div>
-          
-          <div class="drop-zone" data-drop-type="shop">
-            <div class="drop-content">
-              <i class="fas fa-store"></i>
-              <h3>Add Shops</h3>
-              <p>Drag shop journals here to add them to this location</p>
-            </div>
           </div>
 
           {{#if linkedShops}}
@@ -192,7 +167,7 @@
             <div class="empty-state">
               <i class="fas fa-store"></i>
               <h3>No Shops</h3>
-              <p>Drag shop journals here to add commerce to this location</p>
+              <p>Drag shop journals anywhere on this sheet to add commerce to this location</p>
             </div>
           {{/if}}
         </section>
@@ -208,20 +183,12 @@
               <i class="fas fa-eye-slash"></i>
               Private Notes
             </label>
-            <textarea name="notes" class="form-textarea" rows="12" placeholder="Private GM notes about this location...">{{locationData.notes}}</textarea>
+            <textarea name="notes" class="form-textarea" rows="15" placeholder="Private GM notes about this location...">{{locationData.notes}}</textarea>
           </div>
         </section>
 
       </form>
     </main>
   </div>
-
-  {{!-- Footer --}}
-  <footer class="sheet-footer">
-    <button type="button" class="save-btn save-data">
-      <i class="fas fa-save"></i>
-      Save
-    </button>
-  </footer>
 
 </div>

@@ -47,7 +47,16 @@ Hooks.once('init', async function() {
     default: true
   });
 
-  console.log('Campaign Codex | Sheets registered');
+  game.settings.register("campaign-codex", "autoSave", {
+    name: "Auto-Save Changes",
+    hint: "Automatically save changes as you type (recommended)",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true
+  });
+
+  console.log('Campaign Codex | Settings and sheets registered');
 });
 
 Hooks.once('ready', async function() {
@@ -60,7 +69,42 @@ Hooks.once('ready', async function() {
   if (game.settings.get("campaign-codex", "useOrganizedFolders")) {
     await ensureCampaignCodexFolders();
   }
+
+  // Add custom CSS for SVG fallbacks
+  addCustomStyles();
 });
+
+// Add custom styles for better UI/UX
+function addCustomStyles() {
+  const style = document.createElement('style');
+  style.textContent = `
+    /* Fix globe SVG 404 issues */
+    img[src*="globe.svg"]:not([src*="data:"]) {
+      content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="m2 12c2.5-2.5 7.5-2.5 10 0s7.5 2.5 10 0"/><path d="m12 2c2.5 2.5 2.5 7.5 0 10s-2.5 7.5 0 10"/></svg>');
+    }
+    
+    /* Modern scrollbars */
+    .campaign-codex *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    .campaign-codex *::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    
+    .campaign-codex *::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+    }
+    
+    .campaign-codex *::-webkit-scrollbar-thumb:hover {
+      background: #a1a1a1;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 // Ensure Campaign Codex folders exist
 async function ensureCampaignCodexFolders() {
@@ -93,12 +137,12 @@ async function ensureCampaignCodexFolders() {
 
 function getFolderColor(type) {
   const colors = {
-    location: "#28a745",
-    shop: "#6f42c1", 
-    npc: "#fd7e14",
-    region: "#20c997"
+    location: "#3182ce",
+    shop: "#38a169", 
+    npc: "#ed8936",
+    region: "#805ad5"
   };
-  return colors[type] || "#999999";
+  return colors[type] || "#718096";
 }
 
 // Get appropriate folder for document type
@@ -135,25 +179,25 @@ Hooks.on('getActorDirectoryEntryContext', (html, options) => {
 // Add journal entry creation buttons
 Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
   options.unshift({
-    name: "New Location",
+    name: "📍 New Location",
     icon: '<i class="fas fa-map-marker-alt"></i>',
     callback: () => game.campaignCodex.createLocationJournal()
   });
   
   options.unshift({
-    name: "New Shop",
+    name: "🏪 New Shop",
     icon: '<i class="fas fa-store"></i>',
     callback: () => game.campaignCodex.createShopJournal()
   });
   
   options.unshift({
-    name: "New NPC Journal",
+    name: "👤 New NPC Journal",
     icon: '<i class="fas fa-user"></i>',
     callback: () => game.campaignCodex.createNPCJournal()
   });
   
   options.unshift({
-    name: "New Region",
+    name: "🗺️ New Region",
     icon: '<i class="fas fa-globe"></i>',
     callback: () => game.campaignCodex.createRegionJournal()
   });
@@ -161,7 +205,7 @@ Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
   // Add world overview option
   options.unshift({
     name: "📋 Campaign Overview",
-    icon: '<i class="fas fa-globe"></i>',
+    icon: '<i class="fas fa-chart-bar"></i>',
     callback: () => createCampaignOverview()
   });
 
@@ -227,32 +271,38 @@ async function createCampaignOverview() {
   const regions = game.journal.filter(j => j.getFlag("campaign-codex", "type") === "region");
 
   const content = `
-    <h1>🌍 Campaign World Overview</h1>
-    
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0;">
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
-        <h3><i class="fas fa-map-marker-alt"></i> Locations (${locations.length})</h3>
-        ${locations.map(l => `<p>📍 @UUID[${l.uuid}]{${l.name}}</p>`).join('')}
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin: 1.5rem 0;">
+      <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid #3182ce;">
+        <h3 style="margin: 0 0 1rem 0; color: #1a365d; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-map-marker-alt" style="color: #3182ce;"></i> Locations (${locations.length})
+        </h3>
+        ${locations.map(l => `<p style="margin: 0.5rem 0;">📍 @UUID[${l.uuid}]{${l.name}}</p>`).join('')}
       </div>
       
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #6f42c1;">
-        <h3><i class="fas fa-store"></i> Shops (${shops.length})</h3>
-        ${shops.map(s => `<p>🏪 @UUID[${s.uuid}]{${s.name}}</p>`).join('')}
+      <div style="background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid #38a169;">
+        <h3 style="margin: 0 0 1rem 0; color: #1a365d; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-store" style="color: #38a169;"></i> Shops (${shops.length})
+        </h3>
+        ${shops.map(s => `<p style="margin: 0.5rem 0;">🏪 @UUID[${s.uuid}]{${s.name}}</p>`).join('')}
       </div>
       
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #fd7e14;">
-        <h3><i class="fas fa-users"></i> NPCs (${npcs.length})</h3>
-        ${npcs.map(n => `<p>👤 @UUID[${n.uuid}]{${n.name}}</p>`).join('')}
+      <div style="background: linear-gradient(135deg, #fffaf0 0%, #fef5e7 100%); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid #ed8936;">
+        <h3 style="margin: 0 0 1rem 0; color: #1a365d; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-users" style="color: #ed8936;"></i> NPCs (${npcs.length})
+        </h3>
+        ${npcs.map(n => `<p style="margin: 0.5rem 0;">👤 @UUID[${n.uuid}]{${n.name}}</p>`).join('')}
       </div>
       
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #20c997;">
-        <h3><i class="fas fa-globe"></i> Regions (${regions.length})</h3>
-        ${regions.map(r => `<p>🗺️ @UUID[${r.uuid}]{${r.name}}</p>`).join('')}
+      <div style="background: linear-gradient(135deg, #faf5ff 0%, #f7fafc 100%); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid #805ad5;">
+        <h3 style="margin: 0 0 1rem 0; color: #1a365d; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-globe" style="color: #805ad5;"></i> Regions (${regions.length})
+        </h3>
+        ${regions.map(r => `<p style="margin: 0.5rem 0;">🗺️ @UUID[${r.uuid}]{${r.name}}</p>`).join('')}
       </div>
     </div>
     
-    <hr>
-    <p><em>This overview is automatically generated and updates when you recreate it.</em></p>
+    <hr style="margin: 2rem 0; border: none; height: 1px; background: linear-gradient(90deg, transparent, #e2e8f0, transparent);">
+    <p style="text-align: center; color: #718096; font-style: italic; margin: 1rem 0;">This overview updates automatically when you recreate it.</p>
   `;
 
   const journalData = {
@@ -272,7 +322,7 @@ async function createCampaignOverview() {
   overview.sheet.render(true);
 }
 
-// Fixed: Force correct sheet to open immediately upon creation and preserve active tab
+// Force correct sheet to open immediately upon creation
 Hooks.on('createJournalEntry', async (document, options, userId) => {
   if (game.user.id !== userId) return;
   
@@ -285,7 +335,7 @@ Hooks.on('createJournalEntry', async (document, options, userId) => {
     await document.update({ folder: folder.id });
   }
 
-  // Wait a moment for the document to be fully created
+  // Wait for document to be fully created, then open correct sheet
   setTimeout(() => {
     let targetSheet = null;
 
@@ -305,14 +355,11 @@ Hooks.on('createJournalEntry', async (document, options, userId) => {
     }
 
     if (targetSheet) {
-      // Close any existing sheet and open the correct one
       if (document.sheet.rendered) {
         document.sheet.close();
       }
       const sheet = new targetSheet(document);
       sheet.render(true);
-      
-      // Store the sheet reference to maintain state
       document._campaignCodexSheet = sheet;
     }
   }, 100);
@@ -351,68 +398,75 @@ Hooks.on('renderJournalEntry', (journal, html, data) => {
   }
 });
 
-
-
-// Fixed Campaign Codex creation buttons for Journal Directory
+// Modern Campaign Codex creation buttons for Journal Directory
 Hooks.on('renderJournalDirectory', (app, html, data) => {
-  // Remove any existing button group to prevent duplicates
+  // Remove any existing button group
   html.find('.campaign-codex-buttons').remove();
   
-  // Create the button container with compact structure
+  // Create modern button container
   const buttonGroup = $(`
     <div class="campaign-codex-buttons">
       <div class="button-row">
-        <button class="create-location-btn compact-btn" type="button" title="Create New Location">
-          <i class="fas fa-map-marker-alt"></i>
+        <button class="create-location-btn" type="button" title="Create New Location">
+          <i class="fas fa-map-marker-alt"></i>Location
         </button>
-        <button class="create-shop-btn compact-btn" type="button" title="Create New Shop">
-          <i class="fas fa-store"></i>
+        <button class="create-shop-btn" type="button" title="Create New Shop">
+          <i class="fas fa-store"></i>Shop
         </button>
-        <button class="create-npc-btn compact-btn" type="button" title="Create New NPC Journal">
-          <i class="fas fa-user"></i>
+        <button class="create-npc-btn" type="button" title="Create New NPC Journal">
+          <i class="fas fa-user"></i>NPC
         </button>
-        <button class="create-region-btn compact-btn" type="button" title="Create New Region">
-          <i class="fas fa-globe"></i>
+        <button class="create-region-btn" type="button" title="Create New Region">
+          <i class="fas fa-globe"></i>Region
         </button>
       </div>
     </div>
   `);
 
-  // Insert into the directory header
+  // Insert into directory header
   const directoryHeader = html.find('.directory-header');
   directoryHeader.append(buttonGroup);
-  // Event listeners for the buttons
+
+  // Event listeners with improved UX
   html.find('.create-location-btn').click(async () => {
-    const name = await promptForName("Location");
+    const name = await promptForName("Location", "📍");
     if (name) await game.campaignCodex.createLocationJournal(name);
   });
 
   html.find('.create-shop-btn').click(async () => {
-    const name = await promptForName("Shop");
+    const name = await promptForName("Shop", "🏪");
     if (name) await game.campaignCodex.createShopJournal(name);
   });
 
   html.find('.create-npc-btn').click(async () => {
-    const name = await promptForName("NPC Journal");
+    const name = await promptForName("NPC Journal", "👤");
     if (name) await game.campaignCodex.createNPCJournal(null, name);
   });
 
   html.find('.create-region-btn').click(async () => {
-    const name = await promptForName("Region");
+    const name = await promptForName("Region", "🗺️");
     if (name) await game.campaignCodex.createRegionJournal(name);
   });
 });
 
-// Helper function to prompt for name with better UX
-async function promptForName(type) {
+// Enhanced prompt with modern styling
+async function promptForName(type, icon = "") {
   return new Promise((resolve) => {
     new Dialog({
       title: `Create New ${type}`,
       content: `
-        <form class="flexcol">
-          <div class="form-group">
-            <label>Name:</label>
-            <input type="text" name="name" placeholder="Enter ${type.toLowerCase()} name..." autofocus style="width: 100%;" />
+        <form class="flexcol" style="gap: 1rem;">
+          <div class="form-group" style="margin: 0;">
+            <label style="font-weight: 500; margin-bottom: 0.5rem; display: block;">
+              ${icon} ${type} Name:
+            </label>
+            <input 
+              type="text" 
+              name="name" 
+              placeholder="Enter ${type.toLowerCase()} name..." 
+              autofocus 
+              style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; font-size: 0.875rem;"
+            />
           </div>
         </form>
       `,
@@ -433,10 +487,11 @@ async function promptForName(type) {
       },
       default: "create",
       render: (html) => {
-        // Submit on enter key
-        html.find('input[name="name"]').focus().keypress((e) => {
+        // Focus input and submit on enter
+        const input = html.find('input[name="name"]');
+        input.focus();
+        input.keypress((e) => {
           if (e.which === 13) {
-            const name = e.target.value.trim();
             html.closest('.dialog').find('.dialog-button.create button').click();
           }
         });
@@ -447,7 +502,7 @@ async function promptForName(type) {
 
 // Handle bidirectional relationship updates
 Hooks.on('updateJournalEntry', async (document, changes, options, userId) => {
-  if (game.user.id !== userId) return; // Only handle our own updates
+  if (game.user.id !== userId) return;
   
   const type = document.getFlag("campaign-codex", "type");
   if (!type) return;
@@ -467,5 +522,5 @@ Hooks.on('preDeleteActor', async (document, options, userId) => {
   await game.campaignCodex.cleanupActorRelationships(document);
 });
 
-// Export folder management functions for use in campaign manager
+// Export folder management functions
 window.getCampaignCodexFolder = getCampaignCodexFolder;

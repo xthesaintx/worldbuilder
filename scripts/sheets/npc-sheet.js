@@ -1,7 +1,9 @@
 export class NPCSheet extends JournalSheet {
   constructor(document, options = {}) {
     super(document, options);
-    this._currentTab = 'info'; // Track current tab
+    this._currentTab = 'info';
+    this._autoSaveTimeout = null;
+    this._isDragging = false;
   }
 
   static get defaultOptions() {
@@ -10,7 +12,7 @@ export class NPCSheet extends JournalSheet {
       width: 900,
       height: 700,
       resizable: true,
-      dragDrop: [{ dragSelector: ".item", dropSelector: null }],
+      dragDrop: [{ dragSelector: null, dropSelector: null }], // Accept drops anywhere
       tabs: [{ navSelector: ".sidebar-tabs", contentSelector: ".main-content", initial: "info" }]
     });
   }
@@ -29,55 +31,14 @@ export class NPCSheet extends JournalSheet {
     data.linkedShops = await this._getLinkedShops(npcData.linkedShops || []);
     data.associates = await this._getAssociates(npcData.associates || []);
     
-    // NPC specific data with basic character info
+    // NPC specific data
     data.npcData = {
-      // Basic Info
-      name: npcData.name || this.document.name,
-      race: npcData.race || "",
-      alignment: npcData.alignment || "",
-      
-      // Ability Scores
-      abilities: npcData.abilities || {
-        str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10
-      },
-      
-      // Skills & Proficiencies (for advanced NPCs)
-      skills: npcData.skills || [],
-      languages: npcData.languages || [],
-      equipment: npcData.equipment || [],
-      
-      // Descriptions
       description: npcData.description || "",
-      personality: npcData.personality || "",
-      ideals: npcData.ideals || "",
-      bonds: npcData.bonds || "",
-      flaws: npcData.flaws || "",
       notes: npcData.notes || ""
     };
 
-    // Calculate ability modifiers
-    data.npcData.abilityMods = {};
-    for (const [key, value] of Object.entries(data.npcData.abilities)) {
-      data.npcData.abilityMods[key] = Math.floor((value - 10) / 2);
-    }
-
-    // Available skills list for D&D 5e
-    data.availableSkills = [
-      "Acrobatics", "Animal Handling", "Arcana", "Athletics", "Deception",
-      "History", "Insight", "Intimidation", "Investigation", "Medicine",
-      "Nature", "Perception", "Performance", "Persuasion", "Religion",
-      "Sleight of Hand", "Stealth", "Survival"
-    ];
-
-    // Available languages
-    data.availableLanguages = [
-      "Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling",
-      "Orc", "Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal",
-      "Primordial", "Sylvan", "Undercommon"
-    ];
-
     data.canEdit = this.document.canUserModify(game.user, "update");
-    data.currentTab = this._currentTab; // Pass current tab to template
+    data.currentTab = this._currentTab;
     
     return data;
   }
@@ -90,7 +51,7 @@ export class NPCSheet extends JournalSheet {
         name: actor.name,
         img: actor.img,
         race: actor.system.details?.race || "Unknown",
-        class: actor.system.details?.class || "Unknown",
+        class: actor.system.details?.class || "Unknown", 
         level: actor.system.details?.level || 1,
         ac: actor.system.attributes?.ac?.value || 10,
         hp: actor.system.attributes?.hp || { value: 0, max: 0 },
@@ -154,17 +115,11 @@ export class NPCSheet extends JournalSheet {
     // Activate tabs and preserve state
     this._activateTabs(html);
 
-    // Make the sheet a drop target
-    html[0].addEventListener('drop', this._onDrop.bind(this));
-    html[0].addEventListener('dragover', this._onDragOver.bind(this));
+    // Make entire main content area droppable
+    this._setupDragAndDrop(html);
 
-    // Auto-save on form changes
-    html.find('input, textarea, select').change(this._onAutoSave.bind(this));
-    html.find('input, textarea').on('input', foundry.utils.debounce(this._onAutoSave.bind(this), 500));
-
-    // Image functionality
-    html.find('.location-image').click(this._onImageClick.bind(this));
-    html.find('.image-change-btn').click(this._onImageClick.bind(this));
+    // Auto-save functionality
+    this._setupAutoSave(html);
 
     // Remove buttons
     html.find('.remove-actor').click(this._onRemoveActor.bind(this));
@@ -177,30 +132,13 @@ export class NPCSheet extends JournalSheet {
     html.find('.open-location').click(this._onOpenLocation.bind(this));
     html.find('.open-shop').click(this._onOpenShop.bind(this));
     html.find('.open-associate').click(this._onOpenAssociate.bind(this));
-
-    // Ability score controls
-    html.find('.ability-input').change(this._onAbilityChange.bind(this));
-    html.find('.ability-roll').click(this._onAbilityRoll.bind(this));
-
-    // Equipment controls
-    html.find('.add-equipment').click(this._onAddEquipment.bind(this));
-    html.find('.remove-equipment').click(this._onRemoveEquipment.bind(this));
-
-    // Skill controls
-    html.find('.add-skill').click(this._onAddSkill.bind(this));
-    html.find('.remove-skill').click(this._onRemoveSkill.bind(this));
-
-    // Language controls
-    html.find('.add-language').click(this._onAddLanguage.bind(this));
-    html.find('.remove-language').click(this._onRemoveLanguage.bind(this));
   }
 
   _activateTabs(html) {
-    // Tab navigation for sidebar tabs
     html.find('.sidebar-tabs .tab-item').click(event => {
       event.preventDefault();
       const tab = event.currentTarget.dataset.tab;
-      this._currentTab = tab; // Store current tab
+      this._currentTab = tab;
       this._showTab(tab, html);
     });
 
@@ -211,48 +149,112 @@ export class NPCSheet extends JournalSheet {
   _showTab(tabName, html) {
     const $html = html instanceof jQuery ? html : $(html);
     
-    // Remove active from all tabs and panels
     $html.find('.sidebar-tabs .tab-item').removeClass('active');
     $html.find('.tab-panel').removeClass('active');
 
-    // Add active to the correct tab and panel
     $html.find(`.sidebar-tabs .tab-item[data-tab="${tabName}"]`).addClass('active');
     $html.find(`.tab-panel[data-tab="${tabName}"]`).addClass('active');
   }
 
-  async _onImageClick(event) {
-    event.preventDefault();
+  _setupDragAndDrop(html) {
+    const mainContent = html.find('.main-content')[0];
     
-    const current = this.document.img;
-    const fp = new FilePicker({
-      type: "image",
-      current: current,
-      callback: async (path) => {
-        await this.document.update({ img: path });
-        this.render(false); // Re-render without changing tab
-      },
-      top: this.position.top + 40,
-      left: this.position.left + 10
+    // Handle drag events for visual feedback
+    mainContent.addEventListener('dragenter', (event) => {
+      event.preventDefault();
+      this._isDragging = true;
+      mainContent.classList.add('drag-active');
     });
-    
-    return fp.browse();
+
+    mainContent.addEventListener('dragleave', (event) => {
+      event.preventDefault();
+      // Only remove drag-active if we're actually leaving the main content
+      if (!mainContent.contains(event.relatedTarget)) {
+        this._isDragging = false;
+        mainContent.classList.remove('drag-active');
+      }
+    });
+
+    mainContent.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "link";
+    });
+
+    mainContent.addEventListener('drop', (event) => {
+      event.preventDefault();
+      this._isDragging = false;
+      mainContent.classList.remove('drag-active');
+      this._onDrop(event);
+    });
   }
 
-  _onDragOver(event) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "link";
-    
-    // Add visual feedback to main content
-    const mainContent = this.element.find('.main-content');
-    mainContent.addClass('drag-over');
+  _setupAutoSave(html) {
+    // Auto-save on input changes
+    html.find('textarea, input').on('input', (event) => {
+      this._scheduleAutoSave();
+    });
+  }
+
+  _scheduleAutoSave() {
+    // Clear existing timeout
+    if (this._autoSaveTimeout) {
+      clearTimeout(this._autoSaveTimeout);
+    }
+
+    // Schedule new save after 1 second of inactivity
+    this._autoSaveTimeout = setTimeout(() => {
+      this._performAutoSave();
+    }, 1000);
+  }
+
+  async _performAutoSave() {
+    const form = this.element.find('form')[0];
+    if (!form) return;
+
+    const formData = new FormDataExtended(form);
+    const data = formData.object;
+
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const updatedData = {
+      ...currentData,
+      description: data.description || "",
+      notes: data.notes || ""
+    };
+
+    try {
+      await this.document.setFlag("campaign-codex", "data", updatedData);
+      this._showAutoSaveIndicator("Saved");
+    } catch (error) {
+      console.error("Campaign Codex | Auto-save failed:", error);
+      this._showAutoSaveIndicator("Save failed", true);
+    }
+  }
+
+  _showAutoSaveIndicator(message, isError = false) {
+    // Remove existing indicator
+    const existing = document.querySelector('.auto-save-indicator');
+    if (existing) existing.remove();
+
+    // Create new indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'auto-save-indicator';
+    indicator.textContent = message;
+    if (isError) indicator.style.backgroundColor = 'var(--cc-danger)';
+
+    document.body.appendChild(indicator);
+
+    // Show with animation
+    setTimeout(() => indicator.classList.add('show'), 10);
+
+    // Hide after 2 seconds
+    setTimeout(() => {
+      indicator.classList.remove('show');
+      setTimeout(() => indicator.remove(), 200);
+    }, 2000);
   }
 
   async _onDrop(event) {
     event.preventDefault();
-    
-    // Remove visual feedback
-    const mainContent = this.element.find('.main-content');
-    mainContent.removeClass('drag-over');
     
     let data;
     try {
@@ -265,8 +267,6 @@ export class NPCSheet extends JournalSheet {
       await this._handleActorDrop(data);
     } else if (data.type === "JournalEntry") {
       await this._handleJournalDrop(data);
-    } else if (data.type === "Tile") {
-      await this._handleTileDrop(data);
     }
   }
 
@@ -274,29 +274,28 @@ export class NPCSheet extends JournalSheet {
     const actor = await fromUuid(data.uuid);
     if (!actor) return;
 
-    // Check if this is for the main actor link or an associate
-    const dropZone = event.target.closest('.drop-zone');
-    const dropType = dropZone?.dataset.dropType;
-
-    if (dropType === "actor" || !this.document.getFlag("campaign-codex", "data.linkedActor")) {
-      // Link main actor
+    if (actor.type === "npc") {
       const currentData = this.document.getFlag("campaign-codex", "data") || {};
-      currentData.linkedActor = actor.id;
-      await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render(false); // Preserve current tab
-    } else if (actor.type === "npc") {
-      // Create or find NPC journal for this actor and add as associate
-      let npcJournal = game.journal.find(j => {
-        const npcData = j.getFlag("campaign-codex", "data");
-        return npcData && npcData.linkedActor === actor.id;
-      });
+      
+      // If no actor is linked, link this one
+      if (!currentData.linkedActor) {
+        currentData.linkedActor = actor.id;
+        await this.document.setFlag("campaign-codex", "data", currentData);
+        this.render(false);
+      } else {
+        // Create or find NPC journal for this actor and add as associate
+        let npcJournal = game.journal.find(j => {
+          const npcData = j.getFlag("campaign-codex", "data");
+          return npcData && npcData.linkedActor === actor.id;
+        });
 
-      if (!npcJournal) {
-        npcJournal = await game.campaignCodex.createNPCJournal(actor);
+        if (!npcJournal) {
+          npcJournal = await game.campaignCodex.createNPCJournal(actor);
+        }
+
+        await game.campaignCodex.linkNPCToNPC(this.document, npcJournal);
+        this.render(false);
       }
-
-      await game.campaignCodex.linkNPCToNPC(this.document, npcJournal);
-      this.render(false); // Preserve current tab
     }
   }
 
@@ -308,100 +307,13 @@ export class NPCSheet extends JournalSheet {
     
     if (journalType === "location") {
       await game.campaignCodex.linkLocationToNPC(journal, this.document);
-      this.render(false); // Preserve current tab
+      this.render(false);
     } else if (journalType === "shop") {
       await game.campaignCodex.linkShopToNPC(journal, this.document);
-      this.render(false); // Preserve current tab
+      this.render(false);
     } else if (journalType === "npc") {
       await game.campaignCodex.linkNPCToNPC(this.document, journal);
-      this.render(false); // Preserve current tab
-    }
-  }
-
-  async _handleTileDrop(data) {
-    // Handle tile drops for image associations
-    const tile = await fromUuid(data.uuid);
-    if (!tile) return;
-
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const imageTiles = currentData.imageTiles || [];
-    
-    if (!imageTiles.find(t => t.id === tile.id)) {
-      imageTiles.push({
-        id: tile.id,
-        img: tile.texture.src,
-        scene: tile.parent.id
-      });
-      
-      currentData.imageTiles = imageTiles;
-      await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render(false); // Preserve current tab
-    }
-  }
-
-  // Auto-save functionality
-  async _onAutoSave(event) {
-    const form = this.element.find('form')[0];
-    const formData = new FormDataExtended(form);
-    const data = formData.object;
-
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    
-    // Build updated data structure
-    const updatedData = {
-      ...currentData,
-      // Basic Info
-      name: data.name || "",
-      race: data.race || "",
-      alignment: data.alignment || "",
-      
-      // Ability Scores
-      abilities: {
-        str: parseInt(data.str) || 10,
-        dex: parseInt(data.dex) || 10,
-        con: parseInt(data.con) || 10,
-        int: parseInt(data.int) || 10,
-        wis: parseInt(data.wis) || 10,
-        cha: parseInt(data.cha) || 10
-      },
-      
-      // Skills and Languages (preserve existing arrays)
-      skills: currentData.skills || [],
-      languages: currentData.languages || [],
-      equipment: currentData.equipment || [],
-      
-      // Descriptions
-      description: data.description || "",
-      personality: data.personality || "",
-      ideals: data.ideals || "",
-      bonds: data.bonds || "",
-      flaws: data.flaws || "",
-      notes: data.notes || ""
-    };
-
-    try {
-      // Visual feedback
-      const targetElement = $(event.target);
-      targetElement.addClass('saving');
-      
-      await this.document.setFlag("campaign-codex", "data", updatedData);
-      
-      // Also update the document name if it changed
-      if (data.name && data.name !== this.document.name) {
-        await this.document.update({ name: data.name });
-      }
-      
-      // Success feedback
-      targetElement.removeClass('saving').addClass('saved');
-      setTimeout(() => targetElement.removeClass('saved'), 1000);
-      
-    } catch (error) {
-      console.error("Campaign Codex | Error auto-saving NPC data:", error);
-      
-      // Error feedback
-      const targetElement = $(event.target);
-      targetElement.removeClass('saving').addClass('error');
-      setTimeout(() => targetElement.removeClass('error'), 1000);
+      this.render(false);
     }
   }
 
@@ -409,7 +321,7 @@ export class NPCSheet extends JournalSheet {
     const currentData = this.document.getFlag("campaign-codex", "data") || {};
     currentData.linkedActor = null;
     await this.document.setFlag("campaign-codex", "data", currentData);
-    this.render(false); // Preserve current tab
+    this.render(false);
   }
 
   async _onRemoveLocation(event) {
@@ -419,7 +331,7 @@ export class NPCSheet extends JournalSheet {
     currentData.linkedLocations = (currentData.linkedLocations || []).filter(id => id !== locationId);
     await this.document.setFlag("campaign-codex", "data", currentData);
     
-    this.render(false); // Preserve current tab
+    this.render(false);
   }
 
   async _onRemoveShop(event) {
@@ -429,7 +341,7 @@ export class NPCSheet extends JournalSheet {
     currentData.linkedShops = (currentData.linkedShops || []).filter(id => id !== shopId);
     await this.document.setFlag("campaign-codex", "data", currentData);
     
-    this.render(false); // Preserve current tab
+    this.render(false);
   }
 
   async _onRemoveAssociate(event) {
@@ -439,7 +351,7 @@ export class NPCSheet extends JournalSheet {
     currentData.associates = (currentData.associates || []).filter(id => id !== associateId);
     await this.document.setFlag("campaign-codex", "data", currentData);
     
-    this.render(false); // Preserve current tab
+    this.render(false);
   }
 
   _onOpenActor(event) {
@@ -466,271 +378,11 @@ export class NPCSheet extends JournalSheet {
     if (journal) journal.sheet.render(true);
   }
 
-  // Ability score management
-  async _onAbilityChange(event) {
-    const abilityName = event.currentTarget.dataset.ability;
-    const value = parseInt(event.currentTarget.value) || 10;
-    
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const abilities = currentData.abilities || {};
-    abilities[abilityName] = Math.max(1, Math.min(20, value));
-    
-    currentData.abilities = abilities;
-    await this.document.setFlag("campaign-codex", "data", currentData);
-    
-    // Update the modifier display
-    const modifier = Math.floor((abilities[abilityName] - 10) / 2);
-    const modifierDisplay = event.currentTarget.closest('.ability-block').querySelector('.ability-modifier');
-    if (modifierDisplay) {
-      modifierDisplay.textContent = modifier >= 0 ? `+${modifier}` : modifier;
-    }
-  }
-
-  async _onAbilityRoll(event) {
-    event.preventDefault();
-    const abilityName = event.currentTarget.dataset.ability;
-    
-    // Roll 4d6 drop lowest
-    const rolls = [];
-    for (let i = 0; i < 4; i++) {
-      rolls.push(Math.floor(Math.random() * 6) + 1);
-    }
-    rolls.sort((a, b) => b - a);
-    const total = rolls.slice(0, 3).reduce((sum, roll) => sum + roll, 0);
-    
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const abilities = currentData.abilities || {};
-    abilities[abilityName] = total;
-    
-    currentData.abilities = abilities;
-    await this.document.setFlag("campaign-codex", "data", currentData);
-    
-    ui.notifications.info(`Rolled ${total} for ${abilityName.toUpperCase()}: [${rolls.join(", ")}]`);
-    
-    // Update just the ability score display without full re-render
-    const abilityInput = this.element.find(`[data-ability="${abilityName}"]`);
-    abilityInput.val(total);
-    
-    // Update the modifier display
-    const modifier = Math.floor((total - 10) / 2);
-    const modifierDisplay = abilityInput.closest('.ability-block').find('.ability-modifier');
-    modifierDisplay.text(modifier >= 0 ? `+${modifier}` : modifier);
-  }
-
-  async _onAddEquipment(event) {
-    const newEquipment = await this._promptForEquipment();
-    if (!newEquipment) return;
-    
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const equipment = currentData.equipment || [];
-    equipment.push(newEquipment);
-    
-    currentData.equipment = equipment;
-    await this.document.setFlag("campaign-codex", "data", currentData);
-    this.render(false); // Preserve current tab
-  }
-
-  async _onRemoveEquipment(event) {
-    const index = parseInt(event.currentTarget.dataset.index);
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const equipment = currentData.equipment || [];
-    
-    equipment.splice(index, 1);
-    currentData.equipment = equipment;
-    await this.document.setFlag("campaign-codex", "data", currentData);
-    this.render(false); // Preserve current tab
-  }
-
-  async _onAddSkill(event) {
-    const skill = await this._promptForSkill();
-    if (!skill) return;
-    
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const skills = currentData.skills || [];
-    
-    if (!skills.includes(skill)) {
-      skills.push(skill);
-      currentData.skills = skills;
-      await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render(false); // Preserve current tab
-    }
-  }
-
-  async _onRemoveSkill(event) {
-    const skill = event.currentTarget.dataset.skill;
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const skills = currentData.skills || [];
-    
-    const index = skills.indexOf(skill);
-    if (index > -1) {
-      skills.splice(index, 1);
-      currentData.skills = skills;
-      await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render(false); // Preserve current tab
-    }
-  }
-
-  async _onAddLanguage(event) {
-    const language = await this._promptForLanguage();
-    if (!language) return;
-    
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const languages = currentData.languages || [];
-    
-    if (!languages.includes(language)) {
-      languages.push(language);
-      currentData.languages = languages;
-      await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render(false); // Preserve current tab
-    }
-  }
-
-  async _onRemoveLanguage(event) {
-    const language = event.currentTarget.dataset.language;
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const languages = currentData.languages || [];
-    
-    const index = languages.indexOf(language);
-    if (index > -1) {
-      languages.splice(index, 1);
-      currentData.languages = languages;
-      await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render(false); // Preserve current tab
-    }
-  }
-
-  // Helper methods for prompts
-  async _promptForEquipment() {
-    return new Promise((resolve) => {
-      new Dialog({
-        title: "Add Equipment",
-        content: `
-          <form>
-            <div class="form-group">
-              <label>Item Name:</label>
-              <input type="text" name="name" placeholder="Enter item name..." autofocus />
-            </div>
-            <div class="form-group">
-              <label>Type:</label>
-              <select name="type">
-                <option value="Weapon">Weapon</option>
-                <option value="Armor">Armor</option>
-                <option value="Shield">Shield</option>
-                <option value="Tool">Tool</option>
-                <option value="Adventuring Gear">Adventuring Gear</option>
-                <option value="Treasure">Treasure</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Quantity:</label>
-              <input type="number" name="quantity" value="1" min="1" />
-            </div>
-          </form>
-        `,
-        buttons: {
-          add: {
-            label: "Add",
-            callback: (html) => {
-              const name = html.find('[name="name"]').val().trim();
-              const type = html.find('[name="type"]').val();
-              const quantity = parseInt(html.find('[name="quantity"]').val()) || 1;
-              if (name) {
-                resolve({ name, type, quantity });
-              } else {
-                resolve(null);
-              }
-            }
-          },
-          cancel: {
-            label: "Cancel",
-            callback: () => resolve(null)
-          }
-        }
-      }).render(true);
-    });
-  }
-
-  async _promptForSkill() {
-    const availableSkills = [
-      "Acrobatics", "Animal Handling", "Arcana", "Athletics", "Deception",
-      "History", "Insight", "Intimidation", "Investigation", "Medicine",
-      "Nature", "Perception", "Performance", "Persuasion", "Religion",
-      "Sleight of Hand", "Stealth", "Survival"
-    ];
-
-    return new Promise((resolve) => {
-      new Dialog({
-        title: "Add Skill",
-        content: `
-          <form>
-            <div class="form-group">
-              <label>Skill:</label>
-              <select name="skill" autofocus>
-                ${availableSkills.map(skill => `<option value="${skill}">${skill}</option>`).join('')}
-              </select>
-            </div>
-          </form>
-        `,
-        buttons: {
-          add: {
-            label: "Add",
-            callback: (html) => {
-              resolve(html.find('[name="skill"]').val());
-            }
-          },
-          cancel: {
-            label: "Cancel",
-            callback: () => resolve(null)
-          }
-        }
-      }).render(true);
-    });
-  }
-
-  async _promptForLanguage() {
-    const availableLanguages = [
-      "Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling",
-      "Orc", "Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal",
-      "Primordial", "Sylvan", "Undercommon"
-    ];
-
-    return new Promise((resolve) => {
-      new Dialog({
-        title: "Add Language",
-        content: `
-          <form>
-            <div class="form-group">
-              <label>Language:</label>
-              <select name="language" autofocus>
-                ${availableLanguages.map(lang => `<option value="${lang}">${lang}</option>`).join('')}
-              </select>
-            </div>
-          </form>
-        `,
-        buttons: {
-          add: {
-            label: "Add",
-            callback: (html) => {
-              resolve(html.find('[name="language"]').val());
-            }
-          },
-          cancel: {
-            label: "Cancel",
-            callback: () => resolve(null)
-          }
-        }
-      }).render(true);
-    });
-  }
-
   // Override render to preserve tab state
   async render(force = false, options = {}) {
-    // Store current tab before render
     const currentTab = this._currentTab;
-    
     const result = await super.render(force, options);
     
-    // Restore tab after render
     if (this._element && currentTab) {
       setTimeout(() => {
         this._showTab(currentTab, this._element);
@@ -739,4 +391,11 @@ export class NPCSheet extends JournalSheet {
     
     return result;
   }
-}
+
+  // Cleanup on close
+  close(options = {}) {
+    if (this._autoSaveTimeout) {
+      clearTimeout(this._autoSaveTimeout);
+    }
+    return super.close(options);
+  }
