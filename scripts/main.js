@@ -237,8 +237,8 @@ Hooks.on('renderJournalDirectory', (app, html, data) => {
   `);
 
   // Insert after the header but before the directory list
-  const directoryList = html.find('.directory-list');
-  directoryList.before(buttonGroup);
+  const directoryList = html.find('.directory-header');
+  directoryList.append(buttonGroup);
 
   // Event listeners for the buttons
   html.find('.create-location-btn').click(async () => {
