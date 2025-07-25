@@ -174,52 +174,39 @@ export class NPCSheet extends JournalSheet {
     }
   }
 
-  async _handleActorDrop(data) {
-    const actor = await fromUuid(data.uuid);
-    if (!actor) return;
-
-    // Check if this is for the main actor link or an associate
-    const dropZone = event.target.closest('.drop-zone');
-    const dropType = dropZone?.dataset.dropType;
-
-    if (dropType === "actor") {
-      // Link main actor
-      const currentData = this.document.getFlag("campaign-codex", "data") || {};
-      currentData.linkedActor = actor.id;
-      await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render();
-    } else if (dropType === "associate" && actor.type === "npc") {
-      // Create or find NPC journal for this actor and add as associate
-      let npcJournal = game.journal.find(j => {
-        const npcData = j.getFlag("campaign-codex", "data");
-        return npcData && npcData.linkedActor === actor.id;
-      });
-
-      if (!npcJournal) {
-        npcJournal = await game.campaignCodex.createNPCJournal(actor);
-      }
-
-      await game.campaignCodex.linkNPCToNPC(this.document, npcJournal);
-      this.render();
-    }
-  }
-
   async _handleJournalDrop(data) {
     const journal = await fromUuid(data.uuid);
     if (!journal) return;
 
     const journalType = journal.getFlag("campaign-codex", "type");
     
-    if (journalType === "location") {
-      await game.campaignCodex.linkLocationToNPC(journal, this.document);
-      this.render();
+    if (journalType === "npc") {
+      await game.campaignCodex.linkLocationToNPC(this.document, journal);
+      this.render(false); // Preserve current tab
     } else if (journalType === "shop") {
-      await game.campaignCodex.linkShopToNPC(journal, this.document);
-      this.render();
-    } else if (journalType === "npc") {
-      await game.campaignCodex.linkNPCToNPC(this.document, journal);
-      this.render();
+      await game.campaignCodex.linkLocationToShop(this.document, journal);
+      this.render(false); // Preserve current tab
     }
+  }
+
+  async _handleActorDrop(data) {
+    const actor = await fromUuid(data.uuid);
+    if (!actor || actor.type !== "npc") return;
+
+    // Check if there's already an NPC journal for this actor
+    let npcJournal = game.journal.find(j => {
+      const npcData = j.getFlag("campaign-codex", "data");
+      return npcData && npcData.linkedActor === actor.id;
+    });
+
+    // If no journal exists, create one
+    if (!npcJournal) {
+      npcJournal = await game.campaignCodex.createNPCJournal(actor);
+    }
+
+    // Link the location to the NPC journal
+    await game.campaignCodex.linkLocationToNPC(this.document, npcJournal);
+    this.render(false); // Preserve current tab
   }
 
   async _handleTileDrop(data) {

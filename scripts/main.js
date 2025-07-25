@@ -351,32 +351,33 @@ Hooks.on('renderJournalEntry', (journal, html, data) => {
   }
 });
 
+
 // Fixed Campaign Codex creation buttons for Journal Directory
 Hooks.on('renderJournalDirectory', (app, html, data) => {
   // Remove any existing button group to prevent duplicates
   html.find('.campaign-codex-buttons').remove();
   
-  // Create the button container with better structure
+  // Create the button container with compact structure
   const buttonGroup = $(`
     <div class="campaign-codex-buttons">
       <div class="button-row">
-        <button class="create-location-btn" type="button" title="Create New Location">
-          <i class="fas fa-map-marker-alt"></i>Location
+        <button class="create-location-btn compact-btn" type="button" title="Create New Location">
+          <i class="fas fa-map-marker-alt"></i>
         </button>
-        <button class="create-shop-btn" type="button" title="Create New Shop">
-          <i class="fas fa-store"></i>Shop
+        <button class="create-shop-btn compact-btn" type="button" title="Create New Shop">
+          <i class="fas fa-store"></i>
         </button>
-        <button class="create-npc-btn" type="button" title="Create New NPC Journal">
-          <i class="fas fa-user"></i>NPC
+        <button class="create-npc-btn compact-btn" type="button" title="Create New NPC Journal">
+          <i class="fas fa-user"></i>
         </button>
-        <button class="create-region-btn" type="button" title="Create New Region">
-          <i class="fas fa-globe"></i>Region
+        <button class="create-region-btn compact-btn" type="button" title="Create New Region">
+          <i class="fas fa-globe"></i>
         </button>
       </div>
     </div>
   `);
 
-  // Insert into the directory header as you specified
+  // Insert into the directory header
   const directoryHeader = html.find('.directory-header');
   directoryHeader.append(buttonGroup);
 
