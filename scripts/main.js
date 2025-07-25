@@ -352,6 +352,7 @@ Hooks.on('renderJournalEntry', (journal, html, data) => {
 });
 
 
+
 // Fixed Campaign Codex creation buttons for Journal Directory
 Hooks.on('renderJournalDirectory', (app, html, data) => {
   // Remove any existing button group to prevent duplicates
@@ -380,7 +381,6 @@ Hooks.on('renderJournalDirectory', (app, html, data) => {
   // Insert into the directory header
   const directoryHeader = html.find('.directory-header');
   directoryHeader.append(buttonGroup);
-
   // Event listeners for the buttons
   html.find('.create-location-btn').click(async () => {
     const name = await promptForName("Location");

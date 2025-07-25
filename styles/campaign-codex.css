@@ -328,7 +328,347 @@
   margin-top: 2px;
 }
 
-/* Responsive Design */
+/* NPC Character Creation Styles */
+.campaign-codex .character-basics {
+  background: var(--cc-card-bg);
+  border: 1px solid var(--cc-border-light);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.campaign-codex .form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.campaign-codex .form-row:last-child {
+  margin-bottom: 0;
+}
+
+.campaign-codex .form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.campaign-codex .ability-scores-section,
+.campaign-codex .combat-stats-section {
+  background: var(--cc-card-bg);
+  border: 1px solid var(--cc-border-light);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.campaign-codex .ability-scores-section h3,
+.campaign-codex .combat-stats-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cc-main-text);
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.campaign-codex .abilities-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.campaign-codex .ability-block {
+  text-align: center;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--cc-border-light);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.campaign-codex .ability-name {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--cc-text-muted);
+  margin-bottom: 6px;
+}
+
+.campaign-codex .ability-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.campaign-codex .ability-input {
+  width: 40px;
+  padding: 2px 4px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.campaign-codex .ability-roll {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 8px;
+  color: var(--cc-text-muted);
+}
+
+.campaign-codex .ability-roll:hover {
+  background: var(--cc-accent);
+  color: white;
+  border-color: var(--cc-accent);
+}
+
+.campaign-codex .ability-modifier {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cc-accent);
+}
+
+.campaign-codex .combat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.campaign-codex .combat-stat {
+  text-align: center;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--cc-border-light);
+  border-radius: 6px;
+  padding: 8px;
+  position: relative;
+}
+
+.campaign-codex .combat-stat .form-label {
+  font-size: 10px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  justify-content: center;
+}
+
+.campaign-codex .combat-stat .form-input {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 12px;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.campaign-codex .combat-stat .unit {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  font-size: 8px;
+  color: var(--cc-text-muted);
+  pointer-events: none;
+}
+
+.campaign-codex .character-preview {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 8px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.campaign-codex .preview-line {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 2px;
+}
+
+.campaign-codex .preview-stats {
+  font-size: 9px;
+  color: var(--cc-accent);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.campaign-codex .preview-stats span {
+  margin-right: 8px;
+}
+
+/* Skills & Equipment Tab Styles */
+.campaign-codex .skills-section,
+.campaign-codex .languages-section,
+.campaign-codex .equipment-section {
+  background: var(--cc-card-bg);
+  border: 1px solid var(--cc-border-light);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.campaign-codex .skills-section h3,
+.campaign-codex .languages-section h3,
+.campaign-codex .equipment-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cc-main-text);
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.campaign-codex .skills-list,
+.campaign-codex .languages-list,
+.campaign-codex .equipment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.campaign-codex .skill-item,
+.campaign-codex .language-item {
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  padding: 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.campaign-codex .skill-name,
+.campaign-codex .language-name {
+  color: var(--cc-main-text);
+  font-weight: 500;
+}
+
+.campaign-codex .remove-skill,
+.campaign-codex .remove-language {
+  background: none;
+  border: none;
+  color: var(--cc-danger);
+  cursor: pointer;
+  padding: 0;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+}
+
+.campaign-codex .equipment-item {
+  background: var(--cc-card-bg);
+  border: 1px solid var(--cc-border-light);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  width: 100%;
+}
+
+.campaign-codex .equipment-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.campaign-codex .equipment-name {
+  font-weight: 600;
+  color: var(--cc-main-text);
+}
+
+.campaign-codex .equipment-type {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 9px;
+  color: var(--cc-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.campaign-codex .equipment-quantity {
+  font-size: 11px;
+  color: var(--cc-accent);
+  font-weight: 600;
+}
+
+.campaign-codex .remove-equipment {
+  background: none;
+  border: none;
+  color: var(--cc-danger);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.campaign-codex .remove-equipment:hover {
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.campaign-codex .btn-secondary {
+  background: var(--cc-accent);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.campaign-codex .btn-secondary:hover {
+  background: var(--cc-accent-hover);
+  transform: translateY(-1px);
+}
+
+/* Personality Tab Styles */
+.campaign-codex .personality-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .campaign-codex .abilities-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .campaign-codex .combat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .campaign-codex .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .campaign-codex .personality-grid {
+    grid-template-columns: 1fr;
+  }
+}
 @media (max-width: 768px) {
   .campaign-codex .sidebar {
     width: 200px !important;

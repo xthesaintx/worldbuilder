@@ -208,7 +208,6 @@ export class NPCSheet extends JournalSheet {
     await game.campaignCodex.linkLocationToNPC(this.document, npcJournal);
     this.render(false); // Preserve current tab
   }
-
   async _handleTileDrop(data) {
     // Handle tile drops for image associations
     const tile = await fromUuid(data.uuid);
@@ -323,3 +322,82 @@ export class NPCSheet extends JournalSheet {
     if (journal) journal.sheet.render(true);
   }
 }
+
+
+  async getData() {
+    const data = await super.getData();
+    const npcData = this.document.getFlag("campaign-codex", "data") || {};
+    
+    // Get linked documents
+    data.linkedActor = npcData.linkedActor ? await this._getLinkedActor(npcData.linkedActor) : null;
+    data.linkedLocations = await this._getLinkedLocations(npcData.linkedLocations || []);
+    data.linkedShops = await this._getLinkedShops(npcData.linkedShops || []);
+    data.associates = await this._getAssociates(npcData.associates || []);
+    
+    // NPC specific data with basic character info
+    data.npcData = {
+      // Basic Info
+      name: npcData.name || this.document.name,
+      race: npcData.race || "",
+      class: npcData.class || "",
+      level: npcData.level || 1,
+      alignment: npcData.alignment || "",
+      background: npcData.background || "",
+      
+      // Ability Scores
+      abilities: npcData.abilities || {
+        str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10
+      },
+      
+      // Combat Stats
+      ac: npcData.ac || 10,
+      hp: npcData.hp || { value: 8, max: 8 },
+      speed: npcData.speed || 30,
+      
+      // Skills & Proficiencies
+      skills: npcData.skills || [],
+      languages: npcData.languages || [],
+      proficiencyBonus: npcData.proficiencyBonus || Math.ceil(1 + (npcData.level || 1) / 4),
+      
+      // Equipment & Inventory
+      equipment: npcData.equipment || [],
+      
+      // Descriptions
+      description: npcData.description || "",
+      personality: npcData.personality || "",
+      ideals: npcData.ideals || "",
+      bonds: npcData.bonds || "",
+      flaws: npcData.flaws || "",
+      notes: npcData.notes || ""
+    };
+
+    // Calculate ability modifiers
+    data.npcData.abilityMods = {};
+    for (const [key, value] of Object.entries(data.npcData.abilities)) {
+      data.npcData.abilityMods[key] = Math.floor((value - 10) / 2);
+    }
+
+    // Available skills list for D&D 5e
+    data.availableSkills = [
+      "Acrobatics", "Animal Handling", "Arcana", "Athletics", "Deception",
+      "History", "Insight", "Intimidation", "Investigation", "Medicine",
+      "Nature", "Perception", "Performance", "Persuasion", "Religion",
+      "Sleight of Hand", "Stealth", "Survival"
+    ];
+
+    // Available languages
+    data.availableLanguages = [
+      "Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling",
+      "Orc", "Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal",
+      "Primordial", "Sylvan", "Undercommon"
+    ];
+
+    // Equipment types for easy adding
+    data.equipmentTypes = [
+      "Weapon", "Armor", "Shield", "Tool", "Adventuring Gear", "Treasure"
+    ];
+
+    data.canEdit = this.document.canUserModify(game.user, "update");
+    
+    return data;
+  }

@@ -89,11 +89,127 @@
         {{!-- Info Tab --}}
         <section class="tab-panel active" data-tab="info">
           <div class="content-header">
-            <h2><i class="fas fa-info-circle"></i> NPC Information</h2>
+            <h2><i class="fas fa-info-circle"></i> Character Information</h2>
           </div>
 
-          {{!-- Actor Link Section --}}
+          {{!-- Basic Character Info --}}
+          <div class="character-basics">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fas fa-user"></i>
+                  Character Name
+                </label>
+                <input name="name" class="form-input" type="text" value="{{npcData.name}}" placeholder="Character name..." />
+              </div>
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fas fa-users"></i>
+                  Race
+                </label>
+                <input name="race" class="form-input" type="text" value="{{npcData.race}}" placeholder="Human, Elf, etc..." />
+              </div>
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fas fa-sword"></i>
+                  Class
+                </label>
+                <input name="class" class="form-input" type="text" value="{{npcData.class}}" placeholder="Fighter, Wizard, etc..." />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fas fa-level-up-alt"></i>
+                  Level
+                </label>
+                <input name="level" class="form-input" type="number" value="{{npcData.level}}" min="1" max="20" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fas fa-balance-scale"></i>
+                  Alignment
+                </label>
+                <select name="alignment" class="form-input">
+                  <option value="">Choose alignment...</option>
+                  <option value="Lawful Good" {{#if (eq npcData.alignment "Lawful Good")}}selected{{/if}}>Lawful Good</option>
+                  <option value="Neutral Good" {{#if (eq npcData.alignment "Neutral Good")}}selected{{/if}}>Neutral Good</option>
+                  <option value="Chaotic Good" {{#if (eq npcData.alignment "Chaotic Good")}}selected{{/if}}>Chaotic Good</option>
+                  <option value="Lawful Neutral" {{#if (eq npcData.alignment "Lawful Neutral")}}selected{{/if}}>Lawful Neutral</option>
+                  <option value="True Neutral" {{#if (eq npcData.alignment "True Neutral")}}selected{{/if}}>True Neutral</option>
+                  <option value="Chaotic Neutral" {{#if (eq npcData.alignment "Chaotic Neutral")}}selected{{/if}}>Chaotic Neutral</option>
+                  <option value="Lawful Evil" {{#if (eq npcData.alignment "Lawful Evil")}}selected{{/if}}>Lawful Evil</option>
+                  <option value="Neutral Evil" {{#if (eq npcData.alignment "Neutral Evil")}}selected{{/if}}>Neutral Evil</option>
+                  <option value="Chaotic Evil" {{#if (eq npcData.alignment "Chaotic Evil")}}selected{{/if}}>Chaotic Evil</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">
+                  <i class="fas fa-book"></i>
+                  Background
+                </label>
+                <input name="background" class="form-input" type="text" value="{{npcData.background}}" placeholder="Acolyte, Criminal, etc..." />
+              </div>
+            </div>
+          </div>
+
+          {{!-- Ability Scores --}}
+          <div class="ability-scores-section">
+            <h3><i class="fas fa-dice-d20"></i> Ability Scores</h3>
+            <div class="abilities-grid">
+              {{#each npcData.abilities as |value key|}}
+                <div class="ability-block">
+                  <div class="ability-name">{{key}}</div>
+                  <div class="ability-controls">
+                    <input type="number" class="ability-input" data-ability="{{key}}" name="{{key}}" value="{{value}}" min="1" max="20" />
+                    <button type="button" class="ability-roll" data-ability="{{key}}" title="Roll 4d6 drop lowest">
+                      <i class="fas fa-dice"></i>
+                    </button>
+                  </div>
+                  <div class="ability-modifier">
+                    {{#if (lookup ../npcData.abilityMods key)}}
+                      {{#if (gt (lookup ../npcData.abilityMods key) 0)}}+{{/if}}{{lookup ../npcData.abilityMods key}}
+                    {{else}}
+                      +0
+                    {{/if}}
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          </div>
+
+          {{!-- Combat Stats --}}
+          <div class="combat-stats-section">
+            <h3><i class="fas fa-shield-alt"></i> Combat Statistics</h3>
+            <div class="combat-grid">
+              <div class="combat-stat">
+                <label class="form-label">AC</label>
+                <input name="ac" class="form-input" type="number" value="{{npcData.ac}}" min="1" />
+              </div>
+              <div class="combat-stat">
+                <label class="form-label">Current HP</label>
+                <input name="hpCurrent" class="form-input hp-input" data-field="value" type="number" value="{{npcData.hp.value}}" min="0" />
+              </div>
+              <div class="combat-stat">
+                <label class="form-label">Max HP</label>
+                <input name="hpMax" class="form-input hp-input" data-field="max" type="number" value="{{npcData.hp.max}}" min="1" />
+              </div>
+              <div class="combat-stat">
+                <label class="form-label">Speed</label>
+                <input name="speed" class="form-input" type="number" value="{{npcData.speed}}" min="0" />
+                <span class="unit">ft</span>
+              </div>
+              <div class="combat-stat">
+                <label class="form-label">Prof. Bonus</label>
+                <input class="form-input" type="text" value="+{{npcData.proficiencyBonus}}" readonly />
+              </div>
+            </div>
+          </div>
+
+          {{!-- Actor Link Section (Optional) --}}
           <div class="form-section actor-link-section">
+            <h3><i class="fas fa-link"></i> Link to Actor (Optional)</h3>
             {{#if linkedActor}}
               <div class="linked-actor-card">
                 <div class="actor-image">
@@ -104,20 +220,6 @@
                   <div class="actor-details">
                     <span class="actor-race-class">{{linkedActor.race}} {{linkedActor.class}}</span>
                     <span class="actor-level">Level {{linkedActor.level}}</span>
-                  </div>
-                  <div class="actor-stats-grid">
-                    <div class="stat-item">
-                      <span class="stat-label">AC</span>
-                      <span class="stat-value">{{linkedActor.ac}}</span>
-                    </div>
-                    <div class="stat-item">
-                      <span class="stat-label">HP</span>
-                      <span class="stat-value">{{linkedActor.hp.value}}/{{linkedActor.hp.max}}</span>
-                    </div>
-                    <div class="stat-item">
-                      <span class="stat-label">Speed</span>
-                      <span class="stat-value">{{linkedActor.speed}} ft</span>
-                    </div>
                   </div>
                 </div>
                 <div class="actor-actions">
@@ -133,8 +235,8 @@
               <div class="drop-zone" data-drop-type="actor">
                 <div class="drop-content">
                   <i class="fas fa-user-plus"></i>
-                  <h3>Link Actor</h3>
-                  <p>Drag an NPC actor here to link it to this journal</p>
+                  <h3>Link Actor (Optional)</h3>
+                  <p>Drag an NPC actor here to link it to this character sheet</p>
                 </div>
               </div>
             {{/if}}
@@ -145,33 +247,10 @@
               <i class="fas fa-align-left"></i>
               Description
             </label>
-            <textarea name="description" class="form-textarea" rows="8" placeholder="Describe this NPC...">{{npcData.description}}</textarea>
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-map-marker-alt"></i></div>
-              <div class="stat-content">
-                <div class="stat-number">{{linkedLocations.length}}</div>
-                <div class="stat-label">Locations</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-store"></i></div>
-              <div class="stat-content">
-                <div class="stat-number">{{linkedShops.length}}</div>
-                <div class="stat-label">Shops</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-users"></i></div>
-              <div class="stat-content">
-                <div class="stat-number">{{associates.length}}</div>
-                <div class="stat-label">Associates</div>
-              </div>
-            </div>
+            <textarea name="description" class="form-textarea" rows="6" placeholder="Physical description, mannerisms, etc...">{{npcData.description}}</textarea>
           </div>
         </section>
+    
 
         {{!-- Locations Tab --}}
         <section class="tab-panel" data-tab="locations">
