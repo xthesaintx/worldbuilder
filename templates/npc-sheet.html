@@ -1,27 +1,37 @@
 <div class="campaign-codex npc-sheet">
   
+  {{!-- Header Banner --}}
+  <header class="sheet-banner">
+    <div class="banner-overlay"></div>
+    <div class="banner-content">
+      <h1 class="location-name">{{document.name}}</h1>
+      <div class="location-type">NPC Journal</div>
+    </div>
+  </header>
+
   <div class="sheet-body">
     {{!-- Sidebar Navigation --}}
     <nav class="sidebar">
       <div class="sidebar-header">
-        <div class="location-image">
+        <div class="location-image" title="Click to change image">
           {{#if linkedActor}}
             <img src="{{linkedActor.img}}" alt="{{linkedActor.name}}" onerror="this.src='icons/svg/mystery-man.svg'">
           {{else}}
             <img src="{{document.img}}" alt="{{document.name}}" onerror="this.src='icons/svg/mystery-man.svg'">
           {{/if}}
         </div>
+        <button class="image-change-btn" type="button">
+          <i class="fas fa-camera"></i> Change Image
+        </button>
+        
         {{#if linkedActor}}
-          <div class="actor-summary">
-            <h4 class="actor-name">{{linkedActor.name}}</h4>
-            <div class="actor-details">
-              <span class="actor-race-class">{{linkedActor.race}} {{linkedActor.class}}</span>
-              <span class="actor-level">Level {{linkedActor.level}}</span>
+          <div class="actor-stats">
+            <div class="stat-row">
+              <span class="stat-label">Level {{linkedActor.level}} {{linkedActor.race}} {{linkedActor.class}}</span>
             </div>
-            <div class="actor-stats-compact">
-              <span class="stat-compact">AC {{linkedActor.ac}}</span>
-              <span class="stat-compact">HP {{linkedActor.hp.value}}/{{linkedActor.hp.max}}</span>
-              <span class="stat-compact">{{linkedActor.speed}}ft</span>
+            <div class="stat-row">
+              <span class="stat-value">AC {{linkedActor.ac}}</span>
+              <span class="stat-value">HP {{linkedActor.hp.value}}/{{linkedActor.hp.max}}</span>
             </div>
           </div>
         {{/if}}
@@ -50,24 +60,43 @@
         </li>
       </ul>
 
-      {{!-- Quick Links Section --}}
+      {{!-- Statistics Section --}}
+      <div class="sidebar-stats">
+        <div class="stat-item">
+          <i class="fas fa-map-marker-alt" style="color: #28a745;"></i>
+          <span class="stat-number">{{linkedLocations.length}}</span>
+          <span class="stat-label">LOCATIONS</span>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-store" style="color: #6f42c1;"></i>
+          <span class="stat-number">{{linkedShops.length}}</span>
+          <span class="stat-label">SHOPS</span>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-users" style="color: #fd7e14;"></i>
+          <span class="stat-number">{{associates.length}}</span>
+          <span class="stat-label">ASSOCIATES</span>
+        </div>
+      </div>
+
+      {{!-- Links Section --}}
       <div class="sidebar-links">
-        <h3>Quick Links</h3>
+        <h3>Quicklinks</h3>
         <div class="link-grid">
           {{#each linkedLocations}}
-            <div class="link-card location-link" data-location-id="{{id}}">
+            <div class="link-card location-link" data-location-id="{{id}}" title="{{name}}">
               <img src="{{img}}" alt="{{name}}">
               <span class="link-name">{{name}}</span>
             </div>
           {{/each}}
           {{#each linkedShops}}
-            <div class="link-card shop-link" data-shop-id="{{id}}">
+            <div class="link-card shop-link" data-shop-id="{{id}}" title="{{name}}">
               <img src="{{img}}" alt="{{name}}">
               <span class="link-name">{{name}}</span>
             </div>
           {{/each}}
           {{#each associates}}
-            <div class="link-card npc-link" data-npc-id="{{id}}">
+            <div class="link-card npc-link" data-npc-id="{{id}}" title="{{name}}">
               <img src="{{img}}" alt="{{name}}">
               <span class="link-name">{{name}}</span>
             </div>
@@ -82,13 +111,11 @@
         
         {{!-- Info Tab --}}
         <section class="tab-panel {{#if (eq currentTab 'info')}}active{{/if}}" data-tab="info">
-          <div class="content-header">
-            <h2><i class="fas fa-info-circle"></i> NPC Information</h2>
-          </div>
-
+          
           {{!-- Actor Link Section --}}
-          <div class="form-section actor-link-section">
-            {{#if linkedActor}}
+          {{#if linkedActor}}
+            <div class="linked-actor-section">
+              <h3><i class="fas fa-link"></i> Link Actor</h3>
               <div class="linked-actor-card">
                 <div class="actor-image">
                   <img src="{{linkedActor.img}}" alt="{{linkedActor.name}}">
@@ -123,47 +150,25 @@
                   </button>
                 </div>
               </div>
-            {{else}}
-              <div class="drop-zone compact" data-drop-type="actor">
+            </div>
+          {{else}}
+            <div class="actor-link-section">
+              <h3><i class="fas fa-link"></i> Link Actor</h3>
+              <div class="drop-zone" data-drop-type="actor">
                 <div class="drop-content">
                   <i class="fas fa-user-plus"></i>
-                  <h3>Link Actor</h3>
-                  <p>Drag an NPC actor here to link</p>
+                  <h4>Drag an NPC actor here to link</h4>
                 </div>
               </div>
-            {{/if}}
-          </div>
+            </div>
+          {{/if}}
           
           <div class="form-section">
             <label class="form-label">
               <i class="fas fa-align-left"></i>
               Description
             </label>
-            <textarea name="description" class="form-textarea" rows="6" placeholder="Describe this NPC...">{{npcData.description}}</textarea>
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-map-marker-alt"></i></div>
-              <div class="stat-content">
-                <div class="stat-number">{{linkedLocations.length}}</div>
-                <div class="stat-label">Locations</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-store"></i></div>
-              <div class="stat-content">
-                <div class="stat-number">{{linkedShops.length}}</div>
-                <div class="stat-label">Shops</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-users"></i></div>
-              <div class="stat-content">
-                <div class="stat-number">{{associates.length}}</div>
-                <div class="stat-label">Associates</div>
-              </div>
-            </div>
+            <textarea name="description" class="form-textarea" rows="8" placeholder="Describe this NPC...">{{npcData.description}}</textarea>
           </div>
         </section>
 
@@ -173,6 +178,14 @@
             <h2><i class="fas fa-map-marker-alt"></i> Locations</h2>
           </div>
           
+          <div class="drop-zone" data-drop-type="location">
+            <div class="drop-content">
+              <i class="fas fa-map-marker-alt"></i>
+              <h3>Add Locations</h3>
+              <p>Drag location journals here to associate this NPC with them</p>
+            </div>
+          </div>
+
           {{#if linkedLocations}}
             <div class="entity-grid">
               {{#each linkedLocations}}
@@ -201,7 +214,7 @@
             <div class="empty-state">
               <i class="fas fa-map-marker-alt"></i>
               <h3>No Locations</h3>
-              <p>Drag location journals anywhere to show where this NPC can be found</p>
+              <p>Drag location journals here to show where this NPC can be found</p>
             </div>
           {{/if}}
         </section>
@@ -210,6 +223,14 @@
         <section class="tab-panel {{#if (eq currentTab 'shops')}}active{{/if}}" data-tab="shops">
           <div class="content-header">
             <h2><i class="fas fa-store"></i> Associated Shops</h2>
+          </div>
+          
+          <div class="drop-zone" data-drop-type="shop">
+            <div class="drop-content">
+              <i class="fas fa-store"></i>
+              <h3>Add Shops</h3>
+              <p>Drag shop journals here to associate this NPC with them</p>
+            </div>
           </div>
 
           {{#if linkedShops}}
@@ -240,7 +261,7 @@
             <div class="empty-state">
               <i class="fas fa-store"></i>
               <h3>No Shops</h3>
-              <p>Drag shop journals anywhere to show what businesses this NPC is associated with</p>
+              <p>Drag shop journals here to show what businesses this NPC is associated with</p>
             </div>
           {{/if}}
         </section>
@@ -249,6 +270,14 @@
         <section class="tab-panel {{#if (eq currentTab 'associates')}}active{{/if}}" data-tab="associates">
           <div class="content-header">
             <h2><i class="fas fa-users"></i> Associates & Contacts</h2>
+          </div>
+          
+          <div class="drop-zone" data-drop-type="associate">
+            <div class="drop-content">
+              <i class="fas fa-user-friends"></i>
+              <h3>Add Associates</h3>
+              <p>Drag NPC journals or actors here to create relationships</p>
+            </div>
           </div>
 
           {{#if associates}}
@@ -290,7 +319,7 @@
             <div class="empty-state">
               <i class="fas fa-users"></i>
               <h3>No Associates</h3>
-              <p>Drag other NPCs anywhere to create relationships and connections</p>
+              <p>Drag other NPCs here to create relationships and connections</p>
             </div>
           {{/if}}
         </section>
@@ -306,12 +335,27 @@
               <i class="fas fa-eye-slash"></i>
               Private Notes
             </label>
-            <textarea name="notes" class="form-textarea" rows="15" placeholder="Private GM notes about this NPC...">{{npcData.notes}}</textarea>
+            <textarea name="notes" class="form-textarea" rows="12" placeholder="Private GM notes about this NPC...">{{npcData.notes}}</textarea>
           </div>
         </section>
 
       </form>
     </main>
   </div>
+
+  {{!-- Footer --}}
+  <footer class="sheet-footer">
+    <div class="footer-left">
+      <button type="button" class="small-save-btn save-data">
+        <i class="fas fa-save"></i>
+      </button>
+    </div>
+    <div class="footer-right">
+      <button type="button" class="save-btn save-data">
+        <i class="fas fa-save"></i>
+        SAVE
+      </button>
+    </div>
+  </footer>
 
 </div>

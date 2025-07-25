@@ -1,5 +1,14 @@
 <div class="campaign-codex location-sheet">
   
+  {{!-- Header Banner --}}
+  <header class="sheet-banner">
+    <div class="banner-overlay"></div>
+    <div class="banner-content">
+      <h1 class="location-name">{{document.name}}</h1>
+      <div class="location-type">Location</div>
+    </div>
+  </header>
+
   <div class="sheet-body">
     {{!-- Sidebar Navigation --}}
     <nav class="sidebar">
@@ -31,18 +40,32 @@
         </li>
       </ul>
 
+      {{!-- Statistics Section --}}
+      <div class="sidebar-stats">
+        <div class="stat-item">
+          <i class="fas fa-users" style="color: #fd7e14;"></i>
+          <span class="stat-number">{{linkedNPCs.length}}</span>
+          <span class="stat-label">NPCS</span>
+        </div>
+        <div class="stat-item">
+          <i class="fas fa-store" style="color: #6f42c1;"></i>
+          <span class="stat-number">{{linkedShops.length}}</span>
+          <span class="stat-label">SHOPS</span>
+        </div>
+      </div>
+
       {{!-- Links Section --}}
       <div class="sidebar-links">
-        <h3>Quick Links</h3>
+        <h3>Quicklinks</h3>
         <div class="link-grid">
           {{#each linkedNPCs}}
-            <div class="link-card npc-link" data-npc-id="{{id}}">
+            <div class="link-card npc-link" data-npc-id="{{id}}" title="{{name}}">
               <img src="{{img}}" alt="{{name}}">
               <span class="link-name">{{name}}</span>
             </div>
           {{/each}}
           {{#each linkedShops}}
-            <div class="link-card shop-link" data-shop-id="{{id}}">
+            <div class="link-card shop-link" data-shop-id="{{id}}" title="{{name}}">
               <img src="{{img}}" alt="{{name}}">
               <span class="link-name">{{name}}</span>
             </div>
@@ -57,33 +80,12 @@
         
         {{!-- Info Tab --}}
         <section class="tab-panel {{#if (eq currentTab 'info')}}active{{/if}}" data-tab="info">
-          <div class="content-header">
-            <h2><i class="fas fa-info-circle"></i> Location Information</h2>
-          </div>
-          
           <div class="form-section">
             <label class="form-label">
               <i class="fas fa-align-left"></i>
               Description
             </label>
-            <textarea name="description" class="form-textarea" rows="6" placeholder="Describe this location...">{{locationData.description}}</textarea>
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-users"></i></div>
-              <div class="stat-content">
-                <div class="stat-number">{{linkedNPCs.length}}</div>
-                <div class="stat-label">NPCs</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-store"></i></div>
-              <div class="stat-content">
-                <div class="stat-number">{{linkedShops.length}}</div>
-                <div class="stat-label">Shops</div>
-              </div>
-            </div>
+            <textarea name="description" class="form-textarea" rows="8" placeholder="Describe this location...">{{locationData.description}}</textarea>
           </div>
         </section>
 
@@ -91,6 +93,14 @@
         <section class="tab-panel {{#if (eq currentTab 'npcs')}}active{{/if}}" data-tab="npcs">
           <div class="content-header">
             <h2><i class="fas fa-users"></i> NPCs at this Location</h2>
+          </div>
+          
+          <div class="drop-zone" data-drop-type="npc">
+            <div class="drop-content">
+              <i class="fas fa-user-plus"></i>
+              <h3>Add NPCs</h3>
+              <p>Drag NPCs or actors here to add them to this location</p>
+            </div>
           </div>
 
           {{#if linkedNPCs}}
@@ -128,7 +138,7 @@
             <div class="empty-state">
               <i class="fas fa-users"></i>
               <h3>No NPCs</h3>
-              <p>Drag NPCs anywhere on this sheet to populate this location</p>
+              <p>Drag NPCs here to populate this location</p>
             </div>
           {{/if}}
         </section>
@@ -137,6 +147,14 @@
         <section class="tab-panel {{#if (eq currentTab 'shops')}}active{{/if}}" data-tab="shops">
           <div class="content-header">
             <h2><i class="fas fa-store"></i> Shops at this Location</h2>
+          </div>
+          
+          <div class="drop-zone" data-drop-type="shop">
+            <div class="drop-content">
+              <i class="fas fa-store"></i>
+              <h3>Add Shops</h3>
+              <p>Drag shop journals here to add them to this location</p>
+            </div>
           </div>
 
           {{#if linkedShops}}
@@ -167,7 +185,7 @@
             <div class="empty-state">
               <i class="fas fa-store"></i>
               <h3>No Shops</h3>
-              <p>Drag shop journals anywhere on this sheet to add commerce to this location</p>
+              <p>Drag shop journals here to add commerce to this location</p>
             </div>
           {{/if}}
         </section>
@@ -183,12 +201,27 @@
               <i class="fas fa-eye-slash"></i>
               Private Notes
             </label>
-            <textarea name="notes" class="form-textarea" rows="15" placeholder="Private GM notes about this location...">{{locationData.notes}}</textarea>
+            <textarea name="notes" class="form-textarea" rows="12" placeholder="Private GM notes about this location...">{{locationData.notes}}</textarea>
           </div>
         </section>
 
       </form>
     </main>
   </div>
+
+  {{!-- Footer --}}
+  <footer class="sheet-footer">
+    <div class="footer-left">
+      <button type="button" class="small-save-btn save-data">
+        <i class="fas fa-save"></i>
+      </button>
+    </div>
+    <div class="footer-right">
+      <button type="button" class="save-btn save-data">
+        <i class="fas fa-save"></i>
+        SAVE
+      </button>
+    </div>
+  </footer>
 
 </div>

@@ -2,8 +2,6 @@ export class NPCSheet extends JournalSheet {
   constructor(document, options = {}) {
     super(document, options);
     this._currentTab = 'info';
-    this._autoSaveTimeout = null;
-    this._isDragging = false;
   }
 
   static get defaultOptions() {
@@ -12,7 +10,6 @@ export class NPCSheet extends JournalSheet {
       width: 900,
       height: 700,
       resizable: true,
-      dragDrop: [{ dragSelector: null, dropSelector: null }], // Accept drops anywhere
       tabs: [{ navSelector: ".sidebar-tabs", contentSelector: ".main-content", initial: "info" }]
     });
   }
@@ -51,7 +48,7 @@ export class NPCSheet extends JournalSheet {
         name: actor.name,
         img: actor.img,
         race: actor.system.details?.race || "Unknown",
-        class: actor.system.details?.class || "Unknown", 
+        class: actor.system.details?.class || "Unknown",
         level: actor.system.details?.level || 1,
         ac: actor.system.attributes?.ac?.value || 10,
         hp: actor.system.attributes?.hp || { value: 0, max: 0 },
@@ -112,14 +109,24 @@ export class NPCSheet extends JournalSheet {
   activateListeners(html) {
     super.activateListeners(html);
 
-    // Activate tabs and preserve state
+    // Activate tabs
     this._activateTabs(html);
 
-    // Make entire main content area droppable
-    this._setupDragAndDrop(html);
+    // Make the sheet a drop target
+    html[0].addEventListener('drop', this._onDrop.bind(this));
+    html[0].addEventListener('dragover', this._onDragOver.bind(this));
 
-    // Auto-save functionality
-    this._setupAutoSave(html);
+    // Name editing
+    html.find('.location-name').click(this._onNameEdit.bind(this));
+    html.find('.name-input').blur(this._onNameSave.bind(this));
+    html.find('.name-input').keypress(this._onNameKeypress.bind(this));
+
+    // Image change functionality
+    html.find('.location-image').click(this._onImageClick.bind(this));
+    html.find('.image-change-btn').click(this._onImageClick.bind(this));
+
+    // Save button (remove auto-save, only manual save)
+    html.find('.save-data').click(this._onSaveData.bind(this));
 
     // Remove buttons
     html.find('.remove-actor').click(this._onRemoveActor.bind(this));
@@ -127,14 +134,20 @@ export class NPCSheet extends JournalSheet {
     html.find('.remove-shop').click(this._onRemoveShop.bind(this));
     html.find('.remove-associate').click(this._onRemoveAssociate.bind(this));
 
-    // Open document buttons
+    // Open document buttons (fixed)
     html.find('.open-actor').click(this._onOpenActor.bind(this));
     html.find('.open-location').click(this._onOpenLocation.bind(this));
     html.find('.open-shop').click(this._onOpenShop.bind(this));
     html.find('.open-associate').click(this._onOpenAssociate.bind(this));
+
+    // Quick links (fixed)
+    html.find('.location-link').click(this._onOpenLocation.bind(this));
+    html.find('.shop-link').click(this._onOpenShop.bind(this));
+    html.find('.npc-link').click(this._onOpenAssociate.bind(this));
   }
 
   _activateTabs(html) {
+    // Tab navigation for sidebar tabs
     html.find('.sidebar-tabs .tab-item').click(event => {
       event.preventDefault();
       const tab = event.currentTarget.dataset.tab;
@@ -142,131 +155,96 @@ export class NPCSheet extends JournalSheet {
       this._showTab(tab, html);
     });
 
-    // Show current tab (preserves state)
+    // Show current tab
     this._showTab(this._currentTab, html);
   }
 
   _showTab(tabName, html) {
     const $html = html instanceof jQuery ? html : $(html);
     
+    // Remove active from all tabs and panels
     $html.find('.sidebar-tabs .tab-item').removeClass('active');
     $html.find('.tab-panel').removeClass('active');
 
+    // Add active to the correct tab and panel
     $html.find(`.sidebar-tabs .tab-item[data-tab="${tabName}"]`).addClass('active');
     $html.find(`.tab-panel[data-tab="${tabName}"]`).addClass('active');
   }
 
-  _setupDragAndDrop(html) {
-    const mainContent = html.find('.main-content')[0];
+  // Name editing functionality
+  async _onNameEdit(event) {
+    const nameElement = $(event.currentTarget);
+    const currentName = nameElement.text();
     
-    // Handle drag events for visual feedback
-    mainContent.addEventListener('dragenter', (event) => {
-      event.preventDefault();
-      this._isDragging = true;
-      mainContent.classList.add('drag-active');
-    });
+    const input = $(`<input type="text" class="name-input" value="${currentName}" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 2px 8px; border-radius: 4px; font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">`);
+    
+    nameElement.replaceWith(input);
+    input.focus().select();
+  }
 
-    mainContent.addEventListener('dragleave', (event) => {
-      event.preventDefault();
-      // Only remove drag-active if we're actually leaving the main content
-      if (!mainContent.contains(event.relatedTarget)) {
-        this._isDragging = false;
-        mainContent.classList.remove('drag-active');
+  async _onNameSave(event) {
+    const input = $(event.currentTarget);
+    const newName = input.val().trim();
+    
+    if (newName && newName !== this.document.name) {
+      await this.document.update({ name: newName });
+    }
+    
+    const nameElement = $(`<h1 class="location-name">${this.document.name}</h1>`);
+    input.replaceWith(nameElement);
+    nameElement.click(this._onNameEdit.bind(this));
+  }
+
+  async _onNameKeypress(event) {
+    if (event.which === 13) { // Enter key
+      event.currentTarget.blur();
+    }
+  }
+
+  async _onImageClick(event) {
+    event.preventDefault();
+    
+    const current = this.document.img;
+    const fp = new FilePicker({
+      type: "image",
+      current: current,
+      callback: async (path) => {
+        await this.document.update({ img: path });
+        this.render(false);
       }
     });
-
-    mainContent.addEventListener('dragover', (event) => {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "link";
-    });
-
-    mainContent.addEventListener('drop', (event) => {
-      event.preventDefault();
-      this._isDragging = false;
-      mainContent.classList.remove('drag-active');
-      this._onDrop(event);
-    });
+    
+    return fp.browse();
   }
 
-  _setupAutoSave(html) {
-    // Auto-save on input changes
-    html.find('textarea, input').on('input', (event) => {
-      this._scheduleAutoSave();
-    });
-  }
-
-  _scheduleAutoSave() {
-    // Clear existing timeout
-    if (this._autoSaveTimeout) {
-      clearTimeout(this._autoSaveTimeout);
-    }
-
-    // Schedule new save after 1 second of inactivity
-    this._autoSaveTimeout = setTimeout(() => {
-      this._performAutoSave();
-    }, 1000);
-  }
-
-  async _performAutoSave() {
-    const form = this.element.find('form')[0];
-    if (!form) return;
-
-    const formData = new FormDataExtended(form);
-    const data = formData.object;
-
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const updatedData = {
-      ...currentData,
-      description: data.description || "",
-      notes: data.notes || ""
-    };
-
-    try {
-      await this.document.setFlag("campaign-codex", "data", updatedData);
-      this._showAutoSaveIndicator("Saved");
-    } catch (error) {
-      console.error("Campaign Codex | Auto-save failed:", error);
-      this._showAutoSaveIndicator("Save failed", true);
-    }
-  }
-
-  _showAutoSaveIndicator(message, isError = false) {
-    // Remove existing indicator
-    const existing = document.querySelector('.auto-save-indicator');
-    if (existing) existing.remove();
-
-    // Create new indicator
-    const indicator = document.createElement('div');
-    indicator.className = 'auto-save-indicator';
-    indicator.textContent = message;
-    if (isError) indicator.style.backgroundColor = 'var(--cc-danger)';
-
-    document.body.appendChild(indicator);
-
-    // Show with animation
-    setTimeout(() => indicator.classList.add('show'), 10);
-
-    // Hide after 2 seconds
-    setTimeout(() => {
-      indicator.classList.remove('show');
-      setTimeout(() => indicator.remove(), 200);
-    }, 2000);
+  _onDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "link";
   }
 
   async _onDrop(event) {
     event.preventDefault();
     
+    // Prevent duplicate drops
+    if (this._dropping) return;
+    this._dropping = true;
+    
     let data;
     try {
       data = JSON.parse(event.dataTransfer.getData('text/plain'));
     } catch (err) {
+      this._dropping = false;
       return;
     }
 
-    if (data.type === "Actor") {
-      await this._handleActorDrop(data);
-    } else if (data.type === "JournalEntry") {
-      await this._handleJournalDrop(data);
+    try {
+      if (data.type === "Actor") {
+        await this._handleActorDrop(data);
+      } else if (data.type === "JournalEntry") {
+        await this._handleJournalDrop(data);
+      }
+    } finally {
+      this._dropping = false;
     }
   }
 
@@ -274,25 +252,28 @@ export class NPCSheet extends JournalSheet {
     const actor = await fromUuid(data.uuid);
     if (!actor) return;
 
-    if (actor.type === "npc") {
+    const dropZone = event.target.closest('.drop-zone');
+    const dropType = dropZone?.dataset.dropType;
+
+    if (dropType === "actor") {
+      // Link main actor
       const currentData = this.document.getFlag("campaign-codex", "data") || {};
-      
-      // If no actor is linked, link this one
-      if (!currentData.linkedActor) {
-        currentData.linkedActor = actor.id;
-        await this.document.setFlag("campaign-codex", "data", currentData);
-        this.render(false);
-      } else {
-        // Create or find NPC journal for this actor and add as associate
-        let npcJournal = game.journal.find(j => {
-          const npcData = j.getFlag("campaign-codex", "data");
-          return npcData && npcData.linkedActor === actor.id;
-        });
+      currentData.linkedActor = actor.id;
+      await this.document.setFlag("campaign-codex", "data", currentData);
+      this.render(false);
+    } else if (dropType === "associate" && actor.type === "npc") {
+      // Check if NPC journal already exists for this actor
+      let npcJournal = game.journal.find(j => {
+        const npcData = j.getFlag("campaign-codex", "data");
+        return npcData && npcData.linkedActor === actor.id && j.id !== this.document.id;
+      });
 
-        if (!npcJournal) {
-          npcJournal = await game.campaignCodex.createNPCJournal(actor);
-        }
+      if (!npcJournal) {
+        npcJournal = await game.campaignCodex.createNPCJournal(actor);
+      }
 
+      // Prevent linking to self
+      if (npcJournal.id !== this.document.id) {
         await game.campaignCodex.linkNPCToNPC(this.document, npcJournal);
         this.render(false);
       }
@@ -301,7 +282,7 @@ export class NPCSheet extends JournalSheet {
 
   async _handleJournalDrop(data) {
     const journal = await fromUuid(data.uuid);
-    if (!journal) return;
+    if (!journal || journal.id === this.document.id) return; // Prevent self-linking
 
     const journalType = journal.getFlag("campaign-codex", "type");
     
@@ -314,6 +295,38 @@ export class NPCSheet extends JournalSheet {
     } else if (journalType === "npc") {
       await game.campaignCodex.linkNPCToNPC(this.document, journal);
       this.render(false);
+    }
+  }
+
+  async _onSaveData(event) {
+    event.preventDefault();
+    
+    const form = this.element.find('form')[0];
+    const formData = new FormDataExtended(form);
+    const data = formData.object;
+
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const updatedData = {
+      ...currentData,
+      description: data.description || "",
+      notes: data.notes || ""
+    };
+
+    try {
+      await this.document.setFlag("campaign-codex", "data", updatedData);
+      ui.notifications.info("NPC data saved successfully!");
+      
+      const saveBtn = $(event.currentTarget);
+      saveBtn.addClass('success');
+      setTimeout(() => saveBtn.removeClass('success'), 2000);
+      
+    } catch (error) {
+      console.error("Campaign Codex | Error saving NPC data:", error);
+      ui.notifications.error("Failed to save NPC data!");
+      
+      const saveBtn = $(event.currentTarget);
+      saveBtn.addClass('error');
+      setTimeout(() => saveBtn.removeClass('error'), 2000);
     }
   }
 
@@ -354,26 +367,34 @@ export class NPCSheet extends JournalSheet {
     this.render(false);
   }
 
+  // Fixed open methods
   _onOpenActor(event) {
+    event.stopPropagation();
     const actorId = event.currentTarget.dataset.actorId;
     const actor = game.actors.get(actorId);
     if (actor) actor.sheet.render(true);
   }
 
   _onOpenLocation(event) {
-    const locationId = event.currentTarget.dataset.locationId;
+    event.stopPropagation();
+    const locationId = event.currentTarget.dataset.locationId || event.currentTarget.closest('[data-location-id]').dataset.locationId;
     const journal = game.journal.get(locationId);
     if (journal) journal.sheet.render(true);
   }
 
   _onOpenShop(event) {
-    const shopId = event.currentTarget.dataset.shopId;
+    event.stopPropagation();
+    const shopId = event.currentTarget.dataset.shopId || event.currentTarget.closest('[data-shop-id]').dataset.shopId;
     const journal = game.journal.get(shopId);
     if (journal) journal.sheet.render(true);
   }
 
   _onOpenAssociate(event) {
-    const associateId = event.currentTarget.dataset.associateId;
+    event.stopPropagation();
+    const associateId = event.currentTarget.dataset.associateId || 
+                       event.currentTarget.dataset.npcId || 
+                       event.currentTarget.closest('[data-associate-id], [data-npc-id]').dataset.associateId ||
+                       event.currentTarget.closest('[data-associate-id], [data-npc-id]').dataset.npcId;
     const journal = game.journal.get(associateId);
     if (journal) journal.sheet.render(true);
   }
@@ -392,11 +413,22 @@ export class NPCSheet extends JournalSheet {
     return result;
   }
 
-  // Cleanup on close
-  close(options = {}) {
-    if (this._autoSaveTimeout) {
-      clearTimeout(this._autoSaveTimeout);
+  // Override close to save on close
+  async close(options = {}) {
+    // Auto-save on close
+    const form = this.element?.find('form')[0];
+    if (form) {
+      const formData = new FormDataExtended(form);
+      const data = formData.object;
+      const currentData = this.document.getFlag("campaign-codex", "data") || {};
+      const updatedData = {
+        ...currentData,
+        description: data.description || "",
+        notes: data.notes || ""
+      };
+      await this.document.setFlag("campaign-codex", "data", updatedData);
     }
+    
     return super.close(options);
   }
 }

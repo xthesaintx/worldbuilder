@@ -1,117 +1,172 @@
 export class CampaignManager {
   constructor() {
     this.relationshipCache = new Map();
+    this._creationQueue = new Set(); // Prevent duplicate creation
   }
 
   // === JOURNAL CREATION METHODS ===
 
   async createLocationJournal(name = "New Location") {
-    const journalData = {
-      name: name,
-      flags: {
-        "campaign-codex": {
-          type: "location",
-          data: {
-            description: "",
-            linkedNPCs: [],
-            linkedShops: [],
-            notes: ""
-          }
-        }
-      },
-      pages: [{
-        name: "Overview",
-        type: "text",
-        text: { content: `<h1>${name}</h1><p>Location overview...</p>` }
-      }]
-    };
+    // Prevent duplicate creation
+    const creationKey = `location-${name}`;
+    if (this._creationQueue.has(creationKey)) return;
+    this._creationQueue.add(creationKey);
 
-    const journal = await JournalEntry.create(journalData);
-    new (await import('./sheets/location-sheet.js')).LocationSheet(journal).render(true);
-    return journal;
+    try {
+      const journalData = {
+        name: name,
+        flags: {
+          "campaign-codex": {
+            type: "location",
+            data: {
+              description: "",
+              linkedNPCs: [],
+              linkedShops: [],
+              notes: ""
+            }
+          },
+          "core": {
+            sheetClass: "campaign-codex.LocationSheet"
+          }
+        },
+        pages: [{
+          name: "Overview",
+          type: "text",
+          text: { content: `<h1>${name}</h1><p>Location overview...</p>` }
+        }]
+      };
+
+      const journal = await JournalEntry.create(journalData);
+      return journal;
+    } finally {
+      this._creationQueue.delete(creationKey);
+    }
   }
 
   async createShopJournal(name = "New Shop") {
-    const journalData = {
-      name: name,
-      flags: {
-        "campaign-codex": {
-          type: "shop",
-          data: {
-            description: "",
-            linkedNPCs: [],
-            linkedLocation: null,
-            inventory: [],
-            markup: 1.0,
-            notes: ""
-          }
-        }
-      },
-      pages: [{
-        name: "Overview",
-        type: "text",
-        text: { content: `<h1>${name}</h1><p>Shop overview...</p>` }
-      }]
-    };
+    const creationKey = `shop-${name}`;
+    if (this._creationQueue.has(creationKey)) return;
+    this._creationQueue.add(creationKey);
 
-    const journal = await JournalEntry.create(journalData);
-    new (await import('./sheets/shop-sheet.js')).ShopSheet(journal).render(true);
-    return journal;
+    try {
+      const journalData = {
+        name: name,
+        flags: {
+          "campaign-codex": {
+            type: "shop",
+            data: {
+              description: "",
+              linkedNPCs: [],
+              linkedLocation: null,
+              inventory: [],
+              markup: 1.0,
+              notes: ""
+            }
+          },
+          "core": {
+            sheetClass: "campaign-codex.ShopSheet"
+          }
+        },
+        pages: [{
+          name: "Overview",
+          type: "text",
+          text: { content: `<h1>${name}</h1><p>Shop overview...</p>` }
+        }]
+      };
+
+      const journal = await JournalEntry.create(journalData);
+      return journal;
+    } finally {
+      this._creationQueue.delete(creationKey);
+    }
   }
 
   async createNPCJournal(actor = null, name = null) {
     const journalName = name || (actor ? `${actor.name} - Journal` : "New NPC Journal");
+    const creationKey = `npc-${actor?.id || journalName}`;
     
-    const journalData = {
-      name: journalName,
-      flags: {
-        "campaign-codex": {
-          type: "npc",
-          data: {
-            linkedActor: actor ? actor.id : null,
-            description: "",
-            linkedLocations: [],
-            linkedShops: [],
-            associates: [],
-            notes: ""
-          }
-        }
-      },
-      pages: [{
-        name: "Overview",
-        type: "text",
-        text: { content: `<h1>${journalName}</h1><p>NPC details...</p>` }
-      }]
-    };
+    if (this._creationQueue.has(creationKey)) return;
+    this._creationQueue.add(creationKey);
 
-    const journal = await JournalEntry.create(journalData);
-    new (await import('./sheets/npc-sheet.js')).NPCSheet(journal).render(true);
-    return journal;
+    try {
+      // Check if journal already exists for this actor
+      if (actor) {
+        const existing = game.journal.find(j => {
+          const npcData = j.getFlag("campaign-codex", "data");
+          return npcData && npcData.linkedActor === actor.id;
+        });
+        
+        if (existing) {
+          existing.sheet.render(true);
+          return existing;
+        }
+      }
+
+      const journalData = {
+        name: journalName,
+        flags: {
+          "campaign-codex": {
+            type: "npc",
+            data: {
+              linkedActor: actor ? actor.id : null,
+              description: "",
+              linkedLocations: [],
+              linkedShops: [],
+              associates: [],
+              notes: ""
+            }
+          },
+          "core": {
+            sheetClass: "campaign-codex.NPCSheet"
+          }
+        },
+        pages: [{
+          name: "Overview",
+          type: "text",
+          text: { content: `<h1>${journalName}</h1><p>NPC details...</p>` }
+        }]
+      };
+
+      const journal = await JournalEntry.create(journalData);
+      return journal;
+    } finally {
+      this._creationQueue.delete(creationKey);
+    }
   }
 
   async createRegionJournal(name = "New Region") {
-    const journalData = {
-      name: name,
-      flags: {
-        "campaign-codex": {
-          type: "region",
-          data: {
-            description: "",
-            linkedLocations: [],
-            notes: ""
-          }
-        }
-      },
-      pages: [{
-        name: "Overview",
-        type: "text",
-        text: { content: `<h1>${name}</h1><p>Region overview...</p>` }
-      }]
-    };
+    const creationKey = `region-${name}`;
+    if (this._creationQueue.has(creationKey)) return;
+    this._creationQueue.add(creationKey);
 
-    const journal = await JournalEntry.create(journalData);
-    new (await import('./sheets/region-sheet.js')).RegionSheet(journal).render(true);
-    return journal;
+    try {
+      const journalData = {
+        name: name,
+        flags: {
+          "campaign-codex": {
+            type: "region",
+            data: {
+              description: "",
+              linkedLocations: [],
+              notes: ""
+            }
+          },
+          "core": {
+            sheetClass: "campaign-codex.RegionSheet"
+          }
+        },
+        pages: [{
+          name: "Overview",
+          type: "text",
+          text: { content: `<h1>${name}</h1><p>Region overview...</p>` }
+        }]
+      };
+
+      const journal = await JournalEntry.create(journalData);
+      return journal;
+    } finally {
+      this._creationQueue.delete(creationKey);
+    }
   }
 
   // === CONVERSION METHODS ===
@@ -124,9 +179,16 @@ export class CampaignManager {
       linkedShops: [],
       notes: ""
     });
+    await journal.setFlag("core", "sheetClass", "campaign-codex.LocationSheet");
     
     journal.sheet.close();
-    new (await import('./sheets/location-sheet.js')).LocationSheet(journal).render(true);
+    setTimeout(() => {
+      const LocationSheet = CONFIG.JournalEntry.sheetClasses["campaign-codex.LocationSheet"];
+      if (LocationSheet) {
+        const sheet = new LocationSheet.cls(journal);
+        sheet.render(true);
+      }
+    }, 100);
   }
 
   async convertToShop(journal) {
@@ -139,9 +201,16 @@ export class CampaignManager {
       markup: 1.0,
       notes: ""
     });
+    await journal.setFlag("core", "sheetClass", "campaign-codex.ShopSheet");
     
     journal.sheet.close();
-    new (await import('./sheets/shop-sheet.js')).ShopSheet(journal).render(true);
+    setTimeout(() => {
+      const ShopSheet = CONFIG.JournalEntry.sheetClasses["campaign-codex.ShopSheet"];
+      if (ShopSheet) {
+        const sheet = new ShopSheet.cls(journal);
+        sheet.render(true);
+      }
+    }, 100);
   }
 
   async convertToNPC(journal) {
@@ -154,9 +223,16 @@ export class CampaignManager {
       associates: [],
       notes: ""
     });
+    await journal.setFlag("core", "sheetClass", "campaign-codex.NPCSheet");
     
     journal.sheet.close();
-    new (await import('./sheets/npc-sheet.js')).NPCSheet(journal).render(true);
+    setTimeout(() => {
+      const NPCSheet = CONFIG.JournalEntry.sheetClasses["campaign-codex.NPCSheet"];
+      if (NPCSheet) {
+        const sheet = new NPCSheet.cls(journal);
+        sheet.render(true);
+      }
+    }, 100);
   }
 
   async convertToRegion(journal) {
@@ -166,14 +242,24 @@ export class CampaignManager {
       linkedLocations: [],
       notes: ""
     });
+    await journal.setFlag("core", "sheetClass", "campaign-codex.RegionSheet");
     
     journal.sheet.close();
-    new (await import('./sheets/region-sheet.js')).RegionSheet(journal).render(true);
+    setTimeout(() => {
+      const RegionSheet = CONFIG.JournalEntry.sheetClasses["campaign-codex.RegionSheet"];
+      if (RegionSheet) {
+        const sheet = new RegionSheet.cls(journal);
+        sheet.render(true);
+      }
+    }, 100);
   }
 
   // === RELATIONSHIP MANAGEMENT ===
 
   async linkLocationToNPC(locationDoc, npcDoc) {
+    // Prevent self-linking
+    if (locationDoc.id === npcDoc.id) return;
+    
     // Add NPC to location
     const locationData = locationDoc.getFlag("campaign-codex", "data") || {};
     const linkedNPCs = locationData.linkedNPCs || [];
@@ -194,6 +280,9 @@ export class CampaignManager {
   }
 
   async linkLocationToShop(locationDoc, shopDoc) {
+    // Prevent self-linking
+    if (locationDoc.id === shopDoc.id) return;
+    
     // Add shop to location
     const locationData = locationDoc.getFlag("campaign-codex", "data") || {};
     const linkedShops = locationData.linkedShops || [];
@@ -210,6 +299,9 @@ export class CampaignManager {
   }
 
   async linkShopToNPC(shopDoc, npcDoc) {
+    // Prevent self-linking
+    if (shopDoc.id === npcDoc.id) return;
+    
     // Add NPC to shop
     const shopData = shopDoc.getFlag("campaign-codex", "data") || {};
     const linkedNPCs = shopData.linkedNPCs || [];
@@ -230,6 +322,9 @@ export class CampaignManager {
   }
 
   async linkNPCToNPC(npc1Doc, npc2Doc) {
+    // Prevent self-linking
+    if (npc1Doc.id === npc2Doc.id) return;
+    
     // Add NPC2 to NPC1's associates
     const npc1Data = npc1Doc.getFlag("campaign-codex", "data") || {};
     const associates1 = npc1Data.associates || [];
@@ -250,6 +345,9 @@ export class CampaignManager {
   }
 
   async linkRegionToLocation(regionDoc, locationDoc) {
+    // Prevent self-linking
+    if (regionDoc.id === locationDoc.id) return;
+    
     // Add location to region
     const regionData = regionDoc.getFlag("campaign-codex", "data") || {};
     const linkedLocations = regionData.linkedLocations || [];
@@ -384,18 +482,189 @@ export class CampaignManager {
   }
 
   async _handleShopUpdates(shopDoc, changes) {
-    // Similar pattern for shop updates...
-    // Implementation would follow the same bidirectional update pattern
+    const oldData = foundry.utils.getProperty(shopDoc._source, 'flags.campaign-codex.data') || {};
+    const newData = foundry.utils.getProperty(shopDoc, 'flags.campaign-codex.data') || {};
+
+    // Handle NPC changes
+    if (changes.linkedNPCs) {
+      const oldNPCs = oldData.linkedNPCs || [];
+      const newNPCs = newData.linkedNPCs || [];
+      
+      // Remove from old NPCs
+      for (const npcId of oldNPCs) {
+        if (!newNPCs.includes(npcId)) {
+          const npcDoc = game.journal.get(npcId);
+          if (npcDoc) {
+            const npcData = npcDoc.getFlag("campaign-codex", "data") || {};
+            const linkedShops = npcData.linkedShops || [];
+            npcData.linkedShops = linkedShops.filter(id => id !== shopDoc.id);
+            await npcDoc.setFlag("campaign-codex", "data", npcData);
+          }
+        }
+      }
+      
+      // Add to new NPCs
+      for (const npcId of newNPCs) {
+        if (!oldNPCs.includes(npcId)) {
+          const npcDoc = game.journal.get(npcId);
+          if (npcDoc) {
+            const npcData = npcDoc.getFlag("campaign-codex", "data") || {};
+            const linkedShops = npcData.linkedShops || [];
+            if (!linkedShops.includes(shopDoc.id)) {
+              linkedShops.push(shopDoc.id);
+              npcData.linkedShops = linkedShops;
+              await npcDoc.setFlag("campaign-codex", "data", npcData);
+            }
+          }
+        }
+      }
+    }
+
+    // Handle location changes
+    if (changes.linkedLocation !== undefined) {
+      const oldLocation = oldData.linkedLocation;
+      const newLocation = newData.linkedLocation;
+      
+      // Remove from old location
+      if (oldLocation && oldLocation !== newLocation) {
+        const locationDoc = game.journal.get(oldLocation);
+        if (locationDoc) {
+          const locationData = locationDoc.getFlag("campaign-codex", "data") || {};
+          const linkedShops = locationData.linkedShops || [];
+          locationData.linkedShops = linkedShops.filter(id => id !== shopDoc.id);
+          await locationDoc.setFlag("campaign-codex", "data", locationData);
+        }
+      }
+      
+      // Add to new location
+      if (newLocation && newLocation !== oldLocation) {
+        const locationDoc = game.journal.get(newLocation);
+        if (locationDoc) {
+          const locationData = locationDoc.getFlag("campaign-codex", "data") || {};
+          const linkedShops = locationData.linkedShops || [];
+          if (!linkedShops.includes(shopDoc.id)) {
+            linkedShops.push(shopDoc.id);
+            locationData.linkedShops = linkedShops;
+            await locationDoc.setFlag("campaign-codex", "data", locationData);
+          }
+        }
+      }
+    }
   }
 
   async _handleNPCUpdates(npcDoc, changes) {
-    // Similar pattern for NPC updates...
-    // Implementation would follow the same bidirectional update pattern
+    const oldData = foundry.utils.getProperty(npcDoc._source, 'flags.campaign-codex.data') || {};
+    const newData = foundry.utils.getProperty(npcDoc, 'flags.campaign-codex.data') || {};
+
+    // Handle location changes
+    if (changes.linkedLocations) {
+      const oldLocations = oldData.linkedLocations || [];
+      const newLocations = newData.linkedLocations || [];
+      
+      // Remove from old locations
+      for (const locationId of oldLocations) {
+        if (!newLocations.includes(locationId)) {
+          const locationDoc = game.journal.get(locationId);
+          if (locationDoc) {
+            const locationData = locationDoc.getFlag("campaign-codex", "data") || {};
+            const linkedNPCs = locationData.linkedNPCs || [];
+            locationData.linkedNPCs = linkedNPCs.filter(id => id !== npcDoc.id);
+            await locationDoc.setFlag("campaign-codex", "data", locationData);
+          }
+        }
+      }
+      
+      // Add to new locations
+      for (const locationId of newLocations) {
+        if (!oldLocations.includes(locationId)) {
+          const locationDoc = game.journal.get(locationId);
+          if (locationDoc) {
+            const locationData = locationDoc.getFlag("campaign-codex", "data") || {};
+            const linkedNPCs = locationData.linkedNPCs || [];
+            if (!linkedNPCs.includes(npcDoc.id)) {
+              linkedNPCs.push(npcDoc.id);
+              locationData.linkedNPCs = linkedNPCs;
+              await locationDoc.setFlag("campaign-codex", "data", locationData);
+            }
+          }
+        }
+      }
+    }
+
+    // Handle shop changes
+    if (changes.linkedShops) {
+      const oldShops = oldData.linkedShops || [];
+      const newShops = newData.linkedShops || [];
+      
+      // Remove from old shops
+      for (const shopId of oldShops) {
+        if (!newShops.includes(shopId)) {
+          const shopDoc = game.journal.get(shopId);
+          if (shopDoc) {
+            const shopData = shopDoc.getFlag("campaign-codex", "data") || {};
+            const linkedNPCs = shopData.linkedNPCs || [];
+            shopData.linkedNPCs = linkedNPCs.filter(id => id !== npcDoc.id);
+            await shopDoc.setFlag("campaign-codex", "data", shopData);
+          }
+        }
+      }
+      
+      // Add to new shops
+      for (const shopId of newShops) {
+        if (!oldShops.includes(shopId)) {
+          const shopDoc = game.journal.get(shopId);
+          if (shopDoc) {
+            const shopData = shopDoc.getFlag("campaign-codex", "data") || {};
+            const linkedNPCs = shopData.linkedNPCs || [];
+            if (!linkedNPCs.includes(npcDoc.id)) {
+              linkedNPCs.push(npcDoc.id);
+              shopData.linkedNPCs = linkedNPCs;
+              await shopDoc.setFlag("campaign-codex", "data", shopData);
+            }
+          }
+        }
+      }
+    }
+
+    // Handle associate changes
+    if (changes.associates) {
+      const oldAssociates = oldData.associates || [];
+      const newAssociates = newData.associates || [];
+      
+      // Remove from old associates
+      for (const associateId of oldAssociates) {
+        if (!newAssociates.includes(associateId)) {
+          const associateDoc = game.journal.get(associateId);
+          if (associateDoc) {
+            const associateData = associateDoc.getFlag("campaign-codex", "data") || {};
+            const associates = associateData.associates || [];
+            associateData.associates = associates.filter(id => id !== npcDoc.id);
+            await associateDoc.setFlag("campaign-codex", "data", associateData);
+          }
+        }
+      }
+      
+      // Add to new associates
+      for (const associateId of newAssociates) {
+        if (!oldAssociates.includes(associateId)) {
+          const associateDoc = game.journal.get(associateId);
+          if (associateDoc) {
+            const associateData = associateDoc.getFlag("campaign-codex", "data") || {};
+            const associates = associateData.associates || [];
+            if (!associates.includes(npcDoc.id)) {
+              associates.push(npcDoc.id);
+              associateData.associates = associates;
+              await associateDoc.setFlag("campaign-codex", "data", associateData);
+            }
+          }
+        }
+      }
+    }
   }
 
   async _handleRegionUpdates(regionDoc, changes) {
-    // Similar pattern for region updates...
-    // Implementation would follow the same bidirectional update pattern
+    // Regions currently only have one-way relationships with locations
+    // No bidirectional updates needed for now
   }
 
   // === CLEANUP METHODS ===
