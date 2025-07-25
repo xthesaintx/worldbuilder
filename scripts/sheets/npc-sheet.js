@@ -1,10 +1,16 @@
 export class NPCSheet extends JournalSheet {
+  constructor(document, options = {}) {
+    super(document, options);
+    this._currentTab = 'info'; // Track current tab
+  }
+
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ["sheet", "journal-sheet", "campaign-codex", "npc-sheet"],
       width: 900,
       height: 700,
       resizable: true,
+      dragDrop: [{ dragSelector: ".item", dropSelector: null }],
       tabs: [{ navSelector: ".sidebar-tabs", contentSelector: ".main-content", initial: "info" }]
     });
   }
@@ -28,27 +34,16 @@ export class NPCSheet extends JournalSheet {
       // Basic Info
       name: npcData.name || this.document.name,
       race: npcData.race || "",
-      class: npcData.class || "",
-      level: npcData.level || 1,
       alignment: npcData.alignment || "",
-      background: npcData.background || "",
       
       // Ability Scores
       abilities: npcData.abilities || {
         str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10
       },
       
-      // Combat Stats
-      ac: npcData.ac || 10,
-      hp: npcData.hp || { value: 8, max: 8 },
-      speed: npcData.speed || 30,
-      
-      // Skills & Proficiencies
+      // Skills & Proficiencies (for advanced NPCs)
       skills: npcData.skills || [],
       languages: npcData.languages || [],
-      proficiencyBonus: npcData.proficiencyBonus || Math.ceil(1 + (npcData.level || 1) / 4),
-      
-      // Equipment & Inventory
       equipment: npcData.equipment || [],
       
       // Descriptions
@@ -81,12 +76,8 @@ export class NPCSheet extends JournalSheet {
       "Primordial", "Sylvan", "Undercommon"
     ];
 
-    // Equipment types for easy adding
-    data.equipmentTypes = [
-      "Weapon", "Armor", "Shield", "Tool", "Adventuring Gear", "Treasure"
-    ];
-
     data.canEdit = this.document.canUserModify(game.user, "update");
+    data.currentTab = this._currentTab; // Pass current tab to template
     
     return data;
   }
@@ -160,15 +151,20 @@ export class NPCSheet extends JournalSheet {
   activateListeners(html) {
     super.activateListeners(html);
 
-    // Activate tabs
+    // Activate tabs and preserve state
     this._activateTabs(html);
 
     // Make the sheet a drop target
     html[0].addEventListener('drop', this._onDrop.bind(this));
     html[0].addEventListener('dragover', this._onDragOver.bind(this));
 
-    // Save button
-    html.find('.save-data').click(this._onSaveData.bind(this));
+    // Auto-save on form changes
+    html.find('input, textarea, select').change(this._onAutoSave.bind(this));
+    html.find('input, textarea').on('input', foundry.utils.debounce(this._onAutoSave.bind(this), 500));
+
+    // Image functionality
+    html.find('.location-image').click(this._onImageClick.bind(this));
+    html.find('.image-change-btn').click(this._onImageClick.bind(this));
 
     // Remove buttons
     html.find('.remove-actor').click(this._onRemoveActor.bind(this));
@@ -197,9 +193,6 @@ export class NPCSheet extends JournalSheet {
     // Language controls
     html.find('.add-language').click(this._onAddLanguage.bind(this));
     html.find('.remove-language').click(this._onRemoveLanguage.bind(this));
-
-    // HP controls
-    html.find('.hp-input').change(this._onHPChange.bind(this));
   }
 
   _activateTabs(html) {
@@ -207,11 +200,12 @@ export class NPCSheet extends JournalSheet {
     html.find('.sidebar-tabs .tab-item').click(event => {
       event.preventDefault();
       const tab = event.currentTarget.dataset.tab;
+      this._currentTab = tab; // Store current tab
       this._showTab(tab, html);
     });
 
-    // Show first tab by default
-    this._showTab('info', html);
+    // Show current tab (preserves state)
+    this._showTab(this._currentTab, html);
   }
 
   _showTab(tabName, html) {
@@ -226,13 +220,39 @@ export class NPCSheet extends JournalSheet {
     $html.find(`.tab-panel[data-tab="${tabName}"]`).addClass('active');
   }
 
+  async _onImageClick(event) {
+    event.preventDefault();
+    
+    const current = this.document.img;
+    const fp = new FilePicker({
+      type: "image",
+      current: current,
+      callback: async (path) => {
+        await this.document.update({ img: path });
+        this.render(false); // Re-render without changing tab
+      },
+      top: this.position.top + 40,
+      left: this.position.left + 10
+    });
+    
+    return fp.browse();
+  }
+
   _onDragOver(event) {
     event.preventDefault();
     event.dataTransfer.dropEffect = "link";
+    
+    // Add visual feedback to main content
+    const mainContent = this.element.find('.main-content');
+    mainContent.addClass('drag-over');
   }
 
   async _onDrop(event) {
     event.preventDefault();
+    
+    // Remove visual feedback
+    const mainContent = this.element.find('.main-content');
+    mainContent.removeClass('drag-over');
     
     let data;
     try {
@@ -258,13 +278,13 @@ export class NPCSheet extends JournalSheet {
     const dropZone = event.target.closest('.drop-zone');
     const dropType = dropZone?.dataset.dropType;
 
-    if (dropType === "actor") {
+    if (dropType === "actor" || !this.document.getFlag("campaign-codex", "data.linkedActor")) {
       // Link main actor
       const currentData = this.document.getFlag("campaign-codex", "data") || {};
       currentData.linkedActor = actor.id;
       await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render();
-    } else if (dropType === "associate" && actor.type === "npc") {
+      this.render(false); // Preserve current tab
+    } else if (actor.type === "npc") {
       // Create or find NPC journal for this actor and add as associate
       let npcJournal = game.journal.find(j => {
         const npcData = j.getFlag("campaign-codex", "data");
@@ -276,7 +296,7 @@ export class NPCSheet extends JournalSheet {
       }
 
       await game.campaignCodex.linkNPCToNPC(this.document, npcJournal);
-      this.render();
+      this.render(false); // Preserve current tab
     }
   }
 
@@ -288,13 +308,13 @@ export class NPCSheet extends JournalSheet {
     
     if (journalType === "location") {
       await game.campaignCodex.linkLocationToNPC(journal, this.document);
-      this.render();
+      this.render(false); // Preserve current tab
     } else if (journalType === "shop") {
       await game.campaignCodex.linkShopToNPC(journal, this.document);
-      this.render();
+      this.render(false); // Preserve current tab
     } else if (journalType === "npc") {
       await game.campaignCodex.linkNPCToNPC(this.document, journal);
-      this.render();
+      this.render(false); // Preserve current tab
     }
   }
 
@@ -315,13 +335,12 @@ export class NPCSheet extends JournalSheet {
       
       currentData.imageTiles = imageTiles;
       await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render();
+      this.render(false); // Preserve current tab
     }
   }
 
-  async _onSaveData(event) {
-    event.preventDefault();
-    
+  // Auto-save functionality
+  async _onAutoSave(event) {
     const form = this.element.find('form')[0];
     const formData = new FormDataExtended(form);
     const data = formData.object;
@@ -334,10 +353,7 @@ export class NPCSheet extends JournalSheet {
       // Basic Info
       name: data.name || "",
       race: data.race || "",
-      class: data.class || "",
-      level: parseInt(data.level) || 1,
       alignment: data.alignment || "",
-      background: data.background || "",
       
       // Ability Scores
       abilities: {
@@ -348,17 +364,6 @@ export class NPCSheet extends JournalSheet {
         wis: parseInt(data.wis) || 10,
         cha: parseInt(data.cha) || 10
       },
-      
-      // Combat Stats
-      ac: parseInt(data.ac) || 10,
-      hp: {
-        value: parseInt(data.hpCurrent) || 8,
-        max: parseInt(data.hpMax) || 8
-      },
-      speed: parseInt(data.speed) || 30,
-      
-      // Calculate proficiency bonus
-      proficiencyBonus: Math.ceil(1 + (parseInt(data.level) || 1) / 4),
       
       // Skills and Languages (preserve existing arrays)
       skills: currentData.skills || [],
@@ -375,6 +380,10 @@ export class NPCSheet extends JournalSheet {
     };
 
     try {
+      // Visual feedback
+      const targetElement = $(event.target);
+      targetElement.addClass('saving');
+      
       await this.document.setFlag("campaign-codex", "data", updatedData);
       
       // Also update the document name if it changed
@@ -382,19 +391,17 @@ export class NPCSheet extends JournalSheet {
         await this.document.update({ name: data.name });
       }
       
-      ui.notifications.info("NPC data saved successfully!");
-      
-      const saveBtn = $(event.currentTarget);
-      saveBtn.addClass('success');
-      setTimeout(() => saveBtn.removeClass('success'), 2000);
+      // Success feedback
+      targetElement.removeClass('saving').addClass('saved');
+      setTimeout(() => targetElement.removeClass('saved'), 1000);
       
     } catch (error) {
-      console.error("Campaign Codex | Error saving NPC data:", error);
-      ui.notifications.error("Failed to save NPC data!");
+      console.error("Campaign Codex | Error auto-saving NPC data:", error);
       
-      const saveBtn = $(event.currentTarget);
-      saveBtn.addClass('error');
-      setTimeout(() => saveBtn.removeClass('error'), 2000);
+      // Error feedback
+      const targetElement = $(event.target);
+      targetElement.removeClass('saving').addClass('error');
+      setTimeout(() => targetElement.removeClass('error'), 1000);
     }
   }
 
@@ -402,7 +409,7 @@ export class NPCSheet extends JournalSheet {
     const currentData = this.document.getFlag("campaign-codex", "data") || {};
     currentData.linkedActor = null;
     await this.document.setFlag("campaign-codex", "data", currentData);
-    this.render();
+    this.render(false); // Preserve current tab
   }
 
   async _onRemoveLocation(event) {
@@ -412,7 +419,7 @@ export class NPCSheet extends JournalSheet {
     currentData.linkedLocations = (currentData.linkedLocations || []).filter(id => id !== locationId);
     await this.document.setFlag("campaign-codex", "data", currentData);
     
-    this.render();
+    this.render(false); // Preserve current tab
   }
 
   async _onRemoveShop(event) {
@@ -422,7 +429,7 @@ export class NPCSheet extends JournalSheet {
     currentData.linkedShops = (currentData.linkedShops || []).filter(id => id !== shopId);
     await this.document.setFlag("campaign-codex", "data", currentData);
     
-    this.render();
+    this.render(false); // Preserve current tab
   }
 
   async _onRemoveAssociate(event) {
@@ -432,7 +439,7 @@ export class NPCSheet extends JournalSheet {
     currentData.associates = (currentData.associates || []).filter(id => id !== associateId);
     await this.document.setFlag("campaign-codex", "data", currentData);
     
-    this.render();
+    this.render(false); // Preserve current tab
   }
 
   _onOpenActor(event) {
@@ -459,7 +466,7 @@ export class NPCSheet extends JournalSheet {
     if (journal) journal.sheet.render(true);
   }
 
-  // New character creation methods
+  // Ability score management
   async _onAbilityChange(event) {
     const abilityName = event.currentTarget.dataset.ability;
     const value = parseInt(event.currentTarget.value) || 10;
@@ -470,10 +477,17 @@ export class NPCSheet extends JournalSheet {
     
     currentData.abilities = abilities;
     await this.document.setFlag("campaign-codex", "data", currentData);
-    this.render(false);
+    
+    // Update the modifier display
+    const modifier = Math.floor((abilities[abilityName] - 10) / 2);
+    const modifierDisplay = event.currentTarget.closest('.ability-block').querySelector('.ability-modifier');
+    if (modifierDisplay) {
+      modifierDisplay.textContent = modifier >= 0 ? `+${modifier}` : modifier;
+    }
   }
 
   async _onAbilityRoll(event) {
+    event.preventDefault();
     const abilityName = event.currentTarget.dataset.ability;
     
     // Roll 4d6 drop lowest
@@ -492,7 +506,15 @@ export class NPCSheet extends JournalSheet {
     await this.document.setFlag("campaign-codex", "data", currentData);
     
     ui.notifications.info(`Rolled ${total} for ${abilityName.toUpperCase()}: [${rolls.join(", ")}]`);
-    this.render(false);
+    
+    // Update just the ability score display without full re-render
+    const abilityInput = this.element.find(`[data-ability="${abilityName}"]`);
+    abilityInput.val(total);
+    
+    // Update the modifier display
+    const modifier = Math.floor((total - 10) / 2);
+    const modifierDisplay = abilityInput.closest('.ability-block').find('.ability-modifier');
+    modifierDisplay.text(modifier >= 0 ? `+${modifier}` : modifier);
   }
 
   async _onAddEquipment(event) {
@@ -505,7 +527,7 @@ export class NPCSheet extends JournalSheet {
     
     currentData.equipment = equipment;
     await this.document.setFlag("campaign-codex", "data", currentData);
-    this.render(false);
+    this.render(false); // Preserve current tab
   }
 
   async _onRemoveEquipment(event) {
@@ -516,7 +538,7 @@ export class NPCSheet extends JournalSheet {
     equipment.splice(index, 1);
     currentData.equipment = equipment;
     await this.document.setFlag("campaign-codex", "data", currentData);
-    this.render(false);
+    this.render(false); // Preserve current tab
   }
 
   async _onAddSkill(event) {
@@ -530,7 +552,7 @@ export class NPCSheet extends JournalSheet {
       skills.push(skill);
       currentData.skills = skills;
       await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render(false);
+      this.render(false); // Preserve current tab
     }
   }
 
@@ -544,7 +566,7 @@ export class NPCSheet extends JournalSheet {
       skills.splice(index, 1);
       currentData.skills = skills;
       await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render(false);
+      this.render(false); // Preserve current tab
     }
   }
 
@@ -559,7 +581,7 @@ export class NPCSheet extends JournalSheet {
       languages.push(language);
       currentData.languages = languages;
       await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render(false);
+      this.render(false); // Preserve current tab
     }
   }
 
@@ -573,25 +595,8 @@ export class NPCSheet extends JournalSheet {
       languages.splice(index, 1);
       currentData.languages = languages;
       await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render(false);
+      this.render(false); // Preserve current tab
     }
-  }
-
-  async _onHPChange(event) {
-    const field = event.currentTarget.dataset.field;
-    const value = parseInt(event.currentTarget.value) || 1;
-    
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const hp = currentData.hp || { value: 8, max: 8 };
-    
-    hp[field] = Math.max(0, value);
-    if (field === "max" && hp.value > hp.max) {
-      hp.value = hp.max;
-    }
-    
-    currentData.hp = hp;
-    await this.document.setFlag("campaign-codex", "data", currentData);
-    this.render(false);
   }
 
   // Helper methods for prompts
@@ -716,5 +721,22 @@ export class NPCSheet extends JournalSheet {
         }
       }).render(true);
     });
+  }
+
+  // Override render to preserve tab state
+  async render(force = false, options = {}) {
+    // Store current tab before render
+    const currentTab = this._currentTab;
+    
+    const result = await super.render(force, options);
+    
+    // Restore tab after render
+    if (this._element && currentTab) {
+      setTimeout(() => {
+        this._showTab(currentTab, this._element);
+      }, 50);
+    }
+    
+    return result;
   }
 }

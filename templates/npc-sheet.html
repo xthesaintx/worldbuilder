@@ -1,13 +1,4 @@
 <div class="campaign-codex npc-sheet">
-  
-  {{!-- Header Banner --}}
-  <header class="sheet-banner">
-    <div class="banner-overlay"></div>
-    <div class="banner-content">
-      <h1 class="location-name">{{document.name}}</h1>
-      <div class="location-type">NPC Journal</div>
-    </div>
-  </header>
 
   <div class="sheet-body">
     {{!-- Sidebar Navigation --}}
@@ -20,6 +11,10 @@
             <img src="{{document.img}}" alt="{{document.name}}" onerror="this.src='icons/svg/mystery-man.svg'">
           {{/if}}
         </div>
+        <button class="image-change-btn" type="button">
+          <i class="fas fa-camera"></i> Change Image
+        </button>
+        
         {{#if linkedActor}}
           <div class="actor-stats">
             <div class="stat-row">
@@ -30,27 +25,44 @@
               <span class="stat-value">HP {{linkedActor.hp.value}}/{{linkedActor.hp.max}}</span>
             </div>
           </div>
+        {{else}}
+          <div class="character-preview">
+            {{#if npcData.race}}
+              <div class="preview-line">{{npcData.race}}</div>
+            {{/if}}
+            {{#if npcData.alignment}}
+              <div class="preview-line">{{npcData.alignment}}</div>
+            {{/if}}
+          </div>
         {{/if}}
       </div>
       
       <ul class="sidebar-tabs">
-        <li class="tab-item active" data-tab="info">
+        <li class="tab-item {{#if (eq currentTab 'info')}}active{{/if}}" data-tab="info">
           <i class="fas fa-info-circle"></i>
           <span>Info</span>
         </li>
-        <li class="tab-item" data-tab="locations">
+        <li class="tab-item {{#if (eq currentTab 'skills')}}active{{/if}}" data-tab="skills">
+          <i class="fas fa-tools"></i>
+          <span>Skills</span>
+        </li>
+        <li class="tab-item {{#if (eq currentTab 'personality')}}active{{/if}}" data-tab="personality">
+          <i class="fas fa-heart"></i>
+          <span>Traits</span>
+        </li>
+        <li class="tab-item {{#if (eq currentTab 'locations')}}active{{/if}}" data-tab="locations">
           <i class="fas fa-map-marker-alt"></i>
           <span>Locations</span>
         </li>
-        <li class="tab-item" data-tab="shops">
+        <li class="tab-item {{#if (eq currentTab 'shops')}}active{{/if}}" data-tab="shops">
           <i class="fas fa-store"></i>
           <span>Shops</span>
         </li>
-        <li class="tab-item" data-tab="associates">
+        <li class="tab-item {{#if (eq currentTab 'associates')}}active{{/if}}" data-tab="associates">
           <i class="fas fa-users"></i>
           <span>Associates</span>
         </li>
-        <li class="tab-item" data-tab="notes">
+        <li class="tab-item {{#if (eq currentTab 'notes')}}active{{/if}}" data-tab="notes">
           <i class="fas fa-sticky-note"></i>
           <span>Notes</span>
         </li>
@@ -87,50 +99,30 @@
       <form class="npc-form">
         
         {{!-- Info Tab --}}
-        <section class="tab-panel active" data-tab="info">
+        <section class="tab-panel {{#if (eq currentTab 'info')}}active{{/if}}" data-tab="info">
           <div class="content-header">
             <h2><i class="fas fa-info-circle"></i> Character Information</h2>
           </div>
 
-          {{!-- Basic Character Info --}}
-          <div class="character-basics">
-            <div class="form-row">
+          {{!-- Character Name --}}
+          <div class="form-section">
+            <label class="form-label">
+              <i class="fas fa-user"></i>
+              Character Name
+            </label>
+            <input name="name" class="form-input" type="text" value="{{npcData.name}}" placeholder="Character name..." />
+          </div>
+
+          {{!-- Simplified NPC Stats --}}
+          <div class="npc-stats-section">
+            <h3><i class="fas fa-user"></i> Core Stats</h3>
+            <div class="npc-grid">
               <div class="form-group">
-                <label class="form-label">
-                  <i class="fas fa-user"></i>
-                  Character Name
-                </label>
-                <input name="name" class="form-input" type="text" value="{{npcData.name}}" placeholder="Character name..." />
-              </div>
-              <div class="form-group">
-                <label class="form-label">
-                  <i class="fas fa-users"></i>
-                  Race
-                </label>
+                <label class="form-label">Race/Species</label>
                 <input name="race" class="form-input" type="text" value="{{npcData.race}}" placeholder="Human, Elf, etc..." />
               </div>
               <div class="form-group">
-                <label class="form-label">
-                  <i class="fas fa-sword"></i>
-                  Class
-                </label>
-                <input name="class" class="form-input" type="text" value="{{npcData.class}}" placeholder="Fighter, Wizard, etc..." />
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">
-                  <i class="fas fa-level-up-alt"></i>
-                  Level
-                </label>
-                <input name="level" class="form-input" type="number" value="{{npcData.level}}" min="1" max="20" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">
-                  <i class="fas fa-balance-scale"></i>
-                  Alignment
-                </label>
+                <label class="form-label">Alignment</label>
                 <select name="alignment" class="form-input">
                   <option value="">Choose alignment...</option>
                   <option value="Lawful Good" {{#if (eq npcData.alignment "Lawful Good")}}selected{{/if}}>Lawful Good</option>
@@ -144,17 +136,10 @@
                   <option value="Chaotic Evil" {{#if (eq npcData.alignment "Chaotic Evil")}}selected{{/if}}>Chaotic Evil</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label class="form-label">
-                  <i class="fas fa-book"></i>
-                  Background
-                </label>
-                <input name="background" class="form-input" type="text" value="{{npcData.background}}" placeholder="Acolyte, Criminal, etc..." />
-              </div>
             </div>
           </div>
 
-          {{!-- Ability Scores --}}
+          {{!-- Core Ability Scores Only --}}
           <div class="ability-scores-section">
             <h3><i class="fas fa-dice-d20"></i> Ability Scores</h3>
             <div class="abilities-grid">
@@ -179,69 +164,7 @@
             </div>
           </div>
 
-          {{!-- Combat Stats --}}
-          <div class="combat-stats-section">
-            <h3><i class="fas fa-shield-alt"></i> Combat Statistics</h3>
-            <div class="combat-grid">
-              <div class="combat-stat">
-                <label class="form-label">AC</label>
-                <input name="ac" class="form-input" type="number" value="{{npcData.ac}}" min="1" />
-              </div>
-              <div class="combat-stat">
-                <label class="form-label">Current HP</label>
-                <input name="hpCurrent" class="form-input hp-input" data-field="value" type="number" value="{{npcData.hp.value}}" min="0" />
-              </div>
-              <div class="combat-stat">
-                <label class="form-label">Max HP</label>
-                <input name="hpMax" class="form-input hp-input" data-field="max" type="number" value="{{npcData.hp.max}}" min="1" />
-              </div>
-              <div class="combat-stat">
-                <label class="form-label">Speed</label>
-                <input name="speed" class="form-input" type="number" value="{{npcData.speed}}" min="0" />
-                <span class="unit">ft</span>
-              </div>
-              <div class="combat-stat">
-                <label class="form-label">Prof. Bonus</label>
-                <input class="form-input" type="text" value="+{{npcData.proficiencyBonus}}" readonly />
-              </div>
-            </div>
-          </div>
-
-          {{!-- Actor Link Section (Optional) --}}
-          <div class="form-section actor-link-section">
-            <h3><i class="fas fa-link"></i> Link to Actor (Optional)</h3>
-            {{#if linkedActor}}
-              <div class="linked-actor-card">
-                <div class="actor-image">
-                  <img src="{{linkedActor.img}}" alt="{{linkedActor.name}}">
-                </div>
-                <div class="actor-content">
-                  <h4 class="actor-name">{{linkedActor.name}}</h4>
-                  <div class="actor-details">
-                    <span class="actor-race-class">{{linkedActor.race}} {{linkedActor.class}}</span>
-                    <span class="actor-level">Level {{linkedActor.level}}</span>
-                  </div>
-                </div>
-                <div class="actor-actions">
-                  <button type="button" class="action-btn open-actor" data-actor-id="{{linkedActor.id}}" title="Open Actor Sheet">
-                    <i class="fas fa-external-link-alt"></i>
-                  </button>
-                  <button type="button" class="action-btn remove-actor" title="Unlink Actor">
-                    <i class="fas fa-unlink"></i>
-                  </button>
-                </div>
-              </div>
-            {{else}}
-              <div class="drop-zone" data-drop-type="actor">
-                <div class="drop-content">
-                  <i class="fas fa-user-plus"></i>
-                  <h3>Link Actor (Optional)</h3>
-                  <p>Drag an NPC actor here to link it to this character sheet</p>
-                </div>
-              </div>
-            {{/if}}
-          </div>
-          
+          {{!-- Description Section --}}
           <div class="form-section">
             <label class="form-label">
               <i class="fas fa-align-left"></i>
@@ -249,11 +172,145 @@
             </label>
             <textarea name="description" class="form-textarea" rows="6" placeholder="Physical description, mannerisms, etc...">{{npcData.description}}</textarea>
           </div>
+
+          {{!-- Notes Section --}}
+          <div class="form-section">
+            <label class="form-label">
+              <i class="fas fa-sticky-note"></i>
+              Notes
+            </label>
+            <textarea name="notes" class="form-textarea" rows="6" placeholder="Character notes, personality, goals, etc...">{{npcData.notes}}</textarea>
+          </div>
+
+          {{!-- Optional Actor Link (Compact) --}}
+          {{#if linkedActor}}
+            <div class="form-section">
+              <label class="form-label">
+                <i class="fas fa-link"></i>
+                Linked Actor
+              </label>
+              <div class="linked-actor-compact">
+                <img src="{{linkedActor.img}}" alt="{{linkedActor.name}}" class="actor-avatar">
+                <span class="actor-name">{{linkedActor.name}}</span>
+                <button type="button" class="action-btn open-actor" data-actor-id="{{linkedActor.id}}" title="Open Actor Sheet">
+                  <i class="fas fa-external-link-alt"></i>
+                </button>
+                <button type="button" class="action-btn remove-actor" title="Unlink Actor">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          {{/if}}
         </section>
-    
+
+        {{!-- Skills & Equipment Tab --}}
+        <section class="tab-panel {{#if (eq currentTab 'skills')}}active{{/if}}" data-tab="skills">
+          <div class="content-header">
+            <h2><i class="fas fa-tools"></i> Skills & Equipment</h2>
+          </div>
+
+          {{!-- Skills Section --}}
+          <div class="skills-section">
+            <h3><i class="fas fa-star"></i> Proficient Skills</h3>
+            <div class="skills-list">
+              {{#each npcData.skills}}
+                <div class="skill-item">
+                  <span class="skill-name">{{this}}</span>
+                  <button type="button" class="remove-skill" data-skill="{{this}}" title="Remove skill">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              {{/each}}
+            </div>
+            <button type="button" class="add-skill btn-secondary">
+              <i class="fas fa-plus"></i> Add Skill
+            </button>
+          </div>
+
+          {{!-- Languages Section --}}
+          <div class="languages-section">
+            <h3><i class="fas fa-language"></i> Languages</h3>
+            <div class="languages-list">
+              {{#each npcData.languages}}
+                <div class="language-item">
+                  <span class="language-name">{{this}}</span>
+                  <button type="button" class="remove-language" data-language="{{this}}" title="Remove language">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              {{/each}}
+            </div>
+            <button type="button" class="add-language btn-secondary">
+              <i class="fas fa-plus"></i> Add Language
+            </button>
+          </div>
+
+          {{!-- Equipment Section --}}
+          <div class="equipment-section">
+            <h3><i class="fas fa-sword"></i> Equipment & Inventory</h3>
+            <div class="equipment-list">
+              {{#each npcData.equipment}}
+                <div class="equipment-item">
+                  <div class="equipment-info">
+                    <span class="equipment-name">{{name}}</span>
+                    <span class="equipment-type">{{type}}</span>
+                    <span class="equipment-quantity">×{{quantity}}</span>
+                  </div>
+                  <button type="button" class="remove-equipment" data-index="{{@index}}" title="Remove equipment">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              {{/each}}
+            </div>
+            <button type="button" class="add-equipment btn-secondary">
+              <i class="fas fa-plus"></i> Add Equipment
+            </button>
+          </div>
+        </section>
+
+        {{!-- Personality Tab --}}
+        <section class="tab-panel {{#if (eq currentTab 'personality')}}active{{/if}}" data-tab="personality">
+          <div class="content-header">
+            <h2><i class="fas fa-heart"></i> Personality & Traits</h2>
+          </div>
+
+          <div class="personality-grid">
+            <div class="form-section">
+              <label class="form-label">
+                <i class="fas fa-smile"></i>
+                Personality Traits
+              </label>
+              <textarea name="personality" class="form-textarea" rows="4" placeholder="How does this character act and speak?">{{npcData.personality}}</textarea>
+            </div>
+
+            <div class="form-section">
+              <label class="form-label">
+                <i class="fas fa-lightbulb"></i>
+                Ideals
+              </label>
+              <textarea name="ideals" class="form-textarea" rows="4" placeholder="What drives this character?">{{npcData.ideals}}</textarea>
+            </div>
+
+            <div class="form-section">
+              <label class="form-label">
+                <i class="fas fa-handshake"></i>
+                Bonds
+              </label>
+              <textarea name="bonds" class="form-textarea" rows="4" placeholder="What connects this character to the world?">{{npcData.bonds}}</textarea>
+            </div>
+
+            <div class="form-section">
+              <label class="form-label">
+                <i class="fas fa-exclamation-triangle"></i>
+                Flaws
+              </label>
+              <textarea name="flaws" class="form-textarea" rows="4" placeholder="What are this character's weaknesses?">{{npcData.flaws}}</textarea>
+            </div>
+          </div>
+        </section>
 
         {{!-- Locations Tab --}}
-        <section class="tab-panel" data-tab="locations">
+        <section class="tab-panel {{#if (eq currentTab 'locations')}}active{{/if}}" data-tab="locations">
           <div class="content-header">
             <h2><i class="fas fa-map-marker-alt"></i> Locations</h2>
           </div>
@@ -262,7 +319,7 @@
             <div class="drop-content">
               <i class="fas fa-map-marker-alt"></i>
               <h3>Add Locations</h3>
-              <p>Drag location journals here to associate this NPC with them</p>
+              <p>Drag location journals here</p>
             </div>
           </div>
 
@@ -300,7 +357,7 @@
         </section>
 
         {{!-- Shops Tab --}}
-        <section class="tab-panel" data-tab="shops">
+        <section class="tab-panel {{#if (eq currentTab 'shops')}}active{{/if}}" data-tab="shops">
           <div class="content-header">
             <h2><i class="fas fa-store"></i> Associated Shops</h2>
           </div>
@@ -309,7 +366,7 @@
             <div class="drop-content">
               <i class="fas fa-store"></i>
               <h3>Add Shops</h3>
-              <p>Drag shop journals here to associate this NPC with them</p>
+              <p>Drag shop journals here</p>
             </div>
           </div>
 
@@ -347,7 +404,7 @@
         </section>
 
         {{!-- Associates Tab --}}
-        <section class="tab-panel" data-tab="associates">
+        <section class="tab-panel {{#if (eq currentTab 'associates')}}active{{/if}}" data-tab="associates">
           <div class="content-header">
             <h2><i class="fas fa-users"></i> Associates & Contacts</h2>
           </div>
@@ -356,7 +413,7 @@
             <div class="drop-content">
               <i class="fas fa-user-friends"></i>
               <h3>Add Associates</h3>
-              <p>Drag NPC journals or actors here to create relationships</p>
+              <p>Drag NPC journals or actors here</p>
             </div>
           </div>
 
@@ -405,7 +462,7 @@
         </section>
 
         {{!-- Notes Tab --}}
-        <section class="tab-panel" data-tab="notes">
+        <section class="tab-panel {{#if (eq currentTab 'notes')}}active{{/if}}" data-tab="notes">
           <div class="content-header">
             <h2><i class="fas fa-sticky-note"></i> GM Notes</h2>
           </div>
@@ -422,13 +479,5 @@
       </form>
     </main>
   </div>
-
-  {{!-- Footer --}}
-  <footer class="sheet-footer">
-    <button type="button" class="save-btn save-data">
-      <i class="fas fa-save"></i>
-      Save Changes
-    </button>
-  </footer>
 
 </div>
