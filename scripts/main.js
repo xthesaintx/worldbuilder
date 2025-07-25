@@ -4,7 +4,6 @@ import { ShopSheet } from './sheets/shop-sheet.js';
 import { NPCSheet } from './sheets/npc-sheet.js';
 import { RegionSheet } from './sheets/region-sheet.js';
 
-
 Hooks.once('init', async function() {
   console.log('Campaign Codex | Initializing v2.0');
   
@@ -145,7 +144,43 @@ Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
   });
 });
 
-// Auto-select appropriate sheet based on flags
+// Fixed: Force correct sheet to open immediately upon creation
+Hooks.on('createJournalEntry', async (document, options, userId) => {
+  if (game.user.id !== userId) return;
+  
+  const journalType = document.getFlag("campaign-codex", "type");
+  if (!journalType) return;
+
+  // Wait a moment for the document to be fully created
+  setTimeout(() => {
+    let targetSheet = null;
+
+    switch (journalType) {
+      case "location":
+        targetSheet = LocationSheet;
+        break;
+      case "shop":
+        targetSheet = ShopSheet;
+        break;
+      case "npc":
+        targetSheet = NPCSheet;
+        break;
+      case "region":
+        targetSheet = RegionSheet;
+        break;
+    }
+
+    if (targetSheet) {
+      // Close any existing sheet and open the correct one
+      if (document.sheet.rendered) {
+        document.sheet.close();
+      }
+      new targetSheet(document).render(true);
+    }
+  }, 100);
+});
+
+// Auto-select appropriate sheet based on flags for existing documents
 Hooks.on('renderJournalEntry', (journal, html, data) => {
   const journalType = journal.getFlag("campaign-codex", "type");
   if (!journalType) return;
@@ -175,29 +210,6 @@ Hooks.on('renderJournalEntry', (journal, html, data) => {
     }, 100);
   }
 });
-
-// Handle bidirectional relationship updates
-Hooks.on('updateJournalEntry', async (document, changes, options, userId) => {
-  if (game.user.id !== userId) return; // Only handle our own updates
-  
-  const type = document.getFlag("campaign-codex", "type");
-  if (!type) return;
-
-  await game.campaignCodex.handleRelationshipUpdates(document, changes, type);
-});
-
-// Cleanup relationships when documents are deleted
-Hooks.on('preDeleteJournalEntry', async (document, options, userId) => {
-  const type = document.getFlag("campaign-codex", "type");
-  if (!type) return;
-
-  await game.campaignCodex.cleanupRelationships(document, type);
-});
-
-Hooks.on('preDeleteActor', async (document, options, userId) => {
-  await game.campaignCodex.cleanupActorRelationships(document);
-});
-
 
 // Fixed Campaign Codex creation buttons for Journal Directory
 Hooks.on('renderJournalDirectory', (app, html, data) => {
@@ -292,3 +304,24 @@ async function promptForName(type) {
   });
 }
 
+// Handle bidirectional relationship updates
+Hooks.on('updateJournalEntry', async (document, changes, options, userId) => {
+  if (game.user.id !== userId) return; // Only handle our own updates
+  
+  const type = document.getFlag("campaign-codex", "type");
+  if (!type) return;
+
+  await game.campaignCodex.handleRelationshipUpdates(document, changes, type);
+});
+
+// Cleanup relationships when documents are deleted
+Hooks.on('preDeleteJournalEntry', async (document, options, userId) => {
+  const type = document.getFlag("campaign-codex", "type");
+  if (!type) return;
+
+  await game.campaignCodex.cleanupRelationships(document, type);
+});
+
+Hooks.on('preDeleteActor', async (document, options, userId) => {
+  await game.campaignCodex.cleanupActorRelationships(document);
+});
