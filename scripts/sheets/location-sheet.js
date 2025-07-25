@@ -24,6 +24,7 @@ export class LocationSheet extends JournalSheet {
   }
 
   /** @override */
+  async getData() {
     const data = await super.getData();
     const locationData = this.document.getFlag("campaign-codex", "data") || {};
     
