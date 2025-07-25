@@ -1,21 +1,15 @@
-export class RegionSheet extends JournalSheet {
-  constructor(document, options = {}) {
-    super(document, options);
-    this._currentTab = 'info';
-  }
+import { CampaignCodexBaseSheet } from './base-sheet.js';
+import { TemplateComponents } from './template-components.js';
 
+export class RegionSheet extends CampaignCodexBaseSheet {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["sheet", "journal-sheet", "campaign-codex", "region-sheet"],
-      width: 900,
-      height: 700,
-      resizable: true,
-      tabs: [{ navSelector: ".sidebar-tabs", contentSelector: ".main-content", initial: "info" }]
+      classes: [...super.defaultOptions.classes, "region-sheet"]
     });
   }
 
   get template() {
-    return "modules/campaign-codex/templates/region-sheet.html";
+    return "modules/campaign-codex/templates/base-sheet.html";
   }
 
   async getData() {
@@ -27,16 +21,111 @@ export class RegionSheet extends JournalSheet {
     data.autoPopulatedNPCs = await this._getAutoPopulatedNPCs(regionData.linkedLocations || []);
     data.autoPopulatedShops = await this._getAutoPopulatedShops(regionData.linkedLocations || []);
     
-    // Region specific data
-    data.regionData = {
-      description: regionData.description || "",
-      notes: regionData.notes || ""
-    };
-
-    data.canEdit = this.document.canUserModify(game.user, "update");
-    data.currentTab = this._currentTab;
+    // Sheet configuration
+    data.sheetType = "region";
+    data.sheetTypeLabel = "Region";
+    data.defaultImage = "icons/svg/globe.svg";
+    
+    // Navigation tabs
+    data.tabs = [
+      { key: 'info', label: 'Info', icon: 'fas fa-info-circle', active: this._currentTab === 'info' },
+      { key: 'locations', label: 'Locations', icon: 'fas fa-map-marker-alt', active: this._currentTab === 'locations' },
+      { key: 'npcs', label: 'NPCs', icon: 'fas fa-users', active: this._currentTab === 'npcs' },
+      { key: 'shops', label: 'Shops', icon: 'fas fa-store', active: this._currentTab === 'shops' },
+      { key: 'notes', label: 'Notes', icon: 'fas fa-sticky-note', active: this._currentTab === 'notes' }
+    ];
+    
+    // Statistics
+    data.statistics = [
+      { icon: 'fas fa-map-marker-alt', value: data.linkedLocations.length, label: 'LOCATIONS', color: '#28a745' },
+      { icon: 'fas fa-users', value: data.autoPopulatedNPCs.length, label: 'NPCS', color: '#fd7e14' },
+      { icon: 'fas fa-store', value: data.autoPopulatedShops.length, label: 'SHOPS', color: '#6f42c1' }
+    ];
+    
+    // Quick links
+    data.quickLinks = [
+      ...data.linkedLocations.map(loc => ({ ...loc, type: 'location' }))
+    ];
+    
+    // Tab panels
+    data.tabPanels = [
+      {
+        key: 'info',
+        active: this._currentTab === 'info',
+        content: this._generateInfoTab(data)
+      },
+      {
+        key: 'locations',
+        active: this._currentTab === 'locations',
+        content: this._generateLocationsTab(data)
+      },
+      {
+        key: 'npcs',
+        active: this._currentTab === 'npcs',
+        content: this._generateNPCsTab(data)
+      },
+      {
+        key: 'shops', 
+        active: this._currentTab === 'shops',
+        content: this._generateShopsTab(data)
+      },
+      {
+        key: 'notes',
+        active: this._currentTab === 'notes',
+        content: this._generateNotesTab(data)
+      }
+    ];
     
     return data;
+  }
+
+  _generateInfoTab(data) {
+    return TemplateComponents.formSection('Description', 'fas fa-align-left', 'description', 'Describe this region...', data.sheetData.description, 8);
+  }
+
+  _generateLocationsTab(data) {
+    return `
+      ${TemplateComponents.contentHeader('fas fa-map-marker-alt', 'Locations in this Region')}
+      ${TemplateComponents.dropZone('location', 'fas fa-map-marker-alt', 'Add Locations', 'Drag location journals here to add them to this region')}
+      ${TemplateComponents.entityGrid(data.linkedLocations, 'location')}
+    `;
+  }
+
+  _generateNPCsTab(data) {
+    const refreshBtn = `
+      <button type="button" class="refresh-btn refresh-npcs" title="Refresh auto-populated data">
+        <i class="fas fa-sync-alt"></i>
+        Refresh
+      </button>
+    `;
+
+    return `
+      ${TemplateComponents.contentHeader('fas fa-users', 'NPCs in this Region', refreshBtn)}
+      ${TemplateComponents.infoBanner('NPCs are automatically populated from linked locations. Add locations to see NPCs appear here.')}
+      ${TemplateComponents.entityGrid(data.autoPopulatedNPCs, 'npc', true)}
+    `;
+  }
+
+  _generateShopsTab(data) {
+    const refreshBtn = `
+      <button type="button" class="refresh-btn refresh-npcs" title="Refresh auto-populated data">
+        <i class="fas fa-sync-alt"></i>
+        Refresh
+      </button>
+    `;
+
+    return `
+      ${TemplateComponents.contentHeader('fas fa-store', 'Shops in this Region', refreshBtn)}
+      ${TemplateComponents.infoBanner('Shops are automatically populated from linked locations. Add locations to see shops appear here.')}
+      ${TemplateComponents.entityGrid(data.autoPopulatedShops, 'shop')}
+    `;
+  }
+
+  _generateNotesTab(data) {
+    return `
+      ${TemplateComponents.contentHeader('fas fa-sticky-note', 'GM Notes')}
+      ${TemplateComponents.formSection('Private Notes', 'fas fa-eye-slash', 'notes', 'Private GM notes about this region...', data.sheetData.notes, 12)}
+    `;
   }
 
   async _getLinkedLocations(locationIds) {
@@ -49,8 +138,7 @@ export class RegionSheet extends JournalSheet {
           id: journal.id,
           name: journal.name,
           img: journal.img || "icons/svg/direction.svg",
-          npcCount: (locationData.linkedNPCs || []).length,
-          shopCount: (locationData.linkedShops || []).length
+          meta: `<span class="entity-stat">${(locationData.linkedNPCs || []).length} NPCs</span> <span class="entity-stat">${(locationData.linkedShops || []).length} Shops</span>`
         });
       }
     }
@@ -80,10 +168,10 @@ export class RegionSheet extends JournalSheet {
             name: npcJournal.name,
             img: actor ? actor.img : "icons/svg/mystery-man.svg",
             actor: actor,
-            locations: [location.name]
+            locations: [location.name],
+            meta: actor ? `<span class="entity-type">${actor.system.details?.race || 'Unknown'} ${actor.system.details?.class || 'Unknown'}</span>` : '<span class="entity-type">NPC</span>'
           });
         } else {
-          // Add this location to the NPC's location list
           const npc = npcMap.get(npcId);
           if (!npc.locations.includes(location.name)) {
             npc.locations.push(location.name);
@@ -114,7 +202,7 @@ export class RegionSheet extends JournalSheet {
             id: shopJournal.id,
             name: shopJournal.name,
             img: "icons/svg/item-bag.svg",
-            location: location.name
+            locations: [location.name]
           });
         }
       }
@@ -123,147 +211,32 @@ export class RegionSheet extends JournalSheet {
     return Array.from(shopMap.values());
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-
-    // Activate tabs
-    this._activateTabs(html);
-
-    // Make the sheet a drop target
-    html[0].addEventListener('drop', this._onDrop.bind(this));
-    html[0].addEventListener('dragover', this._onDragOver.bind(this));
-
-    // Name editing
-    html.find('.location-name').click(this._onNameEdit.bind(this));
-    html.find('.name-input').blur(this._onNameSave.bind(this));
-    html.find('.name-input').keypress(this._onNameKeypress.bind(this));
-
-    // Image change functionality
-    html.find('.location-image').click(this._onImageClick.bind(this));
-    html.find('.image-change-btn').click(this._onImageClick.bind(this));
-
-    // Save button
-    html.find('.save-data').click(this._onSaveData.bind(this));
-
+  _activateSheetSpecificListeners(html) {
     // Remove buttons
-    html.find('.remove-location').click(this._onRemoveLocation.bind(this));
+    html.find('.remove-location').click((e) => this._onRemoveFromList(e, 'linkedLocations'));
 
-    // Open document buttons
-    html.find('.open-location').click(this._onOpenLocation.bind(this));
-    html.find('.open-npc').click(this._onOpenNPC.bind(this));
-    html.find('.open-shop').click(this._onOpenShop.bind(this));
-    html.find('.open-actor').click(this._onOpenActor.bind(this));
+    // Open buttons
+    html.find('.open-location').click((e) => this._onOpenDocument(e, 'location'));
+    html.find('.open-npc').click((e) => this._onOpenDocument(e, 'npc'));
+    html.find('.open-shop').click((e) => this._onOpenDocument(e, 'shop'));
+    html.find('.open-actor').click((e) => this._onOpenDocument(e, 'actor'));
 
-    // Refresh NPCs button
+    // Refresh button
     html.find('.refresh-npcs').click(this._onRefreshNPCs.bind(this));
 
     // Quick links
-    html.find('.location-link').click(this._onOpenLocation.bind(this));
+    html.find('.location-link').click((e) => this._onOpenDocument(e, 'location'));
   }
 
-  _activateTabs(html) {
-    // Tab navigation for sidebar tabs
-    html.find('.sidebar-tabs .tab-item').click(event => {
-      event.preventDefault();
-      const tab = event.currentTarget.dataset.tab;
-      this._currentTab = tab;
-      this._showTab(tab, html);
-    });
-
-    // Show current tab
-    this._showTab(this._currentTab, html);
-  }
-
-  _showTab(tabName, html) {
-    const $html = html instanceof jQuery ? html : $(html);
-    
-    // Remove active from all tabs and panels
-    $html.find('.sidebar-tabs .tab-item').removeClass('active');
-    $html.find('.tab-panel').removeClass('active');
-
-    // Add active to the correct tab and panel
-    $html.find(`.sidebar-tabs .tab-item[data-tab="${tabName}"]`).addClass('active');
-    $html.find(`.tab-panel[data-tab="${tabName}"]`).addClass('active');
-  }
-
-  // Name editing functionality
-  async _onNameEdit(event) {
-    const nameElement = $(event.currentTarget);
-    const currentName = nameElement.text();
-    
-    const input = $(`<input type="text" class="name-input" value="${currentName}" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 2px 8px; border-radius: 4px; font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">`);
-    
-    nameElement.replaceWith(input);
-    input.focus().select();
-  }
-
-  async _onNameSave(event) {
-    const input = $(event.currentTarget);
-    const newName = input.val().trim();
-    
-    if (newName && newName !== this.document.name) {
-      await this.document.update({ name: newName });
-    }
-    
-    const nameElement = $(`<h1 class="location-name">${this.document.name}</h1>`);
-    input.replaceWith(nameElement);
-    nameElement.click(this._onNameEdit.bind(this));
-  }
-
-  async _onNameKeypress(event) {
-    if (event.which === 13) { // Enter key
-      event.currentTarget.blur();
+  async _handleDrop(data, event) {
+    if (data.type === "JournalEntry") {
+      await this._handleJournalDrop(data, event);
     }
   }
 
-  async _onImageClick(event) {
-    event.preventDefault();
-    
-    const current = this.document.img;
-    const fp = new FilePicker({
-      type: "image",
-      current: current,
-      callback: async (path) => {
-        await this.document.update({ img: path });
-        this.render(false);
-      }
-    });
-    
-    return fp.browse();
-  }
-
-  _onDragOver(event) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "link";
-  }
-
-  async _onDrop(event) {
-    event.preventDefault();
-    
-    // Prevent duplicate drops
-    if (this._dropping) return;
-    this._dropping = true;
-    
-    let data;
-    try {
-      data = JSON.parse(event.dataTransfer.getData('text/plain'));
-    } catch (err) {
-      this._dropping = false;
-      return;
-    }
-
-    try {
-      if (data.type === "JournalEntry") {
-        await this._handleJournalDrop(data);
-      }
-    } finally {
-      this._dropping = false;
-    }
-  }
-
-  async _handleJournalDrop(data) {
+  async _handleJournalDrop(data, event) {
     const journal = await fromUuid(data.uuid);
-    if (!journal || journal.id === this.document.id) return; // Prevent self-linking
+    if (!journal || journal.id === this.document.id) return;
 
     const journalType = journal.getFlag("campaign-codex", "type");
     
@@ -273,113 +246,12 @@ export class RegionSheet extends JournalSheet {
     }
   }
 
-  async _onSaveData(event) {
-    event.preventDefault();
-    
-    const form = this.element.find('form')[0];
-    const formData = new FormDataExtended(form);
-    const data = formData.object;
-
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const updatedData = {
-      ...currentData,
-      description: data.description || "",
-      notes: data.notes || ""
-    };
-
-    try {
-      await this.document.setFlag("campaign-codex", "data", updatedData);
-      ui.notifications.info("Region data saved successfully!");
-      
-      const saveBtn = $(event.currentTarget);
-      saveBtn.addClass('success');
-      setTimeout(() => saveBtn.removeClass('success'), 2000);
-      
-    } catch (error) {
-      console.error("Campaign Codex | Error saving region data:", error);
-      ui.notifications.error("Failed to save region data!");
-      
-      const saveBtn = $(event.currentTarget);
-      saveBtn.addClass('error');
-      setTimeout(() => saveBtn.removeClass('error'), 2000);
-    }
-  }
-
-  async _onRemoveLocation(event) {
-    const locationId = event.currentTarget.dataset.locationId;
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    
-    currentData.linkedLocations = (currentData.linkedLocations || []).filter(id => id !== locationId);
-    await this.document.setFlag("campaign-codex", "data", currentData);
-    
-    this.render(false);
-  }
-
-  // Fixed open methods
-  _onOpenLocation(event) {
-    event.stopPropagation();
-    const locationId = event.currentTarget.dataset.locationId || event.currentTarget.closest('[data-location-id]').dataset.locationId;
-    const journal = game.journal.get(locationId);
-    if (journal) journal.sheet.render(true);
-  }
-
-  _onOpenNPC(event) {
-    event.stopPropagation();
-    const npcId = event.currentTarget.dataset.npcId;
-    const journal = game.journal.get(npcId);
-    if (journal) journal.sheet.render(true);
-  }
-
-  _onOpenShop(event) {
-    event.stopPropagation();
-    const shopId = event.currentTarget.dataset.shopId;
-    const journal = game.journal.get(shopId);
-    if (journal) journal.sheet.render(true);
-  }
-
-  _onOpenActor(event) {
-    event.stopPropagation();
-    const actorId = event.currentTarget.dataset.actorId;
-    const actor = game.actors.get(actorId);
-    if (actor) actor.sheet.render(true);
-  }
-
   async _onRefreshNPCs(event) {
-    // Force refresh of auto-populated data
     this.render(false);
     ui.notifications.info("Region data refreshed!");
   }
 
-  // Override render to preserve tab state
-  async render(force = false, options = {}) {
-    const currentTab = this._currentTab;
-    const result = await super.render(force, options);
-    
-    if (this._element && currentTab) {
-      setTimeout(() => {
-        this._showTab(currentTab, this._element);
-      }, 50);
-    }
-    
-    return result;
-  }
-
-  // Override close to save on close
-  async close(options = {}) {
-    // Auto-save on close
-    const form = this.element?.find('form')[0];
-    if (form) {
-      const formData = new FormDataExtended(form);
-      const data = formData.object;
-      const currentData = this.document.getFlag("campaign-codex", "data") || {};
-      const updatedData = {
-        ...currentData,
-        description: data.description || "",
-        notes: data.notes || ""
-      };
-      await this.document.setFlag("campaign-codex", "data", updatedData);
-    }
-    
-    return super.close(options);
+  getSheetType() {
+    return "region";
   }
 }

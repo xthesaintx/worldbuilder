@@ -5,7 +5,7 @@ import { NPCSheet } from './sheets/npc-sheet.js';
 import { RegionSheet } from './sheets/region-sheet.js';
 
 Hooks.once('init', async function() {
-  console.log('Campaign Codex | Initializing v2.0');
+  console.log('Campaign Codex | Initializing v2.0 - Modular System');
   
   // Register sheet classes
   DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", LocationSheet, {
@@ -275,7 +275,7 @@ async function createCampaignOverview() {
   overview.sheet.render(true);
 }
 
-// Fixed: Force correct sheet to open immediately upon creation and preserve active tab
+// Force correct sheet to open immediately upon creation
 Hooks.on('createJournalEntry', async (document, options, userId) => {
   if (game.user.id !== userId) return;
   
@@ -374,32 +374,30 @@ Hooks.on('renderJournalEntry', (journal, html, data) => {
   }
 });
 
-// Fixed Campaign Codex creation buttons for Journal Directory
+// Campaign Codex creation buttons for Journal Directory
 Hooks.on('renderJournalDirectory', (app, html, data) => {
   // Remove any existing button group to prevent duplicates
   html.find('.campaign-codex-buttons').remove();
   
-  // Create the button container with better structure
+  // Create the button container
   const buttonGroup = $(`
-    <div class="campaign-codex-buttons">
-      <div class="button-row">
-        <button class="create-location-btn" type="button" title="Create New Location">
-          <i class="fas fa-map-marker-alt"></i>Location
-        </button>
-        <button class="create-shop-btn" type="button" title="Create New Shop">
-          <i class="fas fa-store"></i>Shop
-        </button>
-        <button class="create-npc-btn" type="button" title="Create New NPC Journal">
-          <i class="fas fa-user"></i>NPC
-        </button>
-        <button class="create-region-btn" type="button" title="Create New Region">
-          <i class="fas fa-globe"></i>Region
-        </button>
-      </div>
+    <div class="campaign-codex-buttons" style="margin: 8px 0; display: flex; gap: 4px; flex-wrap: wrap;">
+      <button class="create-location-btn" type="button" title="Create New Location" style="flex: 1; min-width: 0; padding: 4px 8px; font-size: 11px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        <i class="fas fa-map-marker-alt"></i> Location
+      </button>
+      <button class="create-shop-btn" type="button" title="Create New Shop" style="flex: 1; min-width: 0; padding: 4px 8px; font-size: 11px; background: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        <i class="fas fa-store"></i> Shop
+      </button>
+      <button class="create-npc-btn" type="button" title="Create New NPC Journal" style="flex: 1; min-width: 0; padding: 4px 8px; font-size: 11px; background: #fd7e14; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        <i class="fas fa-user"></i> NPC
+      </button>
+      <button class="create-region-btn" type="button" title="Create New Region" style="flex: 1; min-width: 0; padding: 4px 8px; font-size: 11px; background: #20c997; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        <i class="fas fa-globe"></i> Region
+      </button>
     </div>
   `);
 
-  // Insert into the directory header as you specified
+  // Insert into the directory header
   const directoryHeader = html.find('.directory-header');
   directoryHeader.append(buttonGroup);
 
@@ -425,7 +423,7 @@ Hooks.on('renderJournalDirectory', (app, html, data) => {
   });
 });
 
-// Helper function to prompt for name with better UX
+// Helper function to prompt for name
 async function promptForName(type) {
   return new Promise((resolve) => {
     new Dialog({
@@ -455,10 +453,8 @@ async function promptForName(type) {
       },
       default: "create",
       render: (html) => {
-        // Submit on enter key
         html.find('input[name="name"]').focus().keypress((e) => {
           if (e.which === 13) {
-            const name = e.target.value.trim();
             html.closest('.dialog').find('.dialog-button.create button').click();
           }
         });
@@ -469,7 +465,7 @@ async function promptForName(type) {
 
 // Handle bidirectional relationship updates
 Hooks.on('updateJournalEntry', async (document, changes, options, userId) => {
-  if (game.user.id !== userId) return; // Only handle our own updates
+  if (game.user.id !== userId) return;
   
   const type = document.getFlag("campaign-codex", "type");
   if (!type) return;

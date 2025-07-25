@@ -1,0 +1,87 @@
+<div class="campaign-codex {{sheetType}}-sheet">
+  <div class="sheet-container">
+    
+    {{!-- Sidebar --}}
+    <aside class="sheet-sidebar">
+      
+      {{!-- Header with Image and Title --}}
+      <div class="sidebar-header">
+        <div class="sheet-image">
+          <img src="{{#if customImage}}{{customImage}}{{else}}{{document.img}}{{/if}}" 
+               alt="{{document.name}}" 
+               onerror="this.src='{{defaultImage}}'">
+        </div>
+        
+        <h1 class="sheet-title">{{document.name}}</h1>
+        <div class="sheet-type">{{sheetTypeLabel}}</div>
+        
+        <button class="image-change-btn" type="button">
+          <i class="fas fa-camera"></i> Change Image
+        </button>
+        
+        {{!-- Custom header content --}}
+        {{{customHeaderContent}}}
+      </div>
+      
+      {{!-- Navigation Tabs --}}
+      <nav class="sidebar-tabs">
+        {{#each tabs}}
+          <div class="tab-item {{#if active}}active{{/if}}" data-tab="{{key}}">
+            <i class="{{icon}}"></i>
+            <span>{{label}}</span>
+          </div>
+        {{/each}}
+      </nav>
+      
+      {{!-- Statistics --}}
+      {{#if statistics}}
+        <div class="sidebar-stats">
+          {{#each statistics}}
+            <div class="stat-item">
+              <i class="{{icon}}" style="color: {{color}};"></i>
+              <span class="stat-number">{{value}}</span>
+              <span class="stat-label">{{label}}</span>
+            </div>
+          {{/each}}
+        </div>
+      {{/if}}
+      
+      {{!-- Quick Links --}}
+      {{#if quickLinks}}
+        <div class="sidebar-links">
+          <h3>Quicklinks</h3>
+          <div class="link-grid">
+            {{#each quickLinks}}
+              <div class="link-card {{type}}-link" data-{{type}}-id="{{id}}" title="{{name}}">
+                <img src="{{img}}" alt="{{name}}">
+                <span class="link-name">{{name}}</span>
+              </div>
+            {{/each}}
+          </div>
+        </div>
+      {{/if}}
+      
+    </aside>
+    
+    {{!-- Main Content --}}
+    <main class="sheet-main">
+      <form class="sheet-form">
+        
+        {{!-- Tab Panels --}}
+        {{#each tabPanels}}
+          <section class="tab-panel {{#if active}}active{{/if}}" data-tab="{{key}}">
+            {{{content}}}
+          </section>
+        {{/each}}
+        
+      </form>
+      
+      {{!-- Save Button --}}
+      <button type="button" class="save-btn save-data">
+        <i class="fas fa-save"></i>
+      </button>
+      
+    </main>
+    
+  </div>
+</div>

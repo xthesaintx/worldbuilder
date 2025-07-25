@@ -1,21 +1,15 @@
-export class ShopSheet extends JournalSheet {
-  constructor(document, options = {}) {
-    super(document, options);
-    this._currentTab = 'info';
-  }
+import { CampaignCodexBaseSheet } from './base-sheet.js';
+import { TemplateComponents } from './template-components.js';
 
+export class ShopSheet extends CampaignCodexBaseSheet {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["sheet", "journal-sheet", "campaign-codex", "shop-sheet"],
-      width: 900,
-      height: 700,
-      resizable: true,
-      tabs: [{ navSelector: ".sidebar-tabs", contentSelector: ".main-content", initial: "info" }]
+      classes: [...super.defaultOptions.classes, "shop-sheet"]
     });
   }
 
   get template() {
-    return "modules/campaign-codex/templates/shop-sheet.html";
+    return "modules/campaign-codex/templates/base-sheet.html";
   }
 
   async getData() {
@@ -27,17 +21,135 @@ export class ShopSheet extends JournalSheet {
     data.linkedLocation = shopData.linkedLocation ? await this._getLinkedLocation(shopData.linkedLocation) : null;
     data.inventory = await this._getInventory(shopData.inventory || []);
     
-    // Shop specific data
-    data.shopData = {
-      description: shopData.description || "",
-      markup: shopData.markup || 1.0,
-      notes: shopData.notes || ""
-    };
-
-    data.canEdit = this.document.canUserModify(game.user, "update");
-    data.currentTab = this._currentTab;
+    // Sheet configuration
+    data.sheetType = "shop";
+    data.sheetTypeLabel = "Shop";
+    data.defaultImage = "icons/svg/item-bag.svg";
+    data.markup = shopData.markup || 1.0;
+    
+    // Navigation tabs
+    data.tabs = [
+      { key: 'info', label: 'Info', icon: 'fas fa-info-circle', active: this._currentTab === 'info' },
+      { key: 'inventory', label: 'Inventory', icon: 'fas fa-boxes', active: this._currentTab === 'inventory' },
+      { key: 'npcs', label: 'NPCs', icon: 'fas fa-users', active: this._currentTab === 'npcs' },
+      { key: 'notes', label: 'Notes', icon: 'fas fa-sticky-note', active: this._currentTab === 'notes' }
+    ];
+    
+    // Statistics
+    data.statistics = [
+      { icon: 'fas fa-boxes', value: data.inventory.length, label: 'ITEMS', color: '#28a745' },
+      { icon: 'fas fa-users', value: data.linkedNPCs.length, label: 'NPCS', color: '#fd7e14' },
+      { icon: 'fas fa-percentage', value: `${data.markup}x`, label: 'MARKUP', color: '#d4af37' }
+    ];
+    
+    // Quick links
+    data.quickLinks = [
+      ...(data.linkedLocation ? [{ ...data.linkedLocation, type: 'location' }] : []),
+      ...data.linkedNPCs.map(npc => ({ ...npc, type: 'npc' }))
+    ];
+    
+    // Custom header content (location info)
+    if (data.linkedLocation) {
+      data.customHeaderContent = `
+        <div class="location-info">
+          <span class="location-label">Located in:</span>
+          <span class="location-name">${data.linkedLocation.name}</span>
+        </div>
+      `;
+    }
+    
+    // Tab panels
+    data.tabPanels = [
+      {
+        key: 'info',
+        active: this._currentTab === 'info',
+        content: this._generateInfoTab(data)
+      },
+      {
+        key: 'inventory',
+        active: this._currentTab === 'inventory',
+        content: this._generateInventoryTab(data)
+      },
+      {
+        key: 'npcs', 
+        active: this._currentTab === 'npcs',
+        content: this._generateNPCsTab(data)
+      },
+      {
+        key: 'notes',
+        active: this._currentTab === 'notes',
+        content: this._generateNotesTab(data)
+      }
+    ];
     
     return data;
+  }
+
+  _generateInfoTab(data) {
+    let locationSection = '';
+    
+    if (data.linkedLocation) {
+      locationSection = `
+        <div class="form-section">
+          <h3><i class="fas fa-map-marker-alt"></i> Location</h3>
+          <div class="linked-actor-card">
+            <div class="actor-image">
+              <img src="${data.linkedLocation.img}" alt="${data.linkedLocation.name}">
+            </div>
+            <div class="actor-content">
+              <h4 class="actor-name">${data.linkedLocation.name}</h4>
+              <div class="actor-details">
+                <span class="actor-race-class">Location</span>
+              </div>
+            </div>
+            <div class="actor-actions">
+              <button type="button" class="action-btn open-location" data-location-id="${data.linkedLocation.id}" title="Open Location">
+                <i class="fas fa-external-link-alt"></i>
+              </button>
+              <button type="button" class="action-btn remove-location" title="Remove Location">
+                <i class="fas fa-unlink"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      locationSection = `
+        <div class="form-section">
+          <h3><i class="fas fa-map-marker-alt"></i> Location</h3>
+          ${TemplateComponents.dropZone('location', 'fas fa-map-marker-alt', 'Set Location', 'Drag a location journal here to set where this shop is located')}
+        </div>
+      `;
+    }
+    
+    return `
+      ${TemplateComponents.formSection('Description', 'fas fa-align-left', 'description', 'Describe this shop...', data.sheetData.description, 8)}
+      ${locationSection}
+    `;
+  }
+
+  _generateInventoryTab(data) {
+    return `
+      ${TemplateComponents.contentHeader('fas fa-boxes', 'Shop Inventory')}
+      ${TemplateComponents.markupControl(data.markup)}
+      ${TemplateComponents.dropZone('item', 'fas fa-plus-circle', 'Add Items', 'Drag items from the items directory to add them to inventory')}
+      ${TemplateComponents.inventoryTable(data.inventory)}
+    `;
+  }
+
+  _generateNPCsTab(data) {
+    return `
+      ${TemplateComponents.contentHeader('fas fa-users', 'Shop NPCs')}
+      ${TemplateComponents.dropZone('npc', 'fas fa-user-plus', 'Add NPCs', 'Drag NPCs or actors here to associate them with this shop')}
+      ${TemplateComponents.entityGrid(data.linkedNPCs, 'npc', true)}
+    `;
+  }
+
+  _generateNotesTab(data) {
+    return `
+      ${TemplateComponents.contentHeader('fas fa-sticky-note', 'GM Notes')}
+      ${TemplateComponents.formSection('Private Notes', 'fas fa-eye-slash', 'notes', 'Private GM notes about this shop...', data.sheetData.notes, 12)}
+    `;
   }
 
   async _getLinkedNPCs(npcIds) {
@@ -51,7 +163,8 @@ export class ShopSheet extends JournalSheet {
           id: journal.id,
           name: journal.name,
           img: actor ? actor.img : "icons/svg/mystery-man.svg",
-          actor: actor
+          actor: actor,
+          meta: actor ? `<span class="entity-type">${actor.system.details?.race || 'Unknown'} ${actor.system.details?.class || 'Unknown'}</span>` : '<span class="entity-type">NPC</span>'
         });
       }
     }
@@ -64,7 +177,7 @@ export class ShopSheet extends JournalSheet {
       return {
         id: journal.id,
         name: journal.name,
-        img: "icons/svg/direction.svg"
+        img: journal.img || "icons/svg/direction.svg"
       };
     }
     return null;
@@ -82,7 +195,7 @@ export class ShopSheet extends JournalSheet {
         
         inventory.push({
           itemId: item.id,
-          name: item.name, // Just the name, no additional description
+          name: item.name,
           img: item.img,
           basePrice: basePrice,
           finalPrice: finalPrice,
@@ -95,33 +208,12 @@ export class ShopSheet extends JournalSheet {
     return inventory;
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-
-    // Activate tabs
-    this._activateTabs(html);
-
-    // Make the sheet a drop target
-    html[0].addEventListener('drop', this._onDrop.bind(this));
-    html[0].addEventListener('dragover', this._onDragOver.bind(this));
-
-    // Name editing
-    html.find('.location-name').click(this._onNameEdit.bind(this));
-    html.find('.name-input').blur(this._onNameSave.bind(this));
-    html.find('.name-input').keypress(this._onNameKeypress.bind(this));
-
-    // Image change functionality
-    html.find('.location-image').click(this._onImageClick.bind(this));
-    html.find('.image-change-btn').click(this._onImageClick.bind(this));
-
-    // Save button (remove auto-save, only manual save)
-    html.find('.save-data').click(this._onSaveData.bind(this));
-
+  _activateSheetSpecificListeners(html) {
     // Markup input
     html.find('.markup-input').change(this._onMarkupChange.bind(this));
 
     // Remove buttons
-    html.find('.remove-npc').click(this._onRemoveNPC.bind(this));
+    html.find('.remove-npc').click((e) => this._onRemoveFromList(e, 'linkedNPCs'));
     html.find('.remove-item').click(this._onRemoveItem.bind(this));
     html.find('.remove-location').click(this._onRemoveLocation.bind(this));
 
@@ -133,122 +225,28 @@ export class ShopSheet extends JournalSheet {
     // Price controls
     html.find('.price-input').change(this._onPriceChange.bind(this));
 
-    // Open document buttons
-    html.find('.open-npc').click(this._onOpenNPC.bind(this));
-    html.find('.open-location').click(this._onOpenLocation.bind(this));
-    html.find('.open-item').click(this._onOpenItem.bind(this));
-    html.find('.open-actor').click(this._onOpenActor.bind(this));
+    // Open buttons
+    html.find('.open-npc').click((e) => this._onOpenDocument(e, 'npc'));
+    html.find('.open-location').click((e) => this._onOpenDocument(e, 'location'));
+    html.find('.open-item').click((e) => this._onOpenDocument(e, 'item'));
+    html.find('.open-actor').click((e) => this._onOpenDocument(e, 'actor'));
 
     // Quick links
-    html.find('.location-link').click(this._onOpenLocation.bind(this));
-    html.find('.npc-link').click(this._onOpenNPC.bind(this));
+    html.find('.location-link').click((e) => this._onOpenDocument(e, 'location'));
+    html.find('.npc-link').click((e) => this._onOpenDocument(e, 'npc'));
   }
 
-  _activateTabs(html) {
-    // Tab navigation for sidebar tabs
-    html.find('.sidebar-tabs .tab-item').click(event => {
-      event.preventDefault();
-      const tab = event.currentTarget.dataset.tab;
-      this._currentTab = tab;
-      this._showTab(tab, html);
-    });
-
-    // Show current tab
-    this._showTab(this._currentTab, html);
-  }
-
-  _showTab(tabName, html) {
-    const $html = html instanceof jQuery ? html : $(html);
-    
-    // Remove active from all tabs and panels
-    $html.find('.sidebar-tabs .tab-item').removeClass('active');
-    $html.find('.tab-panel').removeClass('active');
-
-    // Add active to the correct tab and panel
-    $html.find(`.sidebar-tabs .tab-item[data-tab="${tabName}"]`).addClass('active');
-    $html.find(`.tab-panel[data-tab="${tabName}"]`).addClass('active');
-  }
-
-  // Name editing functionality
-  async _onNameEdit(event) {
-    const nameElement = $(event.currentTarget);
-    const currentName = nameElement.text();
-    
-    const input = $(`<input type="text" class="name-input" value="${currentName}" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 2px 8px; border-radius: 4px; font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">`);
-    
-    nameElement.replaceWith(input);
-    input.focus().select();
-  }
-
-  async _onNameSave(event) {
-    const input = $(event.currentTarget);
-    const newName = input.val().trim();
-    
-    if (newName && newName !== this.document.name) {
-      await this.document.update({ name: newName });
-    }
-    
-    const nameElement = $(`<h1 class="location-name">${this.document.name}</h1>`);
-    input.replaceWith(nameElement);
-    nameElement.click(this._onNameEdit.bind(this));
-  }
-
-  async _onNameKeypress(event) {
-    if (event.which === 13) { // Enter key
-      event.currentTarget.blur();
+  async _handleDrop(data, event) {
+    if (data.type === "Item") {
+      await this._handleItemDrop(data, event);
+    } else if (data.type === "JournalEntry") {
+      await this._handleJournalDrop(data, event);
+    } else if (data.type === "Actor") {
+      await this._handleActorDrop(data, event);
     }
   }
 
-  async _onImageClick(event) {
-    event.preventDefault();
-    
-    const current = this.document.img;
-    const fp = new FilePicker({
-      type: "image",
-      current: current,
-      callback: async (path) => {
-        await this.document.update({ img: path });
-        this.render(false);
-      }
-    });
-    
-    return fp.browse();
-  }
-
-  _onDragOver(event) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "link";
-  }
-
-  async _onDrop(event) {
-    event.preventDefault();
-    
-    // Prevent duplicate drops
-    if (this._dropping) return;
-    this._dropping = true;
-    
-    let data;
-    try {
-      data = JSON.parse(event.dataTransfer.getData('text/plain'));
-    } catch (err) {
-      this._dropping = false;
-      return;
-    }
-
-    try {
-      if (data.type === "Item") {
-        await this._handleItemDrop(data);
-      } else if (data.type === "JournalEntry") {
-        await this._handleJournalDrop(data);
-      } else if (data.type === "Actor") {
-        await this._handleActorDrop(data);
-      }
-    } finally {
-      this._dropping = false;
-    }
-  }
-
-  async _handleItemDrop(data) {
+  async _handleItemDrop(data, event) {
     const item = await fromUuid(data.uuid);
     if (!item) return;
 
@@ -265,9 +263,9 @@ export class ShopSheet extends JournalSheet {
     this.render(false);
   }
 
-  async _handleJournalDrop(data) {
+  async _handleJournalDrop(data, event) {
     const journal = await fromUuid(data.uuid);
-    if (!journal || journal.id === this.document.id) return; // Prevent self-linking
+    if (!journal || journal.id === this.document.id) return;
 
     const journalType = journal.getFlag("campaign-codex", "type");
     
@@ -280,56 +278,21 @@ export class ShopSheet extends JournalSheet {
     }
   }
 
-  async _handleActorDrop(data) {
+  async _handleActorDrop(data, event) {
     const actor = await fromUuid(data.uuid);
     if (!actor || actor.type !== "npc") return;
 
-    // Check if there's already an NPC journal for this actor
     let npcJournal = game.journal.find(j => {
       const npcData = j.getFlag("campaign-codex", "data");
       return npcData && npcData.linkedActor === actor.id;
     });
 
-    // If no journal exists, create one
     if (!npcJournal) {
       npcJournal = await game.campaignCodex.createNPCJournal(actor);
     }
 
-    // Link the shop to the NPC journal
     await game.campaignCodex.linkShopToNPC(this.document, npcJournal);
     this.render(false);
-  }
-
-  async _onSaveData(event) {
-    event.preventDefault();
-    
-    const form = this.element.find('form')[0];
-    const formData = new FormDataExtended(form);
-    const data = formData.object;
-
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const updatedData = {
-      ...currentData,
-      description: data.description || "",
-      notes: data.notes || ""
-    };
-
-    try {
-      await this.document.setFlag("campaign-codex", "data", updatedData);
-      ui.notifications.info("Shop data saved successfully!");
-      
-      const saveBtn = $(event.currentTarget);
-      saveBtn.addClass('success');
-      setTimeout(() => saveBtn.removeClass('success'), 2000);
-      
-    } catch (error) {
-      console.error("Campaign Codex | Error saving shop data:", error);
-      ui.notifications.error("Failed to save shop data!");
-      
-      const saveBtn = $(event.currentTarget);
-      saveBtn.addClass('error');
-      setTimeout(() => saveBtn.removeClass('error'), 2000);
-    }
   }
 
   async _onMarkupChange(event) {
@@ -337,7 +300,7 @@ export class ShopSheet extends JournalSheet {
     const currentData = this.document.getFlag("campaign-codex", "data") || {};
     currentData.markup = markup;
     await this.document.setFlag("campaign-codex", "data", currentData);
-    this.render(false); // Re-render to update prices
+    this.render(false);
   }
 
   async _onQuantityChange(event) {
@@ -387,16 +350,6 @@ export class ShopSheet extends JournalSheet {
     }
   }
 
-  async _onRemoveNPC(event) {
-    const npcId = event.currentTarget.dataset.npcId;
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    
-    currentData.linkedNPCs = (currentData.linkedNPCs || []).filter(id => id !== npcId);
-    await this.document.setFlag("campaign-codex", "data", currentData);
-    
-    this.render(false);
-  }
-
   async _onRemoveItem(event) {
     const itemId = event.currentTarget.dataset.itemId;
     const currentData = this.document.getFlag("campaign-codex", "data") || {};
@@ -414,65 +367,7 @@ export class ShopSheet extends JournalSheet {
     this.render(false);
   }
 
-  // Fixed open methods
-  _onOpenNPC(event) {
-    event.stopPropagation();
-    const npcId = event.currentTarget.dataset.npcId || event.currentTarget.closest('[data-npc-id]').dataset.npcId;
-    const journal = game.journal.get(npcId);
-    if (journal) journal.sheet.render(true);
-  }
-
-  _onOpenLocation(event) {
-    event.stopPropagation();
-    const locationId = event.currentTarget.dataset.locationId || event.currentTarget.closest('[data-location-id]').dataset.locationId;
-    const journal = game.journal.get(locationId);
-    if (journal) journal.sheet.render(true);
-  }
-
-  _onOpenItem(event) {
-    event.stopPropagation();
-    const itemId = event.currentTarget.dataset.itemId;
-    const item = game.items.get(itemId);
-    if (item) item.sheet.render(true);
-  }
-
-  _onOpenActor(event) {
-    event.stopPropagation();
-    const actorId = event.currentTarget.dataset.actorId;
-    const actor = game.actors.get(actorId);
-    if (actor) actor.sheet.render(true);
-  }
-
-  // Override render to preserve tab state
-  async render(force = false, options = {}) {
-    const currentTab = this._currentTab;
-    const result = await super.render(force, options);
-    
-    if (this._element && currentTab) {
-      setTimeout(() => {
-        this._showTab(currentTab, this._element);
-      }, 50);
-    }
-    
-    return result;
-  }
-
-  // Override close to save on close
-  async close(options = {}) {
-    // Auto-save on close
-    const form = this.element?.find('form')[0];
-    if (form) {
-      const formData = new FormDataExtended(form);
-      const data = formData.object;
-      const currentData = this.document.getFlag("campaign-codex", "data") || {};
-      const updatedData = {
-        ...currentData,
-        description: data.description || "",
-        notes: data.notes || ""
-      };
-      await this.document.setFlag("campaign-codex", "data", updatedData);
-    }
-    
-    return super.close(options);
+  getSheetType() {
+    return "shop";
   }
 }
