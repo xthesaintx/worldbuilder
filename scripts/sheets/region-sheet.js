@@ -337,3 +337,4 @@ export class RegionSheet extends JournalSheet {
     return super.close(options);
   }
 }
+}

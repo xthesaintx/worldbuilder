@@ -6,6 +6,7 @@ export class LocationSheet extends JournalSheet {
     this._isDragging = false;
   }
 
+  /** @override */
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       classes: ["sheet", "journal-sheet", "campaign-codex", "location-sheet"],
@@ -17,11 +18,12 @@ export class LocationSheet extends JournalSheet {
     });
   }
 
+  /** @override */
   get template() {
     return "modules/campaign-codex/templates/location-sheet.html";
   }
 
-  async getData() {
+  /** @override */
     const data = await super.getData();
     const locationData = this.document.getFlag("campaign-codex", "data") || {};
     
@@ -72,6 +74,7 @@ export class LocationSheet extends JournalSheet {
     return shops;
   }
 
+  /** @override */
   activateListeners(html) {
     super.activateListeners(html);
 
@@ -304,6 +307,7 @@ export class LocationSheet extends JournalSheet {
     if (actor) actor.sheet.render(true);
   }
 
+  /** @override */
   async render(force = false, options = {}) {
     const currentTab = this._currentTab;
     const result = await super.render(force, options);
@@ -317,9 +321,11 @@ export class LocationSheet extends JournalSheet {
     return result;
   }
 
+  /** @override */
   close(options = {}) {
     if (this._autoSaveTimeout) {
       clearTimeout(this._autoSaveTimeout);
     }
     return super.close(options);
   }
+}

@@ -423,3 +423,4 @@ export class ShopSheet extends JournalSheet {
     return super.close(options);
   }
 }
+}

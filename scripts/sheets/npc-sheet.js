@@ -399,3 +399,4 @@ export class NPCSheet extends JournalSheet {
     }
     return super.close(options);
   }
+}
