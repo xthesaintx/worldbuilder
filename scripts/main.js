@@ -1,330 +1,526 @@
-export class LocationSheet extends JournalSheet {
-  constructor(document, options = {}) {
-    super(document, options);
-    this._currentTab = 'info';
-    this._autoSaveTimeout = null;
-    this._isDragging = false;
+import { CampaignManager } from './campaign-manager.js';
+import { LocationSheet } from './sheets/location-sheet.js';
+import { ShopSheet } from './sheets/shop-sheet.js';
+import { NPCSheet } from './sheets/npc-sheet.js';
+import { RegionSheet } from './sheets/region-sheet.js';
+
+Hooks.once('init', async function() {
+  console.log('Campaign Codex | Initializing v2.0');
+  
+  // Register sheet classes
+  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", LocationSheet, {
+    makeDefault: false,
+    label: "Campaign Codex: Location"
+  });
+
+  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", ShopSheet, {
+    makeDefault: false,
+    label: "Campaign Codex: Shop"
+  });
+
+  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", NPCSheet, {
+    makeDefault: false,
+    label: "Campaign Codex: NPC"
+  });
+
+  DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", RegionSheet, {
+    makeDefault: false,
+    label: "Campaign Codex: Region"
+  });
+
+  // Register settings
+  game.settings.register("campaign-codex", "showPlayerNotes", {
+    name: "Show Player Notes Section",
+    hint: "Allow players to add their own notes",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: false
+  });
+
+  game.settings.register("campaign-codex", "useOrganizedFolders", {
+    name: "Organize in Folders",
+    hint: "Automatically create and organize Campaign Codex journals in folders",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true
+  });
+
+  game.settings.register("campaign-codex", "autoSave", {
+    name: "Auto-Save Changes",
+    hint: "Automatically save changes as you type (recommended)",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true
+  });
+
+  console.log('Campaign Codex | Settings and sheets registered');
+});
+
+Hooks.once('ready', async function() {
+  console.log('Campaign Codex | Ready');
+  
+  // Initialize the campaign manager
+  game.campaignCodex = new CampaignManager();
+  
+  // Create organization folders if setting is enabled
+  if (game.settings.get("campaign-codex", "useOrganizedFolders")) {
+    await ensureCampaignCodexFolders();
   }
 
-  /** @override */
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["sheet", "journal-sheet", "campaign-codex", "location-sheet"],
-      width: 900,
-      height: 700,
-      resizable: true,
-      dragDrop: [{ dragSelector: null, dropSelector: null }],
-      tabs: [{ navSelector: ".sidebar-tabs", contentSelector: ".main-content", initial: "info" }]
-    });
-  }
+  // Add custom CSS for better UI/UX
+  addCustomStyles();
+});
 
-  /** @override */
-  get template() {
-    return "modules/campaign-codex/templates/location-sheet.html";
-  }
-
-  /** @override */
-    const data = await super.getData();
-    const locationData = this.document.getFlag("campaign-codex", "data") || {};
+// Add custom styles for better UI/UX
+function addCustomStyles() {
+  const style = document.createElement('style');
+  style.textContent = `
+    /* Fix globe SVG 404 issues */
+    img[src*="globe.svg"]:not([src*="data:"]) {
+      content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="m2 12c2.5-2.5 7.5-2.5 10 0s7.5 2.5 10 0"/><path d="m12 2c2.5 2.5 2.5 7.5 0 10s-2.5 7.5 0 10"/></svg>');
+    }
     
-    data.linkedNPCs = await this._getLinkedNPCs(locationData.linkedNPCs || []);
-    data.linkedShops = await this._getLinkedShops(locationData.linkedShops || []);
+    /* Modern scrollbars */
+    .campaign-codex *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
     
-    data.locationData = {
-      description: locationData.description || "",
-      notes: locationData.notes || ""
-    };
+    .campaign-codex *::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    
+    .campaign-codex *::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+    }
+    
+    .campaign-codex *::-webkit-scrollbar-thumb:hover {
+      background: #a1a1a1;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
-    data.canEdit = this.document.canUserModify(game.user, "update");
-    data.currentTab = this._currentTab;
+// Ensure Campaign Codex folders exist
+async function ensureCampaignCodexFolders() {
+  const folderNames = {
+    "Campaign Codex - Locations": "location",
+    "Campaign Codex - Shops": "shop", 
+    "Campaign Codex - NPCs": "npc",
+    "Campaign Codex - Regions": "region"
+  };
+
+  for (const [folderName, type] of Object.entries(folderNames)) {
+    let folder = game.folders.find(f => f.name === folderName && f.type === "JournalEntry");
     
-    return data;
+    if (!folder) {
+      await Folder.create({
+        name: folderName,
+        type: "JournalEntry",
+        color: getFolderColor(type),
+        flags: {
+          "campaign-codex": {
+            type: type,
+            autoOrganize: true
+          }
+        }
+      });
+      console.log(`Campaign Codex | Created folder: ${folderName}`);
+    }
+  }
+}
+
+function getFolderColor(type) {
+  const colors = {
+    location: "#3182ce",
+    shop: "#38a169", 
+    npc: "#ed8936",
+    region: "#805ad5"
+  };
+  return colors[type] || "#718096";
+}
+
+// Get appropriate folder for document type
+function getCampaignCodexFolder(type) {
+  if (!game.settings.get("campaign-codex", "useOrganizedFolders")) return null;
+  
+  const folderNames = {
+    location: "Campaign Codex - Locations",
+    shop: "Campaign Codex - Shops",
+    npc: "Campaign Codex - NPCs", 
+    region: "Campaign Codex - Regions"
+  };
+  
+  const folderName = folderNames[type];
+  return game.folders.find(f => f.name === folderName && f.type === "JournalEntry");
+}
+
+// Add context menu options to actors
+Hooks.on('getActorDirectoryEntryContext', (html, options) => {
+  options.push({
+    name: "Create NPC Journal",
+    icon: '<i class="fas fa-user"></i>',
+    condition: li => {
+      const actor = game.actors.get(li.data("documentId"));
+      return actor && actor.type === "npc";
+    },
+    callback: async li => {
+      const actor = game.actors.get(li.data("documentId"));
+      await game.campaignCodex.createNPCJournal(actor);
+    }
+  });
+});
+
+// Add journal entry creation buttons
+Hooks.on('getJournalDirectoryEntryContext', (html, options) => {
+  options.unshift({
+    name: "📍 New Location",
+    icon: '<i class="fas fa-map-marker-alt"></i>',
+    callback: () => game.campaignCodex.createLocationJournal()
+  });
+  
+  options.unshift({
+    name: "🏪 New Shop",
+    icon: '<i class="fas fa-store"></i>',
+    callback: () => game.campaignCodex.createShopJournal()
+  });
+  
+  options.unshift({
+    name: "👤 New NPC Journal",
+    icon: '<i class="fas fa-user"></i>',
+    callback: () => game.campaignCodex.createNPCJournal()
+  });
+  
+  options.unshift({
+    name: "🗺️ New Region",
+    icon: '<i class="fas fa-globe"></i>',
+    callback: () => game.campaignCodex.createRegionJournal()
+  });
+
+  // Add world overview option
+  options.unshift({
+    name: "📋 Campaign Overview",
+    icon: '<i class="fas fa-chart-bar"></i>',
+    callback: () => createCampaignOverview()
+  });
+
+  // Conversion options
+  options.push({
+    name: "Convert to Location",
+    icon: '<i class="fas fa-map-marker-alt"></i>',
+    condition: li => {
+      const journal = game.journal.get(li.data("documentId"));
+      return journal && !journal.getFlag("campaign-codex", "type");
+    },
+    callback: async li => {
+      const journal = game.journal.get(li.data("documentId"));
+      await game.campaignCodex.convertToLocation(journal);
+    }
+  });
+
+  options.push({
+    name: "Convert to Shop",
+    icon: '<i class="fas fa-store"></i>',
+    condition: li => {
+      const journal = game.journal.get(li.data("documentId"));
+      return journal && !journal.getFlag("campaign-codex", "type");
+    },
+    callback: async li => {
+      const journal = game.journal.get(li.data("documentId"));
+      await game.campaignCodex.convertToShop(journal);
+    }
+  });
+
+  options.push({
+    name: "Convert to NPC Journal",
+    icon: '<i class="fas fa-user"></i>',
+    condition: li => {
+      const journal = game.journal.get(li.data("documentId"));
+      return journal && !journal.getFlag("campaign-codex", "type");
+    },
+    callback: async li => {
+      const journal = game.journal.get(li.data("documentId"));
+      await game.campaignCodex.convertToNPC(journal);
+    }
+  });
+
+  options.push({
+    name: "Convert to Region",
+    icon: '<i class="fas fa-globe"></i>',
+    condition: li => {
+      const journal = game.journal.get(li.data("documentId"));
+      return journal && !journal.getFlag("campaign-codex", "type");
+    },
+    callback: async li => {
+      const journal = game.journal.get(li.data("documentId"));
+      await game.campaignCodex.convertToRegion(journal);
+    }
+  });
+});
+
+// Create campaign overview journal
+async function createCampaignOverview() {
+  const locations = game.journal.filter(j => j.getFlag("campaign-codex", "type") === "location");
+  const shops = game.journal.filter(j => j.getFlag("campaign-codex", "type") === "shop");
+  const npcs = game.journal.filter(j => j.getFlag("campaign-codex", "type") === "npc");
+  const regions = game.journal.filter(j => j.getFlag("campaign-codex", "type") === "region");
+
+  const content = `
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin: 1.5rem 0;">
+      <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid #3182ce;">
+        <h3 style="margin: 0 0 1rem 0; color: #1a365d; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-map-marker-alt" style="color: #3182ce;"></i> Locations (${locations.length})
+        </h3>
+        ${locations.map(l => `<p style="margin: 0.5rem 0;">📍 @UUID[${l.uuid}]{${l.name}}</p>`).join('')}
+      </div>
+      
+      <div style="background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid #38a169;">
+        <h3 style="margin: 0 0 1rem 0; color: #1a365d; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-store" style="color: #38a169;"></i> Shops (${shops.length})
+        </h3>
+        ${shops.map(s => `<p style="margin: 0.5rem 0;">🏪 @UUID[${s.uuid}]{${s.name}}</p>`).join('')}
+      </div>
+      
+      <div style="background: linear-gradient(135deg, #fffaf0 0%, #fef5e7 100%); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid #ed8936;">
+        <h3 style="margin: 0 0 1rem 0; color: #1a365d; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-users" style="color: #ed8936;"></i> NPCs (${npcs.length})
+        </h3>
+        ${npcs.map(n => `<p style="margin: 0.5rem 0;">👤 @UUID[${n.uuid}]{${n.name}}</p>`).join('')}
+      </div>
+      
+      <div style="background: linear-gradient(135deg, #faf5ff 0%, #f7fafc 100%); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid #805ad5;">
+        <h3 style="margin: 0 0 1rem 0; color: #1a365d; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-globe" style="color: #805ad5;"></i> Regions (${regions.length})
+        </h3>
+        ${regions.map(r => `<p style="margin: 0.5rem 0;">🗺️ @UUID[${r.uuid}]{${r.name}}</p>`).join('')}
+      </div>
+    </div>
+    
+    <hr style="margin: 2rem 0; border: none; height: 1px; background: linear-gradient(90deg, transparent, #e2e8f0, transparent);">
+    <p style="text-align: center; color: #718096; font-style: italic; margin: 1rem 0;">This overview updates automatically when you recreate it.</p>
+  `;
+
+  const journalData = {
+    name: "📋 Campaign World Overview",
+    pages: [{
+      name: "Overview",
+      type: "text",
+      text: { content: content }
+    }]
+  };
+
+  // Delete existing overview if it exists
+  const existing = game.journal.find(j => j.name === "📋 Campaign World Overview");
+  if (existing) await existing.delete();
+
+  const overview = await JournalEntry.create(journalData);
+  overview.sheet.render(true);
+}
+
+// Force correct sheet to open immediately upon creation
+Hooks.on('createJournalEntry', async (document, options, userId) => {
+  if (game.user.id !== userId) return;
+  
+  const journalType = document.getFlag("campaign-codex", "type");
+  if (!journalType) return;
+
+  // Move to appropriate folder
+  const folder = getCampaignCodexFolder(journalType);
+  if (folder) {
+    await document.update({ folder: folder.id });
   }
 
-  async _getLinkedNPCs(npcIds) {
-    const npcs = [];
-    for (const id of npcIds) {
-      const journal = game.journal.get(id);
-      if (journal) {
-        const npcData = journal.getFlag("campaign-codex", "data") || {};
-        const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
-        npcs.push({
-          id: journal.id,
-          name: journal.name,
-          img: actor ? actor.img : "icons/svg/mystery-man.svg",
-          actor: actor
-        });
+  // Wait for document to be fully created, then open correct sheet
+  setTimeout(() => {
+    let targetSheet = null;
+
+    switch (journalType) {
+      case "location":
+        targetSheet = LocationSheet;
+        break;
+      case "shop":
+        targetSheet = ShopSheet;
+        break;
+      case "npc":
+        targetSheet = NPCSheet;
+        break;
+      case "region":
+        targetSheet = RegionSheet;
+        break;
+    }
+
+    if (targetSheet) {
+      if (document.sheet.rendered) {
+        document.sheet.close();
       }
+      const sheet = new targetSheet(document);
+      sheet.render(true);
+      document._campaignCodexSheet = sheet;
     }
-    return npcs;
+  }, 100);
+});
+
+// Auto-select appropriate sheet based on flags for existing documents
+Hooks.on('renderJournalEntry', (journal, html, data) => {
+  const journalType = journal.getFlag("campaign-codex", "type");
+  if (!journalType) return;
+
+  const currentSheetName = journal.sheet.constructor.name;
+  let targetSheet = null;
+
+  switch (journalType) {
+    case "location":
+      if (currentSheetName !== "LocationSheet") targetSheet = LocationSheet;
+      break;
+    case "shop":
+      if (currentSheetName !== "ShopSheet") targetSheet = ShopSheet;
+      break;
+    case "npc":
+      if (currentSheetName !== "NPCSheet") targetSheet = NPCSheet;
+      break;
+    case "region":
+      if (currentSheetName !== "RegionSheet") targetSheet = RegionSheet;
+      break;
   }
 
-  async _getLinkedShops(shopIds) {
-    const shops = [];
-    for (const id of shopIds) {
-      const journal = game.journal.get(id);
-      if (journal) {
-        shops.push({
-          id: journal.id,
-          name: journal.name,
-          img: "icons/svg/item-bag.svg"
-        });
-      }
-    }
-    return shops;
-  }
-
-  /** @override */
-  activateListeners(html) {
-    super.activateListeners(html);
-
-    this._activateTabs(html);
-    this._setupDragAndDrop(html);
-    this._setupAutoSave(html);
-
-    // Image change functionality
-    html.find('.location-image').click(this._onImageClick.bind(this));
-    html.find('.image-change-btn').click(this._onImageClick.bind(this));
-
-    // Remove buttons
-    html.find('.remove-npc').click(this._onRemoveNPC.bind(this));
-    html.find('.remove-shop').click(this._onRemoveShop.bind(this));
-
-    // Open document buttons
-    html.find('.open-npc').click(this._onOpenNPC.bind(this));
-    html.find('.open-shop').click(this._onOpenShop.bind(this));
-    html.find('.open-actor').click(this._onOpenActor.bind(this));
-  }
-
-  _activateTabs(html) {
-    html.find('.sidebar-tabs .tab-item').click(event => {
-      event.preventDefault();
-      const tab = event.currentTarget.dataset.tab;
-      this._currentTab = tab;
-      this._showTab(tab, html);
-    });
-
-    this._showTab(this._currentTab, html);
-  }
-
-  _showTab(tabName, html) {
-    const $html = html instanceof jQuery ? html : $(html);
-    
-    $html.find('.sidebar-tabs .tab-item').removeClass('active');
-    $html.find('.tab-panel').removeClass('active');
-
-    $html.find(`.sidebar-tabs .tab-item[data-tab="${tabName}"]`).addClass('active');
-    $html.find(`.tab-panel[data-tab="${tabName}"]`).addClass('active');
-  }
-
-  _setupDragAndDrop(html) {
-    const mainContent = html.find('.main-content')[0];
-    
-    mainContent.addEventListener('dragenter', (event) => {
-      event.preventDefault();
-      this._isDragging = true;
-      mainContent.classList.add('drag-active');
-    });
-
-    mainContent.addEventListener('dragleave', (event) => {
-      event.preventDefault();
-      if (!mainContent.contains(event.relatedTarget)) {
-        this._isDragging = false;
-        mainContent.classList.remove('drag-active');
-      }
-    });
-
-    mainContent.addEventListener('dragover', (event) => {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "link";
-    });
-
-    mainContent.addEventListener('drop', (event) => {
-      event.preventDefault();
-      this._isDragging = false;
-      mainContent.classList.remove('drag-active');
-      this._onDrop(event);
-    });
-  }
-
-  _setupAutoSave(html) {
-    html.find('textarea, input').on('input', (event) => {
-      this._scheduleAutoSave();
-    });
-  }
-
-  _scheduleAutoSave() {
-    if (this._autoSaveTimeout) {
-      clearTimeout(this._autoSaveTimeout);
-    }
-
-    this._autoSaveTimeout = setTimeout(() => {
-      this._performAutoSave();
-    }, 1000);
-  }
-
-  async _performAutoSave() {
-    const form = this.element.find('form')[0];
-    if (!form) return;
-
-    const formData = new FormDataExtended(form);
-    const data = formData.object;
-
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const updatedData = {
-      ...currentData,
-      description: data.description || "",
-      notes: data.notes || ""
-    };
-
-    try {
-      await this.document.setFlag("campaign-codex", "data", updatedData);
-      this._showAutoSaveIndicator("Saved");
-    } catch (error) {
-      console.error("Campaign Codex | Auto-save failed:", error);
-      this._showAutoSaveIndicator("Save failed", true);
-    }
-  }
-
-  _showAutoSaveIndicator(message, isError = false) {
-    const existing = document.querySelector('.auto-save-indicator');
-    if (existing) existing.remove();
-
-    const indicator = document.createElement('div');
-    indicator.className = 'auto-save-indicator';
-    indicator.textContent = message;
-    if (isError) indicator.style.backgroundColor = 'var(--cc-danger)';
-
-    document.body.appendChild(indicator);
-
-    setTimeout(() => indicator.classList.add('show'), 10);
+  if (targetSheet) {
     setTimeout(() => {
-      indicator.classList.remove('show');
-      setTimeout(() => indicator.remove(), 200);
-    }, 2000);
+      journal.sheet.close();
+      const sheet = new targetSheet(journal);
+      sheet.render(true);
+      journal._campaignCodexSheet = sheet;
+    }, 100);
   }
+});
 
-  async _onImageClick(event) {
-    event.preventDefault();
-    
-    const current = this.document.img;
-    const fp = new FilePicker({
-      type: "image",
-      current: current,
-      callback: async (path) => {
-        await this.document.update({ img: path });
-        this.render(false);
+// Modern Campaign Codex creation buttons for Journal Directory
+Hooks.on('renderJournalDirectory', (app, html, data) => {
+  // Remove any existing button group
+  html.find('.campaign-codex-buttons').remove();
+  
+  // Create modern button container
+  const buttonGroup = $(`
+    <div class="campaign-codex-buttons">
+      <div class="button-row">
+        <button class="create-location-btn" type="button" title="Create New Location">
+          <i class="fas fa-map-marker-alt"></i>Location
+        </button>
+        <button class="create-shop-btn" type="button" title="Create New Shop">
+          <i class="fas fa-store"></i>Shop
+        </button>
+        <button class="create-npc-btn" type="button" title="Create New NPC Journal">
+          <i class="fas fa-user"></i>NPC
+        </button>
+        <button class="create-region-btn" type="button" title="Create New Region">
+          <i class="fas fa-globe"></i>Region
+        </button>
+      </div>
+    </div>
+  `);
+
+  // Insert into directory header
+  const directoryHeader = html.find('.directory-header');
+  directoryHeader.append(buttonGroup);
+
+  // Event listeners with improved UX
+  html.find('.create-location-btn').click(async () => {
+    const name = await promptForName("Location", "📍");
+    if (name) await game.campaignCodex.createLocationJournal(name);
+  });
+
+  html.find('.create-shop-btn').click(async () => {
+    const name = await promptForName("Shop", "🏪");
+    if (name) await game.campaignCodex.createShopJournal(name);
+  });
+
+  html.find('.create-npc-btn').click(async () => {
+    const name = await promptForName("NPC Journal", "👤");
+    if (name) await game.campaignCodex.createNPCJournal(null, name);
+  });
+
+  html.find('.create-region-btn').click(async () => {
+    const name = await promptForName("Region", "🗺️");
+    if (name) await game.campaignCodex.createRegionJournal(name);
+  });
+});
+
+// Enhanced prompt with modern styling
+async function promptForName(type, icon = "") {
+  return new Promise((resolve) => {
+    new Dialog({
+      title: `Create New ${type}`,
+      content: `
+        <form class="flexcol" style="gap: 1rem;">
+          <div class="form-group" style="margin: 0;">
+            <label style="font-weight: 500; margin-bottom: 0.5rem; display: block;">
+              ${icon} ${type} Name:
+            </label>
+            <input 
+              type="text" 
+              name="name" 
+              placeholder="Enter ${type.toLowerCase()} name..." 
+              autofocus 
+              style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; font-size: 0.875rem;"
+            />
+          </div>
+        </form>
+      `,
+      buttons: {
+        create: {
+          icon: '<i class="fas fa-check"></i>',
+          label: "Create",
+          callback: (html) => {
+            const name = html.find('[name="name"]').val().trim();
+            resolve(name || `New ${type}`);
+          }
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: "Cancel",
+          callback: () => resolve(null)
+        }
+      },
+      default: "create",
+      render: (html) => {
+        // Focus input and submit on enter
+        const input = html.find('input[name="name"]');
+        input.focus();
+        input.keypress((e) => {
+          if (e.which === 13) {
+            html.closest('.dialog').find('.dialog-button.create button').click();
+          }
+        });
       }
-    });
-    
-    return fp.browse();
-  }
+    }).render(true);
+  });
+}
 
-  async _onDrop(event) {
-    event.preventDefault();
-    
-    let data;
-    try {
-      data = JSON.parse(event.dataTransfer.getData('text/plain'));
-    } catch (err) {
-      return;
-    }
+// Handle bidirectional relationship updates
+Hooks.on('updateJournalEntry', async (document, changes, options, userId) => {
+  if (game.user.id !== userId) return;
+  
+  const type = document.getFlag("campaign-codex", "type");
+  if (!type) return;
 
-    if (data.type === "JournalEntry") {
-      await this._handleJournalDrop(data);
-    } else if (data.type === "Actor") {
-      await this._handleActorDrop(data);
-    }
-  }
+  await game.campaignCodex.handleRelationshipUpdates(document, changes, type);
+});
 
-  async _handleJournalDrop(data) {
-    const journal = await fromUuid(data.uuid);
-    if (!journal) return;
+// Cleanup relationships when documents are deleted
+Hooks.on('preDeleteJournalEntry', async (document, options, userId) => {
+  const type = document.getFlag("campaign-codex", "type");
+  if (!type) return;
 
-    const journalType = journal.getFlag("campaign-codex", "type");
-    
-    if (journalType === "npc") {
-      await game.campaignCodex.linkLocationToNPC(this.document, journal);
-      this.render(false);
-    } else if (journalType === "shop") {
-      await game.campaignCodex.linkLocationToShop(this.document, journal);
-      this.render(false);
-    }
-  }
+  await game.campaignCodex.cleanupRelationships(document, type);
+});
 
-  async _handleActorDrop(data) {
-    const actor = await fromUuid(data.uuid);
-    if (!actor || actor.type !== "npc") return;
+Hooks.on('preDeleteActor', async (document, options, userId) => {
+  await game.campaignCodex.cleanupActorRelationships(document);
+});
 
-    let npcJournal = game.journal.find(j => {
-      const npcData = j.getFlag("campaign-codex", "data");
-      return npcData && npcData.linkedActor === actor.id;
-    });
-
-    if (!npcJournal) {
-      npcJournal = await game.campaignCodex.createNPCJournal(actor);
-    }
-
-    await game.campaignCodex.linkLocationToNPC(this.document, npcJournal);
-    this.render(false);
-  }
-
-  async _onRemoveNPC(event) {
-    const npcId = event.currentTarget.dataset.npcId;
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    
-    currentData.linkedNPCs = (currentData.linkedNPCs || []).filter(id => id !== npcId);
-    await this.document.setFlag("campaign-codex", "data", currentData);
-    
-    this.render(false);
-  }
-
-  async _onRemoveShop(event) {
-    const shopId = event.currentTarget.dataset.shopId;
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    
-    currentData.linkedShops = (currentData.linkedShops || []).filter(id => id !== shopId);
-    await this.document.setFlag("campaign-codex", "data", currentData);
-    
-    this.render(false);
-  }
-
-  _onOpenNPC(event) {
-    const npcId = event.currentTarget.dataset.npcId;
-    const journal = game.journal.get(npcId);
-    if (journal) journal.sheet.render(true);
-  }
-
-  _onOpenShop(event) {
-    const shopId = event.currentTarget.dataset.shopId;
-    const journal = game.journal.get(shopId);
-    if (journal) journal.sheet.render(true);
-  }
-
-  _onOpenActor(event) {
-    const actorId = event.currentTarget.dataset.actorId;
-    const actor = game.actors.get(actorId);
-    if (actor) actor.sheet.render(true);
-  }
-
-  /** @override */
-  async render(force = false, options = {}) {
-    const currentTab = this._currentTab;
-    const result = await super.render(force, options);
-    
-    if (this._element && currentTab) {
-      setTimeout(() => {
-        this._showTab(currentTab, this._element);
-      }, 50);
-    }
-    
-    return result;
-  }
-
-  /** @override */
-  close(options = {}) {
-    if (this._autoSaveTimeout) {
-      clearTimeout(this._autoSaveTimeout);
-    }
-    return super.close(options);
-  }
+// Export folder management functions
+window.getCampaignCodexFolder = getCampaignCodexFolder;
