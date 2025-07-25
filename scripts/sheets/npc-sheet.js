@@ -23,11 +23,68 @@ export class NPCSheet extends JournalSheet {
     data.linkedShops = await this._getLinkedShops(npcData.linkedShops || []);
     data.associates = await this._getAssociates(npcData.associates || []);
     
-    // NPC specific data
+    // NPC specific data with basic character info
     data.npcData = {
+      // Basic Info
+      name: npcData.name || this.document.name,
+      race: npcData.race || "",
+      class: npcData.class || "",
+      level: npcData.level || 1,
+      alignment: npcData.alignment || "",
+      background: npcData.background || "",
+      
+      // Ability Scores
+      abilities: npcData.abilities || {
+        str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10
+      },
+      
+      // Combat Stats
+      ac: npcData.ac || 10,
+      hp: npcData.hp || { value: 8, max: 8 },
+      speed: npcData.speed || 30,
+      
+      // Skills & Proficiencies
+      skills: npcData.skills || [],
+      languages: npcData.languages || [],
+      proficiencyBonus: npcData.proficiencyBonus || Math.ceil(1 + (npcData.level || 1) / 4),
+      
+      // Equipment & Inventory
+      equipment: npcData.equipment || [],
+      
+      // Descriptions
       description: npcData.description || "",
+      personality: npcData.personality || "",
+      ideals: npcData.ideals || "",
+      bonds: npcData.bonds || "",
+      flaws: npcData.flaws || "",
       notes: npcData.notes || ""
     };
+
+    // Calculate ability modifiers
+    data.npcData.abilityMods = {};
+    for (const [key, value] of Object.entries(data.npcData.abilities)) {
+      data.npcData.abilityMods[key] = Math.floor((value - 10) / 2);
+    }
+
+    // Available skills list for D&D 5e
+    data.availableSkills = [
+      "Acrobatics", "Animal Handling", "Arcana", "Athletics", "Deception",
+      "History", "Insight", "Intimidation", "Investigation", "Medicine",
+      "Nature", "Perception", "Performance", "Persuasion", "Religion",
+      "Sleight of Hand", "Stealth", "Survival"
+    ];
+
+    // Available languages
+    data.availableLanguages = [
+      "Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling",
+      "Orc", "Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal",
+      "Primordial", "Sylvan", "Undercommon"
+    ];
+
+    // Equipment types for easy adding
+    data.equipmentTypes = [
+      "Weapon", "Armor", "Shield", "Tool", "Adventuring Gear", "Treasure"
+    ];
 
     data.canEdit = this.document.canUserModify(game.user, "update");
     
@@ -124,6 +181,25 @@ export class NPCSheet extends JournalSheet {
     html.find('.open-location').click(this._onOpenLocation.bind(this));
     html.find('.open-shop').click(this._onOpenShop.bind(this));
     html.find('.open-associate').click(this._onOpenAssociate.bind(this));
+
+    // Ability score controls
+    html.find('.ability-input').change(this._onAbilityChange.bind(this));
+    html.find('.ability-roll').click(this._onAbilityRoll.bind(this));
+
+    // Equipment controls
+    html.find('.add-equipment').click(this._onAddEquipment.bind(this));
+    html.find('.remove-equipment').click(this._onRemoveEquipment.bind(this));
+
+    // Skill controls
+    html.find('.add-skill').click(this._onAddSkill.bind(this));
+    html.find('.remove-skill').click(this._onRemoveSkill.bind(this));
+
+    // Language controls
+    html.find('.add-language').click(this._onAddLanguage.bind(this));
+    html.find('.remove-language').click(this._onRemoveLanguage.bind(this));
+
+    // HP controls
+    html.find('.hp-input').change(this._onHPChange.bind(this));
   }
 
   _activateTabs(html) {
@@ -174,40 +250,54 @@ export class NPCSheet extends JournalSheet {
     }
   }
 
+  async _handleActorDrop(data) {
+    const actor = await fromUuid(data.uuid);
+    if (!actor) return;
+
+    // Check if this is for the main actor link or an associate
+    const dropZone = event.target.closest('.drop-zone');
+    const dropType = dropZone?.dataset.dropType;
+
+    if (dropType === "actor") {
+      // Link main actor
+      const currentData = this.document.getFlag("campaign-codex", "data") || {};
+      currentData.linkedActor = actor.id;
+      await this.document.setFlag("campaign-codex", "data", currentData);
+      this.render();
+    } else if (dropType === "associate" && actor.type === "npc") {
+      // Create or find NPC journal for this actor and add as associate
+      let npcJournal = game.journal.find(j => {
+        const npcData = j.getFlag("campaign-codex", "data");
+        return npcData && npcData.linkedActor === actor.id;
+      });
+
+      if (!npcJournal) {
+        npcJournal = await game.campaignCodex.createNPCJournal(actor);
+      }
+
+      await game.campaignCodex.linkNPCToNPC(this.document, npcJournal);
+      this.render();
+    }
+  }
+
   async _handleJournalDrop(data) {
     const journal = await fromUuid(data.uuid);
     if (!journal) return;
 
     const journalType = journal.getFlag("campaign-codex", "type");
     
-    if (journalType === "npc") {
-      await game.campaignCodex.linkLocationToNPC(this.document, journal);
-      this.render(false); // Preserve current tab
+    if (journalType === "location") {
+      await game.campaignCodex.linkLocationToNPC(journal, this.document);
+      this.render();
     } else if (journalType === "shop") {
-      await game.campaignCodex.linkLocationToShop(this.document, journal);
-      this.render(false); // Preserve current tab
+      await game.campaignCodex.linkShopToNPC(journal, this.document);
+      this.render();
+    } else if (journalType === "npc") {
+      await game.campaignCodex.linkNPCToNPC(this.document, journal);
+      this.render();
     }
   }
 
-  async _handleActorDrop(data) {
-    const actor = await fromUuid(data.uuid);
-    if (!actor || actor.type !== "npc") return;
-
-    // Check if there's already an NPC journal for this actor
-    let npcJournal = game.journal.find(j => {
-      const npcData = j.getFlag("campaign-codex", "data");
-      return npcData && npcData.linkedActor === actor.id;
-    });
-
-    // If no journal exists, create one
-    if (!npcJournal) {
-      npcJournal = await game.campaignCodex.createNPCJournal(actor);
-    }
-
-    // Link the location to the NPC journal
-    await game.campaignCodex.linkLocationToNPC(this.document, npcJournal);
-    this.render(false); // Preserve current tab
-  }
   async _handleTileDrop(data) {
     // Handle tile drops for image associations
     const tile = await fromUuid(data.uuid);
@@ -237,14 +327,61 @@ export class NPCSheet extends JournalSheet {
     const data = formData.object;
 
     const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    
+    // Build updated data structure
     const updatedData = {
       ...currentData,
+      // Basic Info
+      name: data.name || "",
+      race: data.race || "",
+      class: data.class || "",
+      level: parseInt(data.level) || 1,
+      alignment: data.alignment || "",
+      background: data.background || "",
+      
+      // Ability Scores
+      abilities: {
+        str: parseInt(data.str) || 10,
+        dex: parseInt(data.dex) || 10,
+        con: parseInt(data.con) || 10,
+        int: parseInt(data.int) || 10,
+        wis: parseInt(data.wis) || 10,
+        cha: parseInt(data.cha) || 10
+      },
+      
+      // Combat Stats
+      ac: parseInt(data.ac) || 10,
+      hp: {
+        value: parseInt(data.hpCurrent) || 8,
+        max: parseInt(data.hpMax) || 8
+      },
+      speed: parseInt(data.speed) || 30,
+      
+      // Calculate proficiency bonus
+      proficiencyBonus: Math.ceil(1 + (parseInt(data.level) || 1) / 4),
+      
+      // Skills and Languages (preserve existing arrays)
+      skills: currentData.skills || [],
+      languages: currentData.languages || [],
+      equipment: currentData.equipment || [],
+      
+      // Descriptions
       description: data.description || "",
+      personality: data.personality || "",
+      ideals: data.ideals || "",
+      bonds: data.bonds || "",
+      flaws: data.flaws || "",
       notes: data.notes || ""
     };
 
     try {
       await this.document.setFlag("campaign-codex", "data", updatedData);
+      
+      // Also update the document name if it changed
+      if (data.name && data.name !== this.document.name) {
+        await this.document.update({ name: data.name });
+      }
+      
       ui.notifications.info("NPC data saved successfully!");
       
       const saveBtn = $(event.currentTarget);
@@ -321,83 +458,263 @@ export class NPCSheet extends JournalSheet {
     const journal = game.journal.get(associateId);
     if (journal) journal.sheet.render(true);
   }
-}
 
-
-  async getData() {
-    const data = await super.getData();
-    const npcData = this.document.getFlag("campaign-codex", "data") || {};
+  // New character creation methods
+  async _onAbilityChange(event) {
+    const abilityName = event.currentTarget.dataset.ability;
+    const value = parseInt(event.currentTarget.value) || 10;
     
-    // Get linked documents
-    data.linkedActor = npcData.linkedActor ? await this._getLinkedActor(npcData.linkedActor) : null;
-    data.linkedLocations = await this._getLinkedLocations(npcData.linkedLocations || []);
-    data.linkedShops = await this._getLinkedShops(npcData.linkedShops || []);
-    data.associates = await this._getAssociates(npcData.associates || []);
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const abilities = currentData.abilities || {};
+    abilities[abilityName] = Math.max(1, Math.min(20, value));
     
-    // NPC specific data with basic character info
-    data.npcData = {
-      // Basic Info
-      name: npcData.name || this.document.name,
-      race: npcData.race || "",
-      class: npcData.class || "",
-      level: npcData.level || 1,
-      alignment: npcData.alignment || "",
-      background: npcData.background || "",
-      
-      // Ability Scores
-      abilities: npcData.abilities || {
-        str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10
-      },
-      
-      // Combat Stats
-      ac: npcData.ac || 10,
-      hp: npcData.hp || { value: 8, max: 8 },
-      speed: npcData.speed || 30,
-      
-      // Skills & Proficiencies
-      skills: npcData.skills || [],
-      languages: npcData.languages || [],
-      proficiencyBonus: npcData.proficiencyBonus || Math.ceil(1 + (npcData.level || 1) / 4),
-      
-      // Equipment & Inventory
-      equipment: npcData.equipment || [],
-      
-      // Descriptions
-      description: npcData.description || "",
-      personality: npcData.personality || "",
-      ideals: npcData.ideals || "",
-      bonds: npcData.bonds || "",
-      flaws: npcData.flaws || "",
-      notes: npcData.notes || ""
-    };
+    currentData.abilities = abilities;
+    await this.document.setFlag("campaign-codex", "data", currentData);
+    this.render(false);
+  }
 
-    // Calculate ability modifiers
-    data.npcData.abilityMods = {};
-    for (const [key, value] of Object.entries(data.npcData.abilities)) {
-      data.npcData.abilityMods[key] = Math.floor((value - 10) / 2);
+  async _onAbilityRoll(event) {
+    const abilityName = event.currentTarget.dataset.ability;
+    
+    // Roll 4d6 drop lowest
+    const rolls = [];
+    for (let i = 0; i < 4; i++) {
+      rolls.push(Math.floor(Math.random() * 6) + 1);
     }
+    rolls.sort((a, b) => b - a);
+    const total = rolls.slice(0, 3).reduce((sum, roll) => sum + roll, 0);
+    
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const abilities = currentData.abilities || {};
+    abilities[abilityName] = total;
+    
+    currentData.abilities = abilities;
+    await this.document.setFlag("campaign-codex", "data", currentData);
+    
+    ui.notifications.info(`Rolled ${total} for ${abilityName.toUpperCase()}: [${rolls.join(", ")}]`);
+    this.render(false);
+  }
 
-    // Available skills list for D&D 5e
-    data.availableSkills = [
+  async _onAddEquipment(event) {
+    const newEquipment = await this._promptForEquipment();
+    if (!newEquipment) return;
+    
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const equipment = currentData.equipment || [];
+    equipment.push(newEquipment);
+    
+    currentData.equipment = equipment;
+    await this.document.setFlag("campaign-codex", "data", currentData);
+    this.render(false);
+  }
+
+  async _onRemoveEquipment(event) {
+    const index = parseInt(event.currentTarget.dataset.index);
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const equipment = currentData.equipment || [];
+    
+    equipment.splice(index, 1);
+    currentData.equipment = equipment;
+    await this.document.setFlag("campaign-codex", "data", currentData);
+    this.render(false);
+  }
+
+  async _onAddSkill(event) {
+    const skill = await this._promptForSkill();
+    if (!skill) return;
+    
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const skills = currentData.skills || [];
+    
+    if (!skills.includes(skill)) {
+      skills.push(skill);
+      currentData.skills = skills;
+      await this.document.setFlag("campaign-codex", "data", currentData);
+      this.render(false);
+    }
+  }
+
+  async _onRemoveSkill(event) {
+    const skill = event.currentTarget.dataset.skill;
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const skills = currentData.skills || [];
+    
+    const index = skills.indexOf(skill);
+    if (index > -1) {
+      skills.splice(index, 1);
+      currentData.skills = skills;
+      await this.document.setFlag("campaign-codex", "data", currentData);
+      this.render(false);
+    }
+  }
+
+  async _onAddLanguage(event) {
+    const language = await this._promptForLanguage();
+    if (!language) return;
+    
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const languages = currentData.languages || [];
+    
+    if (!languages.includes(language)) {
+      languages.push(language);
+      currentData.languages = languages;
+      await this.document.setFlag("campaign-codex", "data", currentData);
+      this.render(false);
+    }
+  }
+
+  async _onRemoveLanguage(event) {
+    const language = event.currentTarget.dataset.language;
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const languages = currentData.languages || [];
+    
+    const index = languages.indexOf(language);
+    if (index > -1) {
+      languages.splice(index, 1);
+      currentData.languages = languages;
+      await this.document.setFlag("campaign-codex", "data", currentData);
+      this.render(false);
+    }
+  }
+
+  async _onHPChange(event) {
+    const field = event.currentTarget.dataset.field;
+    const value = parseInt(event.currentTarget.value) || 1;
+    
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const hp = currentData.hp || { value: 8, max: 8 };
+    
+    hp[field] = Math.max(0, value);
+    if (field === "max" && hp.value > hp.max) {
+      hp.value = hp.max;
+    }
+    
+    currentData.hp = hp;
+    await this.document.setFlag("campaign-codex", "data", currentData);
+    this.render(false);
+  }
+
+  // Helper methods for prompts
+  async _promptForEquipment() {
+    return new Promise((resolve) => {
+      new Dialog({
+        title: "Add Equipment",
+        content: `
+          <form>
+            <div class="form-group">
+              <label>Item Name:</label>
+              <input type="text" name="name" placeholder="Enter item name..." autofocus />
+            </div>
+            <div class="form-group">
+              <label>Type:</label>
+              <select name="type">
+                <option value="Weapon">Weapon</option>
+                <option value="Armor">Armor</option>
+                <option value="Shield">Shield</option>
+                <option value="Tool">Tool</option>
+                <option value="Adventuring Gear">Adventuring Gear</option>
+                <option value="Treasure">Treasure</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Quantity:</label>
+              <input type="number" name="quantity" value="1" min="1" />
+            </div>
+          </form>
+        `,
+        buttons: {
+          add: {
+            label: "Add",
+            callback: (html) => {
+              const name = html.find('[name="name"]').val().trim();
+              const type = html.find('[name="type"]').val();
+              const quantity = parseInt(html.find('[name="quantity"]').val()) || 1;
+              if (name) {
+                resolve({ name, type, quantity });
+              } else {
+                resolve(null);
+              }
+            }
+          },
+          cancel: {
+            label: "Cancel",
+            callback: () => resolve(null)
+          }
+        }
+      }).render(true);
+    });
+  }
+
+  async _promptForSkill() {
+    const availableSkills = [
       "Acrobatics", "Animal Handling", "Arcana", "Athletics", "Deception",
       "History", "Insight", "Intimidation", "Investigation", "Medicine",
       "Nature", "Perception", "Performance", "Persuasion", "Religion",
       "Sleight of Hand", "Stealth", "Survival"
     ];
 
-    // Available languages
-    data.availableLanguages = [
+    return new Promise((resolve) => {
+      new Dialog({
+        title: "Add Skill",
+        content: `
+          <form>
+            <div class="form-group">
+              <label>Skill:</label>
+              <select name="skill" autofocus>
+                ${availableSkills.map(skill => `<option value="${skill}">${skill}</option>`).join('')}
+              </select>
+            </div>
+          </form>
+        `,
+        buttons: {
+          add: {
+            label: "Add",
+            callback: (html) => {
+              resolve(html.find('[name="skill"]').val());
+            }
+          },
+          cancel: {
+            label: "Cancel",
+            callback: () => resolve(null)
+          }
+        }
+      }).render(true);
+    });
+  }
+
+  async _promptForLanguage() {
+    const availableLanguages = [
       "Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling",
       "Orc", "Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal",
       "Primordial", "Sylvan", "Undercommon"
     ];
 
-    // Equipment types for easy adding
-    data.equipmentTypes = [
-      "Weapon", "Armor", "Shield", "Tool", "Adventuring Gear", "Treasure"
-    ];
-
-    data.canEdit = this.document.canUserModify(game.user, "update");
-    
-    return data;
+    return new Promise((resolve) => {
+      new Dialog({
+        title: "Add Language",
+        content: `
+          <form>
+            <div class="form-group">
+              <label>Language:</label>
+              <select name="language" autofocus>
+                ${availableLanguages.map(lang => `<option value="${lang}">${lang}</option>`).join('')}
+              </select>
+            </div>
+          </form>
+        `,
+        buttons: {
+          add: {
+            label: "Add",
+            callback: (html) => {
+              resolve(html.find('[name="language"]').val());
+            }
+          },
+          cancel: {
+            label: "Cancel",
+            callback: () => resolve(null)
+          }
+        }
+      }).render(true);
+    });
   }
+}
