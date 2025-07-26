@@ -204,11 +204,12 @@ export class NPCSheet extends CampaignCodexBaseSheet {
 
   async _getLinkedActor(actorId) {
     const actor = game.actors.get(actorId);
+
     if (actor) {
       return {
         id: actor.id,
         name: actor.name,
-        img: journal.getFlag("campaign-codex", "image") ||  actor.img,
+        img: actor.img,
         race: actor.system.details?.race || "Unknown",
         class: actor.system.details?.class || "Unknown", 
         level: actor.system.details?.level || 1,
@@ -223,7 +224,8 @@ export class NPCSheet extends CampaignCodexBaseSheet {
   // Enhanced method to find ALL locations where this NPC appears
   async _getAllLocations(directLocationIds) {
     const locationMap = new Map();
-    
+            const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+
     // First, add directly linked locations
     for (const id of directLocationIds) {
       const journal = game.journal.get(id);
@@ -231,7 +233,7 @@ export class NPCSheet extends CampaignCodexBaseSheet {
         locationMap.set(id, {
           id: journal.id,
           name: journal.name,
-          img: journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg",
+          img: imageData,
           source: 'direct',
           meta: '<span class="entity-type">Direct Link</span>'
         });
@@ -293,6 +295,8 @@ export class NPCSheet extends CampaignCodexBaseSheet {
         // Find which location this shop is in
         const shopData = journal.getFlag("campaign-codex", "data") || {};
         const linkedLocationId = shopData.linkedLocation;
+                const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+
         let locationName = 'Unknown';
         
         if (linkedLocationId) {
@@ -305,7 +309,7 @@ export class NPCSheet extends CampaignCodexBaseSheet {
         shops.push({
           id: journal.id,
           name: journal.name,
-          img: journal.getFlag("campaign-codex", "image") || "icons/svg/item-bag.svg",
+          img: imageData,
           meta: `<span class="entity-type">Located in ${locationName}</span>`
         });
       }
@@ -319,11 +323,13 @@ export class NPCSheet extends CampaignCodexBaseSheet {
       const journal = game.journal.get(id);
       if (journal) {
         const npcData = journal.getFlag("campaign-codex", "data") || {};
+                const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+
         const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
         associates.push({
           id: journal.id,
           name: journal.name,
-          img: journal.getFlag("campaign-codex", "image") ||  actor.img,
+          img: imageData,
           actor: actor,
           meta: game.campaignCodex.getActorDisplayMeta(actor)
         });

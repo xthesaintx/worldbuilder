@@ -176,7 +176,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
       if (journal) {
         const locationData = journal.getFlag("campaign-codex", "data") || {};
         const directNPCCount = (locationData.linkedNPCs || []).length;
-        
+        const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
         // Count shop NPCs
         let shopNPCCount = 0;
         const shopIds = locationData.linkedShops || [];
@@ -194,7 +194,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
         locations.push({
           id: journal.id,
           name: journal.name,
-          img: journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg",
+          img: imageData,
           meta: `<span class="entity-stat">${totalNPCs} NPCs</span> <span class="entity-stat">${shopCount} Shops</span>`
         });
       }
@@ -220,11 +220,12 @@ export class RegionSheet extends CampaignCodexBaseSheet {
         if (!npcMap.has(npcId)) {
           const npcData = npcJournal.getFlag("campaign-codex", "data") || {};
           const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
-          
+          const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+
           npcMap.set(npcId, {
             id: npcJournal.id,
             name: npcJournal.name,
-            img: journal.getFlag("campaign-codex", "image") ||  actor.img ,
+            img: imageData ,
             actor: actor,
             locations: [location.name],
             shops: [],
@@ -255,11 +256,12 @@ export class RegionSheet extends CampaignCodexBaseSheet {
           if (!npcMap.has(npcId)) {
             const npcData = npcJournal.getFlag("campaign-codex", "data") || {};
             const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
-            
+                    const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+
             npcMap.set(npcId, {
               id: npcJournal.id,
               name: npcJournal.name,
-              img: journal.getFlag("campaign-codex", "image") || actor.img ,
+              img: imageData ,
               actor: actor,
               locations: [location.name],
               shops: [shop.name],
@@ -309,11 +311,12 @@ export class RegionSheet extends CampaignCodexBaseSheet {
           const shopData = shopJournal.getFlag("campaign-codex", "data") || {};
           const npcCount = (shopData.linkedNPCs || []).length;
           const inventoryCount = (shopData.inventory || []).length;
-          
+                  const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+
           shopMap.set(shopId, {
             id: shopJournal.id,
             name: shopJournal.name,
-            img: shopJournal.getFlag("campaign-codex", "image") || "icons/svg/item-bag.svg",
+            img: imageData,
             locations: [location.name],
             meta: `<span class="entity-stat">${npcCount} NPCs</span> <span class="entity-stat">${inventoryCount} Items</span>`
           });

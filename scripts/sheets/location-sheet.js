@@ -154,10 +154,12 @@ export class LocationSheet extends CampaignCodexBaseSheet {
       if (journal) {
         const npcData = journal.getFlag("campaign-codex", "data") || {};
         const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
+                const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+
         npcs.push({
           id: journal.id,
           name: journal.name,
-          img: journal.getFlag("campaign-codex", "image") ||  actor.img ,
+          img: imageData ,
           actor: actor,
           meta: game.campaignCodex.getActorDisplayMeta(actor),
           source: 'direct'
@@ -185,11 +187,12 @@ export class LocationSheet extends CampaignCodexBaseSheet {
         if (!npcMap.has(npcId)) {
           const npcData = npcJournal.getFlag("campaign-codex", "data") || {};
           const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
-          
+                  const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+
           npcMap.set(npcId, {
             id: npcJournal.id,
             name: npcJournal.name,
-            img: journal.getFlag("campaign-codex", "image") ||  actor.img ,
+            img: imageData ,
             actor: actor,
             shops: [shop.name],
             meta: game.campaignCodex.getActorDisplayMeta(actor),
@@ -214,11 +217,12 @@ export class LocationSheet extends CampaignCodexBaseSheet {
       if (journal) {
         const shopData = journal.getFlag("campaign-codex", "data") || {};
         const npcCount = (shopData.linkedNPCs || []).length;
-        
+                const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+
         shops.push({
           id: journal.id,
           name: journal.name,
-          img: journal.getFlag("campaign-codex", "image") ||  "icons/svg/item-bag.svg",
+          img: imageData,
           meta: `<span class="entity-stat">${npcCount} NPCs</span>`
         });
       }

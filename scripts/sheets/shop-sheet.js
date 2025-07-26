@@ -158,11 +158,13 @@ export class ShopSheet extends CampaignCodexBaseSheet {
       const journal = game.journal.get(id);
       if (journal) {
         const npcData = journal.getFlag("campaign-codex", "data") || {};
+                const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+
         const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
         npcs.push({
           id: journal.id,
           name: journal.name,
-          img: journal.getFlag("campaign-codex", "image") ||  actor.img,
+          img: imageData,
           actor: actor,
           meta: game.campaignCodex.getActorDisplayMeta(actor)
 
@@ -174,11 +176,13 @@ export class ShopSheet extends CampaignCodexBaseSheet {
 
   async _getLinkedLocation(locationId) {
     const journal = game.journal.get(locationId);
+            const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+
     if (journal) {
       return {
         id: journal.id,
         name: journal.name,
-        img: journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg"
+        img: imageData
       };
     }
     return null;
