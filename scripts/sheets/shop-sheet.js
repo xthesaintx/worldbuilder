@@ -246,22 +246,51 @@ export class ShopSheet extends CampaignCodexBaseSheet {
     }
   }
 
-  async _handleItemDrop(data, event) {
-    const item = await fromUuid(data.uuid);
-    if (!item) return;
-
-    // Check if item already exists in inventory
-    const currentData = this.document.getFlag("campaign-codex", "data") || {};
-    const inventory = currentData.inventory || [];
+async _handleItemDrop(data, event) {
+  let item;
+  
+  // Handle different drop sources
+  if (data.uuid) {
+    // This handles both world items and compendium items
+    const sourceItem = await fromUuid(data.uuid);
+    if (!sourceItem) return;
     
-    if (inventory.find(i => i.itemId === item.id)) {
-      ui.notifications.warn("Item already exists in inventory!");
-      return;
+    // If it's from a compendium, import it to the world first
+    if (data.uuid.includes('Compendium.')) {
+      console.log('Campaign Codex | Importing item from compendium:', sourceItem.name);
+      const itemData = sourceItem.toObject();
+      // Remove the _id to let Foundry generate a new one
+      delete itemData._id;
+      const importedItems = await Item.createDocuments([itemData]);
+      item = importedItems[0];
+      ui.notifications.info(`Imported "${item.name}" from compendium`);
+    } else {
+      // It's already a world item
+      item = sourceItem;
     }
-
-    await game.campaignCodex.addItemToShop(this.document, item, 1);
-    this.render(false);
+  } else if (data.id) {
+    // Direct item ID (fallback)
+    item = game.items.get(data.id);
   }
+  
+  if (!item) {
+    ui.notifications.warn("Could not find item to add to shop");
+    return;
+  }
+
+  // Check if item already exists in inventory
+  const currentData = this.document.getFlag("campaign-codex", "data") || {};
+  const inventory = currentData.inventory || [];
+  
+  if (inventory.find(i => i.itemId === item.id)) {
+    ui.notifications.warn("Item already exists in inventory!");
+    return;
+  }
+
+  await game.campaignCodex.addItemToShop(this.document, item, 1);
+  this.render(false);
+  ui.notifications.info(`Added "${item.name}" to shop inventory`);
+}
 
   async _handleJournalDrop(data, event) {
     const journal = await fromUuid(data.uuid);
@@ -278,22 +307,60 @@ export class ShopSheet extends CampaignCodexBaseSheet {
     }
   }
 
-  async _handleActorDrop(data, event) {
-    const actor = await fromUuid(data.uuid);
-    if (!actor || actor.type !== "npc") return;
 
-    let npcJournal = game.journal.find(j => {
-      const npcData = j.getFlag("campaign-codex", "data");
-      return npcData && npcData.linkedActor === actor.id;
-    });
-
-    if (!npcJournal) {
-      npcJournal = await game.campaignCodex.createNPCJournal(actor);
+async _handleActorDrop(data, event) {
+  let actor;
+  
+  // Handle different drop sources
+  if (data.uuid) {
+    const sourceActor = await fromUuid(data.uuid);
+    if (!sourceActor || sourceActor.type !== "npc") return;
+    
+    // If it's from a compendium, import it to the world first
+    if (data.uuid.includes('Compendium.')) {
+      console.log('Campaign Codex | Importing actor from compendium:', sourceActor.name);
+      const actorData = sourceActor.toObject();
+      // Remove the _id to let Foundry generate a new one
+      delete actorData._id;
+      const importedActors = await Actor.createDocuments([actorData]);
+      actor = importedActors[0];
+      ui.notifications.info(`Imported "${actor.name}" from compendium`);
+    } else {
+      // It's already a world actor
+      actor = sourceActor;
     }
-
-    await game.campaignCodex.linkShopToNPC(this.document, npcJournal);
-    this.render(false);
+  } else if (data.id) {
+    // Direct actor ID (fallback)
+    actor = game.actors.get(data.id);
+    if (!actor || actor.type !== "npc") return;
   }
+  
+  if (!actor) {
+    ui.notifications.warn("Could not find NPC actor");
+    return;
+  }
+
+  // Check if there's already an NPC journal for this actor
+  let npcJournal = game.journal.find(j => {
+    const npcData = j.getFlag("campaign-codex", "data");
+    return npcData && npcData.linkedActor === actor.id;
+  });
+
+  // If no journal exists, create one
+  if (!npcJournal) {
+    npcJournal = await game.campaignCodex.createNPCJournal(actor);
+  }
+
+  // Link based on sheet type
+  if (this.getSheetType() === "location") {
+    await game.campaignCodex.linkLocationToNPC(this.document, npcJournal);
+  } else if (this.getSheetType() === "shop") {
+    await game.campaignCodex.linkShopToNPC(this.document, npcJournal);
+  }
+  
+  this.render(false);
+  ui.notifications.info(`Added "${actor.name}" to ${this.getSheetType()}`);
+}
 
   async _onMarkupChange(event) {
     const markup = parseFloat(event.target.value) || 1.0;
@@ -370,4 +437,147 @@ export class ShopSheet extends CampaignCodexBaseSheet {
   getSheetType() {
     return "shop";
   }
+
+
+// Add these methods to the ShopSheet class in scripts/sheets/shop-sheet.js
+
+_activateSheetSpecificListeners(html) {
+  // Markup input
+  html.find('.markup-input').change(this._onMarkupChange.bind(this));
+
+  // Remove buttons
+  html.find('.remove-npc').click((e) => this._onRemoveFromList(e, 'linkedNPCs'));
+  html.find('.remove-item').click(this._onRemoveItem.bind(this));
+  html.find('.remove-location').click(this._onRemoveLocation.bind(this));
+
+  // Quantity controls
+  html.find('.quantity-decrease').click(this._onQuantityDecrease.bind(this));
+  html.find('.quantity-increase').click(this._onQuantityIncrease.bind(this));
+  html.find('.quantity-input').change(this._onQuantityChange.bind(this));
+
+  // Price controls
+  html.find('.price-input').change(this._onPriceChange.bind(this));
+
+  // Open buttons
+  html.find('.open-npc').click((e) => this._onOpenDocument(e, 'npc'));
+  html.find('.open-location').click((e) => this._onOpenDocument(e, 'location'));
+  html.find('.open-item').click(this._onOpenItem.bind(this)); // Updated to use custom method
+  html.find('.open-actor').click((e) => this._onOpenDocument(e, 'actor'));
+
+  // Player transfer buttons
+  html.find('.send-to-player').click(this._onSendToPlayer.bind(this));
+
+  // Quick links
+  html.find('.location-link').click((e) => this._onOpenDocument(e, 'location'));
+  html.find('.npc-link').click((e) => this._onOpenDocument(e, 'npc'));
+
+  // Item dragging
+  html.find('.inventory-item').on('dragstart', this._onItemDragStart.bind(this));
+}
+
+// New method to handle opening item sheets
+async _onOpenItem(event) {
+  event.stopPropagation();
+  const itemId = event.currentTarget.dataset.itemId;
+  const item = game.items.get(itemId);
+  
+  if (item) {
+    item.sheet.render(true);
+  } else {
+    ui.notifications.warn("Item not found in world items");
+  }
+}
+
+// New method to handle sending items to players
+async _onSendToPlayer(event) {
+  event.stopPropagation();
+  const itemId = event.currentTarget.dataset.itemId;
+  const item = game.items.get(itemId);
+  
+  if (!item) {
+    ui.notifications.warn("Item not found");
+    return;
+  }
+
+  // Import the TemplateComponents if not already available
+  const { TemplateComponents } = await import('../template-components.js');
+  
+  TemplateComponents.createPlayerSelectionDialog(item.name, async (targetActor) => {
+    await this._transferItemToActor(item, targetActor);
+  });
+}
+
+// Method to transfer item to actor
+async _transferItemToActor(item, targetActor) {
+  try {
+    // Create a copy of the item data
+    const itemData = item.toObject();
+    delete itemData._id; // Remove ID to create a new item
+    
+    // Get the quantity from the shop inventory
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    const inventory = currentData.inventory || [];
+    const shopItem = inventory.find(i => i.itemId === item.id);
+    const quantity = shopItem ? shopItem.quantity : 1;
+    
+    // Set the quantity
+    itemData.system.quantity = Math.min(quantity, 1); // Transfer 1 item at a time
+    
+    // Add item to target actor
+    await targetActor.createEmbeddedDocuments("Item", [itemData]);
+    
+    // Reduce quantity in shop by 1
+    if (shopItem && shopItem.quantity > 1) {
+      await this._updateInventoryItem(item.id, { quantity: shopItem.quantity - 1 });
+    } else {
+      // Remove item from shop if quantity is 1 or less
+      await this._onRemoveItem({ currentTarget: { dataset: { itemId: item.id } } });
+    }
+    
+    ui.notifications.info(`Sent "${item.name}" to ${targetActor.name}`);
+    
+    // Notify the player if they're online
+    const targetUser = game.users.find(u => u.character?.id === targetActor.id);
+    if (targetUser && targetUser.active) {
+      ChatMessage.create({
+        content: `<p><strong>${game.user.name}</strong> sent you <strong>${item.name}</strong> from ${this.document.name}!</p>`,
+        whisper: [targetUser.id]
+      });
+    }
+    
+  } catch (error) {
+    console.error("Error transferring item:", error);
+    ui.notifications.error("Failed to transfer item");
+  }
+}
+
+// New method to handle item dragging
+_onItemDragStart(event) {
+  const itemId = event.currentTarget.dataset.itemId;
+  const itemName = event.currentTarget.dataset.itemName;
+  
+  const dragData = {
+    type: "Item",
+    id: itemId,
+    uuid: `Item.${itemId}`,
+    source: "shop",
+    shopId: this.document.id,
+    shopName: this.document.name
+  };
+  
+  event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+  
+  // Visual feedback
+  event.currentTarget.style.opacity = "0.5";
+  setTimeout(() => {
+    if (event.currentTarget) {
+      event.currentTarget.style.opacity = "1";
+    }
+  }, 100);
+}
+
+
+
+
+  
 }

@@ -908,3 +908,113 @@
     flex-shrink: 0;
   }
 }
+
+
+
+/* Player Selection Dialog */
+.player-selection {
+  padding: 16px;
+}
+
+.player-selection p {
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #333;
+}
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.player-option {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.player-option:hover {
+  background: #e9ecef;
+  border-color: var(--cc-accent);
+  transform: translateY(-1px);
+}
+
+.player-option span {
+  font-weight: 500;
+  color: #333;
+}
+
+/* Enhanced Action Buttons */
+.campaign-codex .action-btn.send-to-player {
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.campaign-codex .action-btn.send-to-player:hover {
+  background: #218838;
+  border-color: #1e7e34;
+}
+
+/* Draggable Inventory Items */
+.campaign-codex .inventory-item {
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.campaign-codex .inventory-item:hover {
+  background: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.campaign-codex .inventory-item:active {
+  cursor: grabbing;
+}
+
+.campaign-codex .inventory-item.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+/* Improved Action Button Spacing */
+.campaign-codex .item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 40px;
+}
+
+/* Notification Styling for Item Transfers */
+.notification.info {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+}
+
+/* Enhanced Item Details */
+.campaign-codex .item-details {
+  min-width: 0;
+  flex: 1;
+}
+
+.campaign-codex .item-name {
+  font-weight: 600;
+  color: var(--cc-main-text);
+  font-size: 14px;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campaign-codex .item-weight {
+  font-size: 11px;
+  color: #999;
+  font-style: italic;
+}

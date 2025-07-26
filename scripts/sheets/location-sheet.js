@@ -171,27 +171,63 @@ export class LocationSheet extends CampaignCodexBaseSheet {
     }
   }
 
-  async _handleActorDrop(data, event) {
-    const actor = await fromUuid(data.uuid);
-    if (!actor || actor.type !== "npc") return;
+// Add this method to both LocationSheet and ShopSheet classes
+// Replace the existing _handleActorDrop method
 
-    // Check if there's already an NPC journal for this actor
-    let npcJournal = game.journal.find(j => {
-      const npcData = j.getFlag("campaign-codex", "data");
-      return npcData && npcData.linkedActor === actor.id;
-    });
-
-    // If no journal exists, create one
-    if (!npcJournal) {
-      npcJournal = await game.campaignCodex.createNPCJournal(actor);
+async _handleActorDrop(data, event) {
+  let actor;
+  
+  // Handle different drop sources
+  if (data.uuid) {
+    const sourceActor = await fromUuid(data.uuid);
+    if (!sourceActor || sourceActor.type !== "npc") return;
+    
+    // If it's from a compendium, import it to the world first
+    if (data.uuid.includes('Compendium.')) {
+      console.log('Campaign Codex | Importing actor from compendium:', sourceActor.name);
+      const actorData = sourceActor.toObject();
+      // Remove the _id to let Foundry generate a new one
+      delete actorData._id;
+      const importedActors = await Actor.createDocuments([actorData]);
+      actor = importedActors[0];
+      ui.notifications.info(`Imported "${actor.name}" from compendium`);
+    } else {
+      // It's already a world actor
+      actor = sourceActor;
     }
+  } else if (data.id) {
+    // Direct actor ID (fallback)
+    actor = game.actors.get(data.id);
+    if (!actor || actor.type !== "npc") return;
+  }
+  
+  if (!actor) {
+    ui.notifications.warn("Could not find NPC actor");
+    return;
+  }
 
-    // Link the location to the NPC journal
+  // Check if there's already an NPC journal for this actor
+  let npcJournal = game.journal.find(j => {
+    const npcData = j.getFlag("campaign-codex", "data");
+    return npcData && npcData.linkedActor === actor.id;
+  });
+
+  // If no journal exists, create one
+  if (!npcJournal) {
+    npcJournal = await game.campaignCodex.createNPCJournal(actor);
+  }
+
+  // Link based on sheet type
+  if (this.getSheetType() === "location") {
     await game.campaignCodex.linkLocationToNPC(this.document, npcJournal);
-    this.render(false);
+  } else if (this.getSheetType() === "shop") {
+    await game.campaignCodex.linkShopToNPC(this.document, npcJournal);
   }
+  
+  this.render(false);
+  ui.notifications.info(`Added "${actor.name}" to ${this.getSheetType()}`);
+}
 
-  getSheetType() {
-    return "location";
-  }
+
+
 }

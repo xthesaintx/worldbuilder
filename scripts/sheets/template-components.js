@@ -168,59 +168,107 @@ export class TemplateComponents {
   }
 
   // Shop inventory table
-  static inventoryTable(inventory) {
-    if (!inventory || inventory.length === 0) {
-      return this.emptyState('item');
-    }
+static inventoryTable(inventory) {
+  if (!inventory || inventory.length === 0) {
+    return this.emptyState('item');
+  }
 
-    return `
-      <div class="inventory-table">
-        <div class="table-header">
-          <div>Image</div>
-          <div>Item Name</div>
-          <div>Base Price</div>
-          <div>Quantity</div>
-          <div>Final Price</div>
-          <div>Actions</div>
+  return `
+    <div class="inventory-table">
+      <div class="table-header">
+        <div>Image</div>
+        <div>Item Name</div>
+        <div>Base Price</div>
+        <div>Quantity</div>
+        <div>Final Price</div>
+        <div>Actions</div>
+      </div>
+      ${inventory.map(item => `
+        <div class="inventory-item" draggable="true" data-item-id="${item.itemId}" data-item-name="${item.name}">
+          <div class="item-image">
+            <img src="${item.img}" alt="${item.name}">
+          </div>
+          <div class="item-details">
+            <div class="item-name">${item.name}</div>
+          </div>
+          <div class="item-base-price">
+            ${item.basePrice} ${item.currency}
+          </div>
+          <div class="quantity-control">
+            <button type="button" class="quantity-btn quantity-decrease" data-item-id="${item.itemId}">
+              <i class="fas fa-minus"></i>
+            </button>
+            <input type="number" class="quantity-input" data-item-id="${item.itemId}" value="${item.quantity}" min="0">
+            <button type="button" class="quantity-btn quantity-increase" data-item-id="${item.itemId}">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+          <div class="item-final-price">
+            <input type="number" class="price-input" data-item-id="${item.itemId}" value="${item.finalPrice}" step="0.01" min="0">
+            <span class="price-currency">${item.currency}</span>
+          </div>
+          <div class="item-actions">
+            <button type="button" class="action-btn open-item" data-item-id="${item.itemId}" title="Open Item Sheet">
+              <i class="fas fa-external-link-alt"></i>
+            </button>
+            <button type="button" class="action-btn send-to-player" data-item-id="${item.itemId}" title="Send to Player">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+            <button type="button" class="action-btn remove-item" data-item-id="${item.itemId}" title="Remove Item">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
         </div>
-        ${inventory.map(item => `
-          <div class="inventory-item">
-            <div class="item-image">
-              <img src="${item.img}" alt="${item.name}">
-            </div>
-            <div class="item-details">
-              <div class="item-name">${item.name}</div>
-              ${item.weight ? `<div class="item-weight">${item.weight} lbs</div>` : ''}
-            </div>
-            <div class="item-base-price">
-              ${item.basePrice} ${item.currency}
-            </div>
-            <div class="quantity-control">
-              <button type="button" class="quantity-btn quantity-decrease" data-item-id="${item.itemId}">
-                <i class="fas fa-minus"></i>
-              </button>
-              <input type="number" class="quantity-input" data-item-id="${item.itemId}" value="${item.quantity}" min="0">
-              <button type="button" class="quantity-btn quantity-increase" data-item-id="${item.itemId}">
-                <i class="fas fa-plus"></i>
-              </button>
-            </div>
-            <div class="item-final-price">
-              <input type="number" class="price-input" data-item-id="${item.itemId}" value="${item.finalPrice}" step="0.01" min="0">
-              <span class="price-currency">${item.currency}</span>
-            </div>
-            <div class="item-actions">
-              <button type="button" class="action-btn open-item" data-item-id="${item.itemId}" title="Open Item">
-                <i class="fas fa-external-link-alt"></i>
-              </button>
-              <button type="button" class="action-btn remove-item" data-item-id="${item.itemId}" title="Remove Item">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+static createPlayerSelectionDialog(itemName, onPlayerSelected) {
+  const playerCharacters = game.users
+    .filter(u => u.active && !u.isGM && u.character)
+    .map(u => u.character);
+
+  if (playerCharacters.length === 0) {
+    ui.notifications.warn("No active player characters found");
+    return;
+  }
+
+  const content = `
+    <div class="player-selection">
+      <p>Send <strong>${itemName}</strong> to which player?</p>
+      <div class="player-list">
+        ${playerCharacters.map(char => `
+          <div class="player-option" data-actor-id="${char.id}">
+            <img src="${char.img}" alt="${char.name}" style="width: 32px; height: 32px; border-radius: 4px; margin-right: 8px;">
+            <span>${char.name}</span>
           </div>
         `).join('')}
       </div>
-    `;
-  }
+    </div>
+  `;
+
+  new Dialog({
+    title: "Send Item to Player",
+    content: content,
+    buttons: {
+      cancel: {
+        icon: '<i class="fas fa-times"></i>',
+        label: "Cancel"
+      }
+    },
+    render: (html) => {
+      html.find('.player-option').click((event) => {
+        const actorId = event.currentTarget.dataset.actorId;
+        const actor = game.actors.get(actorId);
+        if (actor) {
+          onPlayerSelected(actor);
+        }
+        html.closest('.dialog').find('.dialog-button.cancel button').click();
+      });
+    }
+  }).render(true);
+}
 
   // Markup control component
   static markupControl(markup) {

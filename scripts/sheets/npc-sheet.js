@@ -250,37 +250,75 @@ export class NPCSheet extends CampaignCodexBaseSheet {
     }
   }
 
-  async _handleActorDrop(data, event) {
-    const actor = await fromUuid(data.uuid);
-    if (!actor) return;
 
-    const dropZone = event.target.closest('.drop-zone');
-    const dropType = dropZone?.dataset.dropType;
-
-    if (dropType === "actor") {
-      // Link main actor
-      const currentData = this.document.getFlag("campaign-codex", "data") || {};
-      currentData.linkedActor = actor.id;
-      await this.document.setFlag("campaign-codex", "data", currentData);
-      this.render(false);
-    } else if (dropType === "associate" && actor.type === "npc") {
-      // Check if NPC journal already exists for this actor
-      let npcJournal = game.journal.find(j => {
-        const npcData = j.getFlag("campaign-codex", "data");
-        return npcData && npcData.linkedActor === actor.id && j.id !== this.document.id;
-      });
-
-      if (!npcJournal) {
-        npcJournal = await game.campaignCodex.createNPCJournal(actor);
-      }
-
-      // Prevent linking to self
-      if (npcJournal.id !== this.document.id) {
-        await game.campaignCodex.linkNPCToNPC(this.document, npcJournal);
-        this.render(false);
-      }
+async _handleActorDrop(data, event) {
+  let actor;
+  
+  // Handle different drop sources
+  if (data.uuid) {
+    const sourceActor = await fromUuid(data.uuid);
+    if (!sourceActor) return;
+    
+    // If it's from a compendium, import it to the world first
+    if (data.uuid.includes('Compendium.')) {
+      console.log('Campaign Codex | Importing actor from compendium:', sourceActor.name);
+      const actorData = sourceActor.toObject();
+      // Remove the _id to let Foundry generate a new one
+      delete actorData._id;
+      const importedActors = await Actor.createDocuments([actorData]);
+      actor = importedActors[0];
+      ui.notifications.info(`Imported "${actor.name}" from compendium`);
+    } else {
+      // It's already a world actor
+      actor = sourceActor;
     }
+  } else if (data.id) {
+    // Direct actor ID (fallback)
+    actor = game.actors.get(data.id);
   }
+  
+  if (!actor) {
+    ui.notifications.warn("Could not find actor");
+    return;
+  }
+
+  const dropZone = event.target.closest('.drop-zone');
+  const dropType = dropZone?.dataset.dropType;
+
+  if (dropType === "actor") {
+    // Link main actor to this NPC journal
+    const currentData = this.document.getFlag("campaign-codex", "data") || {};
+    currentData.linkedActor = actor.id;
+    await this.document.setFlag("campaign-codex", "data", currentData);
+    this.render(false);
+    ui.notifications.info(`Linked "${actor.name}" to NPC journal`);
+    
+  } else if (dropType === "associate" && actor.type === "npc") {
+    // Create associate relationship
+    
+    // Check if NPC journal already exists for this actor
+    let npcJournal = game.journal.find(j => {
+      const npcData = j.getFlag("campaign-codex", "data");
+      return npcData && npcData.linkedActor === actor.id && j.id !== this.document.id;
+    });
+
+    if (!npcJournal) {
+      npcJournal = await game.campaignCodex.createNPCJournal(actor);
+      ui.notifications.info(`Created NPC journal for "${actor.name}"`);
+    }
+
+    // Prevent linking to self
+    if (npcJournal.id !== this.document.id) {
+      await game.campaignCodex.linkNPCToNPC(this.document, npcJournal);
+      this.render(false);
+      ui.notifications.info(`Added "${actor.name}" as associate`);
+    } else {
+      ui.notifications.warn("Cannot link NPC to itself");
+    }
+  } else {
+    ui.notifications.warn("Invalid drop target for this actor type");
+  }
+}
 
   async _handleJournalDrop(data, event) {
     const journal = await fromUuid(data.uuid);
