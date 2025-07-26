@@ -16,10 +16,10 @@ export class RegionSheet extends CampaignCodexBaseSheet {
     const data = await super.getData();
     const regionData = this.document.getFlag("campaign-codex", "data") || {};
     
-    // Get linked documents
+    // Get linked documents with complete hierarchy
     data.linkedLocations = await this._getLinkedLocations(regionData.linkedLocations || []);
-    data.autoPopulatedNPCs = await this._getAutoPopulatedNPCs(regionData.linkedLocations || []);
-    data.autoPopulatedShops = await this._getAutoPopulatedShops(regionData.linkedLocations || []);
+    data.allNPCs = await this._getAllNPCs(regionData.linkedLocations || []);
+    data.allShops = await this._getAllShops(regionData.linkedLocations || []);
     
     // Sheet configuration
     data.sheetType = "region";
@@ -38,8 +38,8 @@ export class RegionSheet extends CampaignCodexBaseSheet {
     // Statistics
     data.statistics = [
       { icon: 'fas fa-map-marker-alt', value: data.linkedLocations.length, label: 'LOCATIONS', color: '#28a745' },
-      { icon: 'fas fa-users', value: data.autoPopulatedNPCs.length, label: 'NPCS', color: '#fd7e14' },
-      { icon: 'fas fa-store', value: data.autoPopulatedShops.length, label: 'SHOPS', color: '#6f42c1' }
+      { icon: 'fas fa-users', value: data.allNPCs.length, label: 'NPCS', color: '#fd7e14' },
+      { icon: 'fas fa-store', value: data.allShops.length, label: 'SHOPS', color: '#6f42c1' }
     ];
     
     // Quick links
@@ -100,24 +100,65 @@ export class RegionSheet extends CampaignCodexBaseSheet {
     `;
 
     return `
-      ${TemplateComponents.contentHeader('fas fa-users', 'NPCs in this Region')}
-      ${TemplateComponents.infoBanner('NPCs are automatically populated from linked locations. Add locations to see NPCs appear here.')}
-      ${TemplateComponents.entityGrid(data.autoPopulatedNPCs, 'npc', true)}
+      ${TemplateComponents.contentHeader('fas fa-users', 'NPCs in this Region', refreshBtn)}
+      ${TemplateComponents.infoBanner('NPCs are automatically populated from all locations and shops in this region.')}
+      ${this._generateNPCsBySource(data)}
     `;
+  }
+
+  _generateNPCsBySource(data) {
+    // Group NPCs by their source
+    const directNPCs = data.allNPCs.filter(npc => npc.source === 'location');
+    const shopNPCs = data.allNPCs.filter(npc => npc.source === 'shop');
+
+    let content = '';
+
+    // Direct Location NPCs
+    if (directNPCs.length > 0) {
+      content += `
+        <div class="npc-section">
+          <h3 style="color: var(--cc-main-text); font-family: var(--cc-font-heading); font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 16px 0; border-bottom: 1px solid var(--cc-border-light); padding-bottom: 8px;">
+            <i class="fas fa-map-marker-alt" style="color: var(--cc-accent); margin-right: 8px;"></i>
+            Location NPCs (${directNPCs.length})
+          </h3>
+          ${TemplateComponents.entityGrid(directNPCs, 'npc', true)}
+        </div>
+      `;
+    }
+
+    // Shop NPCs
+    if (shopNPCs.length > 0) {
+      content += `
+        <div class="npc-section">
+          <h3 style="color: var(--cc-main-text); font-family: var(--cc-font-heading); font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 16px 0; border-bottom: 1px solid var(--cc-border-light); padding-bottom: 8px;">
+            <i class="fas fa-store" style="color: var(--cc-accent); margin-right: 8px;"></i>
+            Shop NPCs (${shopNPCs.length})
+          </h3>
+          ${TemplateComponents.entityGrid(shopNPCs, 'npc', true)}
+        </div>
+      `;
+    }
+
+    // If no NPCs
+    if (data.allNPCs.length === 0) {
+      content = TemplateComponents.emptyState('npc');
+    }
+
+    return content;
   }
 
   _generateShopsTab(data) {
     const refreshBtn = `
-      <button type="button" class="refresh-btn refresh-npcs" title="Refresh auto-populated data">
+      <button type="button" class="refresh-btn refresh-shops" title="Refresh auto-populated data">
         <i class="fas fa-sync-alt"></i>
         Refresh
       </button>
     `;
 
     return `
-      ${TemplateComponents.contentHeader('fas fa-store', 'Shops in this Region')}
-      ${TemplateComponents.infoBanner('Shops are automatically populated from linked locations. Add locations to see shops appear here.')}
-      ${TemplateComponents.entityGrid(data.autoPopulatedShops, 'shop')}
+      ${TemplateComponents.contentHeader('fas fa-store', 'Shops in this Region', refreshBtn)}
+      ${TemplateComponents.infoBanner('Shops are automatically populated from all locations in this region.')}
+      ${TemplateComponents.entityGrid(data.allShops, 'shop')}
     `;
   }
 
@@ -134,18 +175,34 @@ export class RegionSheet extends CampaignCodexBaseSheet {
       const journal = game.journal.get(id);
       if (journal) {
         const locationData = journal.getFlag("campaign-codex", "data") || {};
+        const directNPCCount = (locationData.linkedNPCs || []).length;
+        
+        // Count shop NPCs
+        let shopNPCCount = 0;
+        const shopIds = locationData.linkedShops || [];
+        for (const shopId of shopIds) {
+          const shop = game.journal.get(shopId);
+          if (shop) {
+            const shopData = shop.getFlag("campaign-codex", "data") || {};
+            shopNPCCount += (shopData.linkedNPCs || []).length;
+          }
+        }
+        
+        const totalNPCs = directNPCCount + shopNPCCount;
+        const shopCount = shopIds.length;
+        
         locations.push({
           id: journal.id,
           name: journal.name,
           img: journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg",
-          meta: `<span class="entity-stat">${(locationData.linkedNPCs || []).length} NPCs</span> <span class="entity-stat">${(locationData.linkedShops || []).length} Shops</span>`
+          meta: `<span class="entity-stat">${totalNPCs} NPCs</span> <span class="entity-stat">${shopCount} Shops</span>`
         });
       }
     }
     return locations;
   }
 
-  async _getAutoPopulatedNPCs(locationIds) {
+  async _getAllNPCs(locationIds) {
     const npcMap = new Map();
     
     for (const locationId of locationIds) {
@@ -153,9 +210,10 @@ export class RegionSheet extends CampaignCodexBaseSheet {
       if (!location) continue;
       
       const locationData = location.getFlag("campaign-codex", "data") || {};
-      const linkedNPCs = locationData.linkedNPCs || [];
       
-      for (const npcId of linkedNPCs) {
+      // Get direct location NPCs
+      const directNPCs = locationData.linkedNPCs || [];
+      for (const npcId of directNPCs) {
         const npcJournal = game.journal.get(npcId);
         if (!npcJournal) continue;
         
@@ -169,7 +227,9 @@ export class RegionSheet extends CampaignCodexBaseSheet {
             img: actor ? actor.img : "icons/svg/mystery-man.svg",
             actor: actor,
             locations: [location.name],
-            meta: game.campaignCodex.getActorDisplayMeta(actor)
+            shops: [],
+            meta: game.campaignCodex.getActorDisplayMeta(actor),
+            source: 'location'
           });
         } else {
           const npc = npcMap.get(npcId);
@@ -178,38 +238,96 @@ export class RegionSheet extends CampaignCodexBaseSheet {
           }
         }
       }
+      
+      // Get shop NPCs from this location
+      const shopIds = locationData.linkedShops || [];
+      for (const shopId of shopIds) {
+        const shop = game.journal.get(shopId);
+        if (!shop) continue;
+        
+        const shopData = shop.getFlag("campaign-codex", "data") || {};
+        const shopNPCs = shopData.linkedNPCs || [];
+        
+        for (const npcId of shopNPCs) {
+          const npcJournal = game.journal.get(npcId);
+          if (!npcJournal) continue;
+          
+          if (!npcMap.has(npcId)) {
+            const npcData = npcJournal.getFlag("campaign-codex", "data") || {};
+            const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
+            
+            npcMap.set(npcId, {
+              id: npcJournal.id,
+              name: npcJournal.name,
+              img: actor ? actor.img : "icons/svg/mystery-man.svg",
+              actor: actor,
+              locations: [location.name],
+              shops: [shop.name],
+              meta: game.campaignCodex.getActorDisplayMeta(actor),
+              source: 'shop'
+            });
+          } else {
+            const npc = npcMap.get(npcId);
+            
+            // Add location if not already present
+            if (!npc.locations.includes(location.name)) {
+              npc.locations.push(location.name);
+            }
+            
+            // Add shop if not already present
+            if (!npc.shops.includes(shop.name)) {
+              npc.shops.push(shop.name);
+            }
+            
+            // Update source if this NPC is now found in a shop
+            if (npc.source === 'location' && shopNPCs.includes(npcId)) {
+              npc.source = 'shop';
+            }
+          }
+        }
+      }
     }
     
     return Array.from(npcMap.values());
   }
 
-async _getAutoPopulatedShops(locationIds) {
-  const shopMap = new Map();
-  
-  for (const locationId of locationIds) {
-    const location = game.journal.get(locationId);
-    if (!location) continue;
+  async _getAllShops(locationIds) {
+    const shopMap = new Map();
     
-    const locationData = location.getFlag("campaign-codex", "data") || {};
-    const linkedShops = locationData.linkedShops || [];
-    
-    for (const shopId of linkedShops) {
-      const shopJournal = game.journal.get(shopId);
-      if (!shopJournal) continue;
+    for (const locationId of locationIds) {
+      const location = game.journal.get(locationId);
+      if (!location) continue;
       
-      if (!shopMap.has(shopId)) {
-        shopMap.set(shopId, {
-          id: shopJournal.id,
-          name: shopJournal.name,
-          img: shopJournal.getFlag("campaign-codex", "image") || "icons/svg/item-bag.svg",
-          locations: [location.name]
-        });
+      const locationData = location.getFlag("campaign-codex", "data") || {};
+      const linkedShops = locationData.linkedShops || [];
+      
+      for (const shopId of linkedShops) {
+        const shopJournal = game.journal.get(shopId);
+        if (!shopJournal) continue;
+        
+        if (!shopMap.has(shopId)) {
+          const shopData = shopJournal.getFlag("campaign-codex", "data") || {};
+          const npcCount = (shopData.linkedNPCs || []).length;
+          const inventoryCount = (shopData.inventory || []).length;
+          
+          shopMap.set(shopId, {
+            id: shopJournal.id,
+            name: shopJournal.name,
+            img: shopJournal.getFlag("campaign-codex", "image") || "icons/svg/item-bag.svg",
+            locations: [location.name],
+            meta: `<span class="entity-stat">${npcCount} NPCs</span> <span class="entity-stat">${inventoryCount} Items</span>`
+          });
+        } else {
+          const shop = shopMap.get(shopId);
+          if (!shop.locations.includes(location.name)) {
+            shop.locations.push(location.name);
+          }
+        }
       }
     }
+    
+    return Array.from(shopMap.values());
   }
-  
-  return Array.from(shopMap.values());
-}
 
   _activateSheetSpecificListeners(html) {
     // Remove buttons
@@ -221,8 +339,9 @@ async _getAutoPopulatedShops(locationIds) {
     html.find('.open-shop').click((e) => this._onOpenDocument(e, 'shop'));
     html.find('.open-actor').click((e) => this._onOpenDocument(e, 'actor'));
 
-    // Refresh button
-    html.find('.refresh-npcs').click(this._onRefreshNPCs.bind(this));
+    // Refresh buttons
+    html.find('.refresh-npcs').click(this._onRefreshData.bind(this));
+    html.find('.refresh-shops').click(this._onRefreshData.bind(this));
 
     // Quick links
     html.find('.location-link').click((e) => this._onOpenDocument(e, 'location'));
@@ -246,12 +365,7 @@ async _getAutoPopulatedShops(locationIds) {
     }
   }
 
-
-
-
-
-
-  async _onRefreshNPCs(event) {
+  async _onRefreshData(event) {
     this.render(false);
     ui.notifications.info("Region data refreshed!");
   }

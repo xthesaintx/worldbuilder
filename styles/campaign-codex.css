@@ -1070,8 +1070,6 @@
   color: #b8941f;
   text-shadow: 0 0 4px rgba(212, 175, 55, 0.3);
 }
-
-
 /* Enhanced NPC Section Styling */
 .campaign-codex .npc-section {
   margin-bottom: 32px;
@@ -1079,6 +1077,28 @@
 
 .campaign-codex .npc-section:last-child {
   margin-bottom: 0;
+}
+
+/* Region NPC Cards - Location NPCs */
+.campaign-codex .npc-section .entity-card.npc-card[data-source="location"] {
+  border-left: 4px solid #28a745;
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.02), rgba(40, 167, 69, 0.05));
+}
+
+.campaign-codex .npc-section .entity-card.npc-card[data-source="location"]:hover {
+  border-left-color: #218838;
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(40, 167, 69, 0.08));
+}
+
+/* Region NPC Cards - Shop NPCs */
+.campaign-codx .npc-section .entity-card.npc-card[data-source="shop"] {
+  border-left: 4px solid #6f42c1;
+  background: linear-gradient(135deg, rgba(111, 66, 193, 0.02), rgba(111, 66, 193, 0.05));
+}
+
+.campaign-codex .npc-section .entity-card.npc-card[data-source="shop"]:hover {
+  border-left-color: #563d7c;
+  background: linear-gradient(135deg, rgba(111, 66, 193, 0.05), rgba(111, 66, 193, 0.08));
 }
 
 /* Shop NPC Cards */
