@@ -192,21 +192,38 @@ export class RegionSheet extends CampaignCodexBaseSheet {
       
       const locationData = location.getFlag("campaign-codex", "data") || {};
       const linkedShops = locationData.linkedShops || [];
-      
       for (const shopId of linkedShops) {
-        const shopJournal = game.journal.get(shopId);
-        if (!shopJournal) continue;
+        const shop = game.journal.get(shopId);
+        if (!shop) continue;
         
-        if (!shopMap.has(shopId)) {
-          shopMap.set(shopId, {
-            id: shopJournal.id,
-            name: shopJournal.name,
-            img: shopJournal.getFlag("campaign-codex", "image") || "icons/svg/item-bag.svg",
-            locations: [location.name]
-          });
+        const shopData = shop.getFlag("campaign-codex", "data") || {};
+        const shopNPCs = shopData.linkedNPCs || [];
+        
+        for (const npcId of shopNPCs) {
+          const npcJournal = game.journal.get(npcId);
+          if (!npcJournal) continue;
+          
+          if (!npcMap.has(npcId)) {
+            const npcData = npcJournal.getFlag("campaign-codex", "data") || {};
+            const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
+            
+            npcMap.set(npcId, {
+              id: npcJournal.id,
+              name: npcJournal.name,
+              img: actor ? actor.img : "icons/svg/mystery-man.svg",
+              actor: actor,
+              locations: [`${location.name} (via ${shop.name})`],
+              meta: game.campaignCodex.getActorDisplayMeta(actor)
+            });
+          } else {
+            const npc = npcMap.get(npcId);
+            const shopLocation = `${location.name} (via ${shop.name})`;
+            if (!npc.locations.includes(shopLocation)) {
+              npc.locations.push(shopLocation);
+            }
+          }
         }
       }
-    }
     
     return Array.from(shopMap.values());
   }

@@ -707,6 +707,18 @@ export class CampaignManager {
   async _handleRegionUpdates(regionDoc, changes) {
     // Regions currently only have one-way relationships with locations
     // No bidirectional updates needed for now
+
+  if (changes.linkedLocations) {
+    // Force refresh any open region sheets
+    setTimeout(() => {
+      for (const app of Object.values(ui.windows)) {
+        if (app.document && app.document.id === regionDoc.id) {
+          app.render(false);
+        }
+      }
+    }, 100);
+  }
+    
   }
 
   // === CLEANUP METHODS ===

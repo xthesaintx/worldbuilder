@@ -299,5 +299,27 @@ async close(options = {}) {
   getSheetType() {
     // Override in subclasses
     return "base";
+
+
+_isRelatedDocument(changedDocId) {
+  if (!this.document.getFlag) return false;
+  
+  const data = this.document.getFlag("campaign-codex", "data") || {};
+  const allLinkedIds = [
+    ...(data.linkedNPCs || []),
+    ...(data.linkedShops || []),
+    ...(data.linkedLocations || []),
+    ...(data.associates || []),
+    data.linkedLocation,
+    data.linkedActor
+  ].filter(Boolean);
+  
+  return allLinkedIds.includes(changedDocId);
+}
+
+
+
+
+    
   }
 }

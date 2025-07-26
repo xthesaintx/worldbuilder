@@ -471,7 +471,14 @@ Hooks.on('updateJournalEntry', async (document, changes, options, userId) => {
   
   const type = document.getFlag("campaign-codex", "type");
   if (!type) return;
-
+  // Refresh all related open sheets
+  setTimeout(() => {
+    for (const app of Object.values(ui.windows)) {
+      if (app.document && app._isRelatedDocument && app._isRelatedDocument(document.id)) {
+        app.render(false);
+      }
+    }
+  }, 100);
   await game.campaignCodex.handleRelationshipUpdates(document, changes, type);
 });
 
