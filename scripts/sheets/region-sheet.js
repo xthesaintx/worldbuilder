@@ -100,7 +100,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
     `;
 
     return `
-      ${TemplateComponents.contentHeader('fas fa-users', 'NPCs in this Region', refreshBtn)}
+      ${TemplateComponents.contentHeader('fas fa-users', 'NPCs in this Region')}
       ${TemplateComponents.infoBanner('NPCs are automatically populated from linked locations. Add locations to see NPCs appear here.')}
       ${TemplateComponents.entityGrid(data.autoPopulatedNPCs, 'npc', true)}
     `;
