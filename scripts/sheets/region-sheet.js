@@ -224,7 +224,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
           npcMap.set(npcId, {
             id: npcJournal.id,
             name: npcJournal.name,
-            img: actor ? actor.img : "icons/svg/mystery-man.svg",
+            img: journal.getFlag("campaign-codex", "image") ||  actor.img ,
             actor: actor,
             locations: [location.name],
             shops: [],
@@ -259,7 +259,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
             npcMap.set(npcId, {
               id: npcJournal.id,
               name: npcJournal.name,
-              img: actor ? actor.img : "icons/svg/mystery-man.svg",
+              img: journal.getFlag("campaign-codex", "image") || actor.img ,
               actor: actor,
               locations: [location.name],
               shops: [shop.name],

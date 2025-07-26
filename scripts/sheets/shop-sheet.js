@@ -162,7 +162,7 @@ export class ShopSheet extends CampaignCodexBaseSheet {
         npcs.push({
           id: journal.id,
           name: journal.name,
-          img: actor ? actor.img : "icons/svg/mystery-man.svg",
+          img: journal.getFlag("campaign-codex", "image") ||  actor.img,
           actor: actor,
           meta: game.campaignCodex.getActorDisplayMeta(actor)
 

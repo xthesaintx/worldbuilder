@@ -157,7 +157,7 @@ export class LocationSheet extends CampaignCodexBaseSheet {
         npcs.push({
           id: journal.id,
           name: journal.name,
-          img: actor ? actor.img : "icons/svg/mystery-man.svg",
+          img: journal.getFlag("campaign-codex", "image") ||  actor.img ,
           actor: actor,
           meta: game.campaignCodex.getActorDisplayMeta(actor),
           source: 'direct'
@@ -189,7 +189,7 @@ export class LocationSheet extends CampaignCodexBaseSheet {
           npcMap.set(npcId, {
             id: npcJournal.id,
             name: npcJournal.name,
-            img: actor ? actor.img : "icons/svg/mystery-man.svg",
+            img: journal.getFlag("campaign-codex", "image") ||  actor.img ,
             actor: actor,
             shops: [shop.name],
             meta: game.campaignCodex.getActorDisplayMeta(actor),

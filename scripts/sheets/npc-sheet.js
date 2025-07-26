@@ -208,7 +208,7 @@ export class NPCSheet extends CampaignCodexBaseSheet {
       return {
         id: actor.id,
         name: actor.name,
-        img: actor.img,
+        img: journal.getFlag("campaign-codex", "image") ||  actor.img,
         race: actor.system.details?.race || "Unknown",
         class: actor.system.details?.class || "Unknown", 
         level: actor.system.details?.level || 1,
@@ -323,7 +323,7 @@ export class NPCSheet extends CampaignCodexBaseSheet {
         associates.push({
           id: journal.id,
           name: journal.name,
-          img: actor ? actor.img : "icons/svg/mystery-man.svg",
+          img: journal.getFlag("campaign-codex", "image") ||  actor.img,
           actor: actor,
           meta: game.campaignCodex.getActorDisplayMeta(actor)
         });
