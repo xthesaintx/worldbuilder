@@ -686,7 +686,7 @@
 
 .campaign-codex .table-header {
   display: grid;
-  grid-template-columns: 60px 1fr 100px 120px 120px 80px;
+  grid-template-columns: 60px 1fr 100px 120px 120px 100px;
   gap: 16px;
   padding: 16px;
   background: #f8f9fa;
@@ -987,7 +987,7 @@
 /* Improved Action Button Spacing */
 .campaign-codex .item-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 4px;
   min-width: 40px;
 }

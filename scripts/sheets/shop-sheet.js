@@ -502,9 +502,7 @@ async _onSendToPlayer(event) {
     return;
   }
 
-  // Import the TemplateComponents if not already available
-  const { TemplateComponents } = await import('../template-components.js');
-  
+
   TemplateComponents.createPlayerSelectionDialog(item.name, async (targetActor) => {
     await this._transferItemToActor(item, targetActor);
   });
@@ -582,5 +580,5 @@ _onItemDragStart(event) {
 
 
 
-  
+
 }
