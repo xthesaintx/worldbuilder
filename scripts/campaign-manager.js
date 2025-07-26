@@ -42,7 +42,7 @@ export class CampaignManager {
       return `<span class="entity-type">${actor.type || 'Actor'}</span>`;
     }
   }
-}
+
 
 
 
