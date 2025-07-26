@@ -165,8 +165,8 @@ static get defaultOptions() {
 //     left: this.position.left + 10
 //   });
   
-  return fp.browse();
-}
+//   return fp.browse();
+// }
 
   _onDragOver(event) {
     event.preventDefault();
