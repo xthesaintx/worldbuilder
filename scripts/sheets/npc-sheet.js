@@ -223,12 +223,12 @@ export class NPCSheet extends CampaignCodexBaseSheet {
 
   // Enhanced method to find ALL locations where this NPC appears
   async _getAllLocations(directLocationIds) {
-    const locationMap = new Map();
-            const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
-
+   const locationMap = new Map();
+   
     // First, add directly linked locations
     for (const id of directLocationIds) {
       const journal = game.journal.get(id);
+     const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
       if (journal) {
         locationMap.set(id, {
           id: journal.id,

@@ -187,7 +187,7 @@ export class LocationSheet extends CampaignCodexBaseSheet {
         if (!npcMap.has(npcId)) {
           const npcData = npcJournal.getFlag("campaign-codex", "data") || {};
           const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
-                  const imageData = journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
+          const imageData = npcJournal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg";
 
           npcMap.set(npcId, {
             id: npcJournal.id,
