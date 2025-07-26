@@ -23,7 +23,7 @@ export class LocationSheet extends CampaignCodexBaseSheet {
     // Sheet configuration
     data.sheetType = "location";
     data.sheetTypeLabel = "Location";
-    data.defaultImage = "icons/svg/direction.svg";
+    data.customImage = this.document.img || "icons/svg/direction.svg";
     
     // Navigation tabs
     data.tabs = [

@@ -27,6 +27,8 @@
   border-radius: 0 !important;
   box-shadow: none !important;
   overflow: visible !important;
+  width: 100% !important;
+  height: 100% !important; 
 }
 
 .campaign-codex .window-header {
@@ -36,13 +38,16 @@
 .campaign-codex .window-content {
   padding: 0 !important;
   background: transparent !important;
+  width: 100% !important; 
+  height: 100% !important;
 }
 
 /* Sheet Container */
 .campaign-codex .sheet-container {
   display: flex;
   width: 100%;
-  height: 700px;
+  height: 100%;
+  min-height: 600px;
   background: var(--cc-card-bg);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
@@ -209,6 +214,7 @@
   flex: 1;
   padding: 20px 24px;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .campaign-codex .sidebar-links h3 {
@@ -271,27 +277,29 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* Important for flexbox scrolling */
-  overflow: hidden; /* Prevent double scrollbars */
+  min-height: 0;
+  overflow: hidden;
 }
 
 .campaign-codex .sheet-form {
   flex: 1;
-  overflow-y: auto;
-  max-height: calc(100vh - 200px); /* Adjust based on your needs */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .campaign-codex .tab-panel {
   display: none;
   padding: 32px;
-  height: auto;
-  min-height: 0;
-  overflow-y: auto;
+  height: 100%;
+  overflow-y: auto; 
+  flex: 1;
 }
 
 .campaign-codex .tab-panel.active {
-  display: block;
-  overflow-y: auto;
+  display: flex;
+  overflow-y: column;
 }
 /* Content Headers */
 .campaign-codex .content-header {
@@ -860,9 +868,16 @@
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .campaign-codex .sheet-sidebar {
-    width: 250px;
-  }
+.campaign-codex .sheet-sidebar {
+  width: 300px;
+  min-width: 250px; /* Add minimum width */
+  background: var(--cc-sidebar-bg);
+  color: var(--cc-sidebar-text);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden; 
+}
   
   .campaign-codex .entity-grid {
     grid-template-columns: 1fr;

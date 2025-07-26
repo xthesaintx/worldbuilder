@@ -5,15 +5,16 @@ export class CampaignCodexBaseSheet extends JournalSheet {
     this._currentTab = 'info';
   }
 
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["sheet", "journal-sheet", "campaign-codex"],
-      width: 1000,
-      height: 700,
-      resizable: true,
-      tabs: [{ navSelector: ".sidebar-tabs", contentSelector: ".main-content", initial: "info" }]
-    });
-  }
+static get defaultOptions() {
+  return foundry.utils.mergeObject(super.defaultOptions, {
+    classes: ["sheet", "journal-sheet", "campaign-codex"],
+    width: 1000,
+    height: 700,
+    resizable: true,
+    minimizable: true, // Add this
+    tabs: [{ navSelector: ".sidebar-tabs", contentSelector: ".main-content", initial: "info" }]
+  });
+}
 
   async getData() {
     const data = await super.getData();
@@ -79,7 +80,7 @@ export class CampaignCodexBaseSheet extends JournalSheet {
   }
 
   _setupImageChange(html) {
-    html.find('.image-change-btn').click(this._onImageClick.bind(this));
+    html.find('.image-change-btn').off('click').on('click', this._onImageClick.bind(this));
   }
 
   _setupSaveButton(html) {
@@ -115,42 +116,57 @@ export class CampaignCodexBaseSheet extends JournalSheet {
       event.currentTarget.blur();
     }
   }
-
-async _onImageClick(event) {
-  event.preventDefault();
-  
-  const fp = new FilePicker({
-    type: "image",
-    current: this.document.img,
-    callback: async (path) => {
-      try {
+  async _onImageClick(event) {
+    event.preventDefault();
+    
+    const current = this.document.img;
+    const fp = new FilePicker({
+      type: "image",
+      current: current,
+      callback: async (path) => {
         await this.document.update({ img: path });
-        // Force re-render to show new image
-        this.render(true);
-      } catch (error) {
-        console.error("Failed to update image:", error);
-        ui.notifications.error("Failed to update image");
+        this.render(false);
       }
-    }
-  });
+    });
+    
+    return fp.browse();
+  }
+// async _onImageClick(event) {
+//   event.preventDefault();
+//   event.stopPropagation();
+  
+//   const current = this.document.img;
+//   const fp = new FilePicker({
+//     type: "image",
+//     current: current,
+//     callback: async (path) => {
+//       try {
+//         console.log("Updating image to:", path); // Debug log
+//         await this.document.update({ img: path });
+        
+//         // Force immediate visual update
+//         const imgElement = this.element.find('.sheet-image img');
+//         if (imgElement.length) {
+//           imgElement.attr('src', path);
+//         }
+        
+//         // Re-render the entire sheet to ensure all image references update
+//         setTimeout(() => {
+//           this.render(false);
+//         }, 100);
+        
+//         ui.notifications.info("Image updated successfully!");
+//       } catch (error) {
+//         console.error("Failed to update image:", error);
+//         ui.notifications.error("Failed to update image");
+//       }
+//     },
+//     top: this.position.top + 40,
+//     left: this.position.left + 10
+//   });
   
   return fp.browse();
 }
-  // async _onImageClick(event) {
-  //   event.preventDefault();
-    
-  //   const current = this.document.img;
-  //   const fp = new FilePicker({
-  //     type: "image",
-  //     current: current,
-  //     callback: async (path) => {
-  //       await this.document.update({ img: path });
-  //       this.render(false);
-  //     }
-  //   });
-    
-  //   return fp.browse();
-  // }
 
   _onDragOver(event) {
     event.preventDefault();
