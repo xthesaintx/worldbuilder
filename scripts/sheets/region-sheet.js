@@ -24,7 +24,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
     // Sheet configuration
     data.sheetType = "region";
     data.sheetTypeLabel = "Region";
-    data.defaultImage = "icons/svg/world.svg";
+    data.defaultImage = "icons/svg/direction.svg";
     
     // Navigation tabs
     data.tabs = [
