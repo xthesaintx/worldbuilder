@@ -121,14 +121,14 @@ async _onImageClick(event) {
   event.preventDefault();
   event.stopPropagation();
   
-  const current = this.document.img;
+  const current = this.document.getFlag("campaign-codex", "image") || this.document.img;
   const fp = new FilePicker({
     type: "image",
     current: current,
     callback: async (path) => {
       try {
-        console.log("Updating image to:", path); // Debug log
-        await this.document.update({ img: path });
+        console.log("Updating image to:", path);
+        await this.document.setFlag("campaign-codex", "image", path);
         
         // Force immediate visual update
         const imgElement = this.element.find('.sheet-image img');
@@ -256,22 +256,36 @@ async _onImageClick(event) {
   }
 
   // Override close to save on close
-  async close(options = {}) {
-    const form = this.element?.find('form')[0];
-    if (form) {
-      const formData = new FormDataExtended(form);
-      const data = formData.object;
-      const currentData = this.document.getFlag("campaign-codex", "data") || {};
-      const updatedData = {
-        ...currentData,
-        description: data.description || "",
-        notes: data.notes || ""
-      };
-      await this.document.setFlag("campaign-codex", "data", updatedData);
-    }
-    
+async close(options = {}) {
+  // Check if we're being force-closed due to document deletion
+  if (this._forceClose) {
     return super.close(options);
   }
+
+  // Check if document still exists before trying to save
+  const documentExists = this.document && game.journal.get(this.document.id);
+  
+  if (documentExists && !this.document._pendingDeletion) {
+    const form = this.element?.find('form')[0];
+    if (form) {
+      try {
+        const formData = new FormDataExtended(form);
+        const data = formData.object;
+        const currentData = this.document.getFlag("campaign-codex", "data") || {};
+        const updatedData = {
+          ...currentData,
+          description: data.description || "",
+          notes: data.notes || ""
+        };
+        await this.document.setFlag("campaign-codex", "data", updatedData);
+      } catch (error) {
+        console.warn("Campaign Codex | Could not save on close:", error);
+      }
+    }
+  }
+  
+  return super.close(options);
+}
 
   // Abstract methods to be implemented by subclasses
   _activateSheetSpecificListeners(html) {

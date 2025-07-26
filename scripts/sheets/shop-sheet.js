@@ -24,7 +24,7 @@ export class ShopSheet extends CampaignCodexBaseSheet {
     // Sheet configuration
     data.sheetType = "shop";
     data.sheetTypeLabel = "Shop";
-    data.customImage = this.document.img || "icons/svg/item-bag.svg";
+    data.customImage = this.document.getFlag("campaign-codex", "image") || "icons/svg/item-bag.svg";
     data.markup = shopData.markup || 1.0;
     
     // Navigation tabs

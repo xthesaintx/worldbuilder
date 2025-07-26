@@ -272,6 +272,7 @@
 
 /* Ensure main content can scroll */
 .campaign-codex .sheet-main {
+  scrollbar-width: auto;
   flex: 1;
   background: var(--cc-main-bg);
   position: relative;

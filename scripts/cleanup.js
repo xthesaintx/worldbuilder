@@ -27,7 +27,26 @@ export class CleanUp {
       } catch (error) {
         console.warn(`Campaign Codex | Actor cleanup failed for ${document.name}:`, error);
       }
-    });
-  }
+    Hooks.on('deleteJournalEntry', async (document, options, userId) => {
+      const type = document.getFlag("campaign-codex", "type");
+      if (!type) return;
+
+      // Close any open Campaign Codex sheets for this document
+      for (const app of Object.values(ui.windows)) {
+        if (app.document && app.document.id === document.id) {
+          const isCampaignCodexSheet = [
+            'LocationSheet', 'ShopSheet', 'NPCSheet', 'RegionSheet'
+          ].includes(app.constructor.name);
+          
+          if (isCampaignCodexSheet) {
+            app._forceClose = true;
+            await app.close();
+          }
+        }
+      }
+});
+
+  
 }
+
 

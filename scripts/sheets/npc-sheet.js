@@ -26,7 +26,7 @@ export class NPCSheet extends CampaignCodexBaseSheet {
     data.sheetType = "npc";
     data.sheetTypeLabel = "NPC Journal";
     data.defaultImage = "icons/svg/mystery-man.svg";
-    data.customImage = this.document.img || data.linkedActor?.img || "icons/svg/mystery-man.svg";
+    data.customImage = this.document.getFlag("campaign-codex", "image") || data.linkedActor?.img || "icons/svg/mystery-man.svg";
     
     
     // Navigation tabs
