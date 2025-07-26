@@ -6,7 +6,7 @@ import { RegionSheet } from './sheets/region-sheet.js';
 import { CleanUp } from './cleanup.js';
 
 Hooks.once('init', async function() {
-  console.log('Campaign Codex | Initializing v2.0 - Modular System');
+  console.log('Campaign Codex | Initializing');
   
   // Register sheet classes
   DocumentSheetConfig.registerSheet(JournalEntry, "campaign-codex", LocationSheet, {
@@ -56,7 +56,8 @@ Hooks.once('ready', async function() {
   
   // Initialize the campaign manager
   game.campaignCodex = new CampaignManager();
-  
+  game.campaignCodexCleanup = new CleanUp();
+
   // Create organization folders if setting is enabled
   if (game.settings.get("campaign-codex", "useOrganizedFolders")) {
     await ensureCampaignCodexFolders();
@@ -474,17 +475,6 @@ Hooks.on('updateJournalEntry', async (document, changes, options, userId) => {
   await game.campaignCodex.handleRelationshipUpdates(document, changes, type);
 });
 
-// // Cleanup relationships when documents are deleted
-// Hooks.on('preDeleteJournalEntry', async (document, options, userId) => {
-//   const type = document.getFlag("campaign-codex", "type");
-//   if (!type) return;
-
-//   await game.campaignCodex.cleanupRelationships(document, type);
-// });
-
-// Hooks.on('preDeleteActor', async (document, options, userId) => {
-//   await game.campaignCodex.cleanupActorRelationships(document);
-// });
 
 // Export folder management functions for use in campaign manager
 window.getCampaignCodexFolder = getCampaignCodexFolder;
