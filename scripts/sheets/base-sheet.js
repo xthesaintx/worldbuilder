@@ -299,7 +299,7 @@ async close(options = {}) {
   getSheetType() {
     // Override in subclasses
     return "base";
-
+}
 
 _isRelatedDocument(changedDocId) {
   if (!this.document.getFlag) return false;
@@ -320,6 +320,5 @@ _isRelatedDocument(changedDocId) {
 
 
 
-    
+
   }
-}
