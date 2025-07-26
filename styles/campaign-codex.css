@@ -299,6 +299,7 @@
 
 .campaign-codex .tab-panel.active {
   display: flex;
+  flex-direction: column;
   overflow-y: column;
 }
 /* Content Headers */
@@ -643,7 +644,7 @@
 /* Save Button */
 .campaign-codex .save-btn {
   position: absolute;
-  bottom: 20px;
+  top: 20px;
   right: 20px;
   width: 48px;
   height: 48px;

@@ -116,57 +116,43 @@ static get defaultOptions() {
       event.currentTarget.blur();
     }
   }
-  async _onImageClick(event) {
-    event.preventDefault();
-    
-    const current = this.document.img;
-    const fp = new FilePicker({
-      type: "image",
-      current: current,
-      callback: async (path) => {
+  
+async _onImageClick(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  
+  const current = this.document.img;
+  const fp = new FilePicker({
+    type: "image",
+    current: current,
+    callback: async (path) => {
+      try {
+        console.log("Updating image to:", path); // Debug log
         await this.document.update({ img: path });
-        this.render(false);
+        
+        // Force immediate visual update
+        const imgElement = this.element.find('.sheet-image img');
+        if (imgElement.length) {
+          imgElement.attr('src', path);
+        }
+        
+        // Re-render the entire sheet to ensure all image references update
+        setTimeout(() => {
+          this.render(false);
+        }, 100);
+        
+        ui.notifications.info("Image updated successfully!");
+      } catch (error) {
+        console.error("Failed to update image:", error);
+        ui.notifications.error("Failed to update image");
       }
-    });
-    
-    return fp.browse();
-  }
-// async _onImageClick(event) {
-//   event.preventDefault();
-//   event.stopPropagation();
+    },
+    top: this.position.top + 40,
+    left: this.position.left + 10
+  });
   
-//   const current = this.document.img;
-//   const fp = new FilePicker({
-//     type: "image",
-//     current: current,
-//     callback: async (path) => {
-//       try {
-//         console.log("Updating image to:", path); // Debug log
-//         await this.document.update({ img: path });
-        
-//         // Force immediate visual update
-//         const imgElement = this.element.find('.sheet-image img');
-//         if (imgElement.length) {
-//           imgElement.attr('src', path);
-//         }
-        
-//         // Re-render the entire sheet to ensure all image references update
-//         setTimeout(() => {
-//           this.render(false);
-//         }, 100);
-        
-//         ui.notifications.info("Image updated successfully!");
-//       } catch (error) {
-//         console.error("Failed to update image:", error);
-//         ui.notifications.error("Failed to update image");
-//       }
-//     },
-//     top: this.position.top + 40,
-//     left: this.position.left + 10
-//   });
-  
-//   return fp.browse();
-// }
+  return fp.browse();
+}
 
   _onDragOver(event) {
     event.preventDefault();
