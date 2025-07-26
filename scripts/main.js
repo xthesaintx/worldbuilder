@@ -3,6 +3,7 @@ import { LocationSheet } from './sheets/location-sheet.js';
 import { ShopSheet } from './sheets/shop-sheet.js';
 import { NPCSheet } from './sheets/npc-sheet.js';
 import { RegionSheet } from './sheets/region-sheet.js';
+import { CleanUp } from './cleanup.js';
 
 Hooks.once('init', async function() {
   console.log('Campaign Codex | Initializing v2.0 - Modular System');
@@ -473,17 +474,17 @@ Hooks.on('updateJournalEntry', async (document, changes, options, userId) => {
   await game.campaignCodex.handleRelationshipUpdates(document, changes, type);
 });
 
-// Cleanup relationships when documents are deleted
-Hooks.on('preDeleteJournalEntry', async (document, options, userId) => {
-  const type = document.getFlag("campaign-codex", "type");
-  if (!type) return;
+// // Cleanup relationships when documents are deleted
+// Hooks.on('preDeleteJournalEntry', async (document, options, userId) => {
+//   const type = document.getFlag("campaign-codex", "type");
+//   if (!type) return;
 
-  await game.campaignCodex.cleanupRelationships(document, type);
-});
+//   await game.campaignCodex.cleanupRelationships(document, type);
+// });
 
-Hooks.on('preDeleteActor', async (document, options, userId) => {
-  await game.campaignCodex.cleanupActorRelationships(document);
-});
+// Hooks.on('preDeleteActor', async (document, options, userId) => {
+//   await game.campaignCodex.cleanupActorRelationships(document);
+// });
 
 // Export folder management functions for use in campaign manager
 window.getCampaignCodexFolder = getCampaignCodexFolder;
