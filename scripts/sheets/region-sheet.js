@@ -201,7 +201,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
           shopMap.set(shopId, {
             id: shopJournal.id,
             name: shopJournal.name,
-            img: journal.getFlag("campaign-codex", "image") || "icons/svg/item-bag.svg",
+            img: shopJournal.getFlag("campaign-codex", "image") || "icons/svg/item-bag.svg",
             locations: [location.name]
           });
         }
@@ -245,6 +245,11 @@ export class RegionSheet extends CampaignCodexBaseSheet {
       this.render(false);
     }
   }
+
+
+
+
+  
 
   async _onRefreshNPCs(event) {
     this.render(false);

@@ -700,7 +700,7 @@
 
 .campaign-codex .inventory-item {
   display: grid;
-  grid-template-columns: 60px 1fr 100px 120px 120px 80px;
+  grid-template-columns: 60px 1fr 100px 120px 120px 100px;
   gap: 16px;
   padding: 16px;
   align-items: center;
@@ -915,6 +915,8 @@
 /* Player Selection Dialog */
 .player-selection {
   padding: 16px;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .player-selection p {
@@ -944,6 +946,24 @@
   background: #e9ecef;
   border-color: var(--cc-accent);
   transform: translateY(-1px);
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.character-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.user-info {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
 }
 
 .player-option span {

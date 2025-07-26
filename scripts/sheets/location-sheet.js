@@ -171,6 +171,10 @@ export class LocationSheet extends CampaignCodexBaseSheet {
     }
   }
 
+
+
+  
+
 // Add this method to both LocationSheet and ShopSheet classes
 // Replace the existing _handleActorDrop method
 async _handleActorDrop(data, event) {

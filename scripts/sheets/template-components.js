@@ -225,31 +225,39 @@ static inventoryTable(inventory) {
 }
 
 static createPlayerSelectionDialog(itemName, onPlayerSelected) {
-  const playerCharacters = game.users
-    .filter(u => u.active && !u.isGM && u.character)
-    .map(u => u.character);
+  // Get all actors that are player characters (type "character")
+  const playerCharacters = game.actors.filter(actor => actor.type === "character");
 
   if (playerCharacters.length === 0) {
-    ui.notifications.warn("No active player characters found");
+    ui.notifications.warn("No player characters found");
     return;
   }
 
   const content = `
     <div class="player-selection">
-      <p>Send <strong>${itemName}</strong> to which player?</p>
+      <p>Send <strong>${itemName}</strong> to which player character?</p>
       <div class="player-list">
-        ${playerCharacters.map(char => `
-          <div class="player-option" data-actor-id="${char.id}">
-            <img src="${char.img}" alt="${char.name}" style="width: 32px; height: 32px; border-radius: 4px; margin-right: 8px;">
-            <span>${char.name}</span>
-          </div>
-        `).join('')}
+        ${playerCharacters.map(char => {
+          // Check if character has an assigned user
+          const assignedUser = game.users.find(u => u.character?.id === char.id);
+          const userInfo = assignedUser ? ` (${assignedUser.name})` : ' (Unassigned)';
+          
+          return `
+            <div class="player-option" data-actor-id="${char.id}">
+              <img src="${char.img}" alt="${char.name}" style="width: 32px; height: 32px; border-radius: 4px; margin-right: 8px;">
+              <div class="player-info">
+                <span class="character-name">${char.name}</span>
+                <span class="user-info">${userInfo}</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
       </div>
     </div>
   `;
 
   new Dialog({
-    title: "Send Item to Player",
+    title: "Send Item to Player Character",
     content: content,
     buttons: {
       cancel: {
