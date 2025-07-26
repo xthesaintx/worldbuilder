@@ -183,50 +183,33 @@ export class RegionSheet extends CampaignCodexBaseSheet {
     return Array.from(npcMap.values());
   }
 
-  async _getAutoPopulatedShops(locationIds) {
-    const shopMap = new Map();
+async _getAutoPopulatedShops(locationIds) {
+  const shopMap = new Map();
+  
+  for (const locationId of locationIds) {
+    const location = game.journal.get(locationId);
+    if (!location) continue;
     
-    for (const locationId of locationIds) {
-      const location = game.journal.get(locationId);
-      if (!location) continue;
+    const locationData = location.getFlag("campaign-codex", "data") || {};
+    const linkedShops = locationData.linkedShops || [];
+    
+    for (const shopId of linkedShops) {
+      const shopJournal = game.journal.get(shopId);
+      if (!shopJournal) continue;
       
-      const locationData = location.getFlag("campaign-codex", "data") || {};
-      const linkedShops = locationData.linkedShops || [];
-      for (const shopId of linkedShops) {
-        const shop = game.journal.get(shopId);
-        if (!shop) continue;
-        
-        const shopData = shop.getFlag("campaign-codex", "data") || {};
-        const shopNPCs = shopData.linkedNPCs || [];
-        
-        for (const npcId of shopNPCs) {
-          const npcJournal = game.journal.get(npcId);
-          if (!npcJournal) continue;
-          
-          if (!npcMap.has(npcId)) {
-            const npcData = npcJournal.getFlag("campaign-codex", "data") || {};
-            const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
-            
-            npcMap.set(npcId, {
-              id: npcJournal.id,
-              name: npcJournal.name,
-              img: actor ? actor.img : "icons/svg/mystery-man.svg",
-              actor: actor,
-              locations: [`${location.name} (via ${shop.name})`],
-              meta: game.campaignCodex.getActorDisplayMeta(actor)
-            });
-          } else {
-            const npc = npcMap.get(npcId);
-            const shopLocation = `${location.name} (via ${shop.name})`;
-            if (!npc.locations.includes(shopLocation)) {
-              npc.locations.push(shopLocation);
-            }
-          }
-        }
+      if (!shopMap.has(shopId)) {
+        shopMap.set(shopId, {
+          id: shopJournal.id,
+          name: shopJournal.name,
+          img: shopJournal.getFlag("campaign-codex", "image") || "icons/svg/item-bag.svg",
+          locations: [location.name]
+        });
       }
-    
-    return Array.from(shopMap.values());
+    }
   }
+  
+  return Array.from(shopMap.values());
+}
 
   _activateSheetSpecificListeners(html) {
     // Remove buttons
@@ -266,7 +249,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
 
 
 
-  
+
 
   async _onRefreshNPCs(event) {
     this.render(false);
