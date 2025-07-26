@@ -49,7 +49,7 @@
   height: 100%;
   min-height: 600px;
   background: var(--cc-card-bg);
-  border-radius: 12px;
+/*  border-radius: 12px;*/
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   font-family: var(--cc-font-body);
@@ -72,8 +72,8 @@
 }
 
 .campaign-codex .sheet-image {
-  width: 120px;
-  height: 120px;
+  width: 100%;
+  max-height: 200px;
   border-radius: 12px;
   overflow: hidden;
   margin: 0 auto 16px auto;
@@ -83,8 +83,9 @@
 
 .campaign-codex .sheet-image img {
   width: 100%;
-  height: 100%;
+  max-height: 200px;
   object-fit: cover;
+  object-position: center;
 }
 
 .campaign-codex .sheet-title {
