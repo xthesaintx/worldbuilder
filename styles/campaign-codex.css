@@ -30,7 +30,7 @@
 }
 
 .campaign-codex .window-header {
-  display: none !important;
+  /*display: none !important;*/
 }
 
 .campaign-codex .window-content {
@@ -264,31 +264,35 @@
   white-space: nowrap;
 }
 
-/* Main Content */
+/* Ensure main content can scroll */
 .campaign-codex .sheet-main {
   flex: 1;
   background: var(--cc-main-bg);
   position: relative;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Important for flexbox scrolling */
+  overflow: hidden; /* Prevent double scrollbars */
 }
 
 .campaign-codex .sheet-form {
   flex: 1;
   overflow-y: auto;
+  max-height: calc(100vh - 200px); /* Adjust based on your needs */
 }
 
-/* Tab Panels */
 .campaign-codex .tab-panel {
   display: none;
   padding: 32px;
-  height: 100%;
+  height: auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .campaign-codex .tab-panel.active {
   display: block;
+  overflow-y: auto;
 }
-
 /* Content Headers */
 .campaign-codex .content-header {
   margin-bottom: 24px;

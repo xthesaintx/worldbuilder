@@ -116,21 +116,41 @@ export class CampaignCodexBaseSheet extends JournalSheet {
     }
   }
 
-  async _onImageClick(event) {
-    event.preventDefault();
-    
-    const current = this.document.img;
-    const fp = new FilePicker({
-      type: "image",
-      current: current,
-      callback: async (path) => {
+async _onImageClick(event) {
+  event.preventDefault();
+  
+  const fp = new FilePicker({
+    type: "image",
+    current: this.document.img,
+    callback: async (path) => {
+      try {
         await this.document.update({ img: path });
-        this.render(false);
+        // Force re-render to show new image
+        this.render(true);
+      } catch (error) {
+        console.error("Failed to update image:", error);
+        ui.notifications.error("Failed to update image");
       }
-    });
+    }
+  });
+  
+  return fp.browse();
+}
+  // async _onImageClick(event) {
+  //   event.preventDefault();
     
-    return fp.browse();
-  }
+  //   const current = this.document.img;
+  //   const fp = new FilePicker({
+  //     type: "image",
+  //     current: current,
+  //     callback: async (path) => {
+  //       await this.document.update({ img: path });
+  //       this.render(false);
+  //     }
+  //   });
+    
+  //   return fp.browse();
+  // }
 
   _onDragOver(event) {
     event.preventDefault();
