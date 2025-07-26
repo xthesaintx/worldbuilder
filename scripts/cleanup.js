@@ -1,4 +1,4 @@
-export class TemplateComponents {
+export class CleanUp {
 
   // Cleanup relationships when documents are deleted
   Hooks.on('preDeleteJournalEntry', async (document, options, userId) => {
