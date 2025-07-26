@@ -115,7 +115,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
     `;
 
     return `
-      ${TemplateComponents.contentHeader('fas fa-store', 'Shops in this Region', refreshBtn)}
+      ${TemplateComponents.contentHeader('fas fa-store', 'Shops in this Region')}
       ${TemplateComponents.infoBanner('Shops are automatically populated from linked locations. Add locations to see shops appear here.')}
       ${TemplateComponents.entityGrid(data.autoPopulatedShops, 'shop')}
     `;
@@ -137,8 +137,8 @@ export class RegionSheet extends CampaignCodexBaseSheet {
         locations.push({
           id: journal.id,
           name: journal.name,
-          img: journal.img || "icons/svg/direction.svg",
-          meta: `<span class="entity-stat">${(locationData.linkedNPCs || []).length} NPCs</span> <span class="entity-stat">${(locationData.linkedShops || []).length} Shops</span>`
+          img: journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg",
+          meta: game.campaignCodex.getActorDisplayMeta(actor)
         });
       }
     }
@@ -169,7 +169,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
             img: actor ? actor.img : "icons/svg/mystery-man.svg",
             actor: actor,
             locations: [location.name],
-            meta: actor ? `<span class="entity-type">${actor.system.details?.race || 'Unknown'} ${actor.system.details?.class || 'Unknown'}</span>` : '<span class="entity-type">NPC</span>'
+            meta: game.campaignCodex.getActorDisplayMeta(actor)
           });
         } else {
           const npc = npcMap.get(npcId);
@@ -201,7 +201,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
           shopMap.set(shopId, {
             id: shopJournal.id,
             name: shopJournal.name,
-            img: "icons/svg/item-bag.svg",
+            img: journal.getFlag("campaign-codex", "image") || "icons/svg/item-bag.svg",
             locations: [location.name]
           });
         }

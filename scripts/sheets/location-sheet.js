@@ -111,7 +111,7 @@ export class LocationSheet extends CampaignCodexBaseSheet {
           name: journal.name,
           img: actor ? actor.img : "icons/svg/mystery-man.svg",
           actor: actor,
-          meta: actor ? `<span class="entity-type">${actor.system.details?.race || 'Unknown'} ${actor.system.details?.class || 'Unknown'}</span>` : '<span class="entity-type">NPC</span>'
+          meta: game.campaignCodex.getActorDisplayMeta(actor)
         });
       }
     }
@@ -126,7 +126,7 @@ export class LocationSheet extends CampaignCodexBaseSheet {
         shops.push({
           id: journal.id,
           name: journal.name,
-          img: "icons/svg/item-bag.svg"
+          img: journal.getFlag("campaign-codex", "image") ||  "icons/svg/item-bag.svg"
         });
       }
     }
@@ -173,7 +173,6 @@ export class LocationSheet extends CampaignCodexBaseSheet {
 
 // Add this method to both LocationSheet and ShopSheet classes
 // Replace the existing _handleActorDrop method
-
 async _handleActorDrop(data, event) {
   let actor;
   
@@ -215,19 +214,20 @@ async _handleActorDrop(data, event) {
   // If no journal exists, create one
   if (!npcJournal) {
     npcJournal = await game.campaignCodex.createNPCJournal(actor);
+    ui.notifications.info(`Created NPC journal for "${actor.name}"`);
   }
 
-  // Link based on sheet type
+  // Automatically link to current sheet based on sheet type
   if (this.getSheetType() === "location") {
     await game.campaignCodex.linkLocationToNPC(this.document, npcJournal);
+    ui.notifications.info(`Added "${actor.name}" to location`);
   } else if (this.getSheetType() === "shop") {
     await game.campaignCodex.linkShopToNPC(this.document, npcJournal);
+    ui.notifications.info(`Added "${actor.name}" to shop`);
   }
   
   this.render(false);
-  ui.notifications.info(`Added "${actor.name}" to ${this.getSheetType()}`);
 }
-
 
 
 }

@@ -181,7 +181,7 @@ export class NPCSheet extends CampaignCodexBaseSheet {
         locations.push({
           id: journal.id,
           name: journal.name,
-          img: journal.img || "icons/svg/direction.svg"
+          img: journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg"
         });
       }
     }
@@ -196,7 +196,7 @@ export class NPCSheet extends CampaignCodexBaseSheet {
         shops.push({
           id: journal.id,
           name: journal.name,
-          img: "icons/svg/item-bag.svg"
+          img: journal.getFlag("campaign-codex", "image") || "icons/svg/item-bag.svg"
         });
       }
     }
@@ -215,7 +215,7 @@ export class NPCSheet extends CampaignCodexBaseSheet {
           name: journal.name,
           img: actor ? actor.img : "icons/svg/mystery-man.svg",
           actor: actor,
-          meta: actor ? `<span class="entity-type">${actor.system.details?.race || 'Unknown'} ${actor.system.details?.class || 'Unknown'}</span>` : '<span class="entity-type">NPC</span>'
+          meta: game.campaignCodex.getActorDisplayMeta(actor)
         });
       }
     }
@@ -316,7 +316,28 @@ async _handleActorDrop(data, event) {
       ui.notifications.warn("Cannot link NPC to itself");
     }
   } else {
-    ui.notifications.warn("Invalid drop target for this actor type");
+    // Default behavior - if no specific drop zone, treat as general NPC link
+    if (actor.type === "npc") {
+      // Check if NPC journal already exists for this actor
+      let npcJournal = game.journal.find(j => {
+        const npcData = j.getFlag("campaign-codex", "data");
+        return npcData && npcData.linkedActor === actor.id && j.id !== this.document.id;
+      });
+
+      if (!npcJournal) {
+        npcJournal = await game.campaignCodex.createNPCJournal(actor);
+        ui.notifications.info(`Created NPC journal for "${actor.name}"`);
+      }
+
+      // Add as associate
+      if (npcJournal.id !== this.document.id) {
+        await game.campaignCodex.linkNPCToNPC(this.document, npcJournal);
+        this.render(false);
+        ui.notifications.info(`Added "${actor.name}" as associate`);
+      }
+    } else {
+      ui.notifications.warn("Invalid drop target for this actor type");
+    }
   }
 }
 

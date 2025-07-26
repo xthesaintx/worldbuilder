@@ -4,6 +4,48 @@ export class CampaignManager {
     this._creationQueue = new Set(); // Prevent duplicate creation
   }
 
+  getActorDisplayMeta(actor) {
+    if (!actor) return '<span class="entity-type">NPC</span>';
+    
+    // Check actor type first
+    if (actor.type === 'character') {
+      // Player character
+      const race = actor.system.details?.race?.value || actor.system.details?.race || '';
+      const charClass = actor.system.details?.class?.value || actor.system.details?.class || '';
+      return `<span class="entity-type">${(race + ' ' + charClass).trim() || 'Character'}</span>`;
+    } 
+    else if (actor.type === 'npc') {
+      // Check if it has race/class (humanoid NPC) or creature type (monster)
+      const race = actor.system.details?.race?.value || actor.system.details?.race;
+      const charClass = actor.system.details?.class?.value || actor.system.details?.class;
+      const creatureType = actor.system.details?.type?.value || actor.system.details?.type;
+      const size = actor.system.traits?.size?.value || actor.system.traits?.size;
+      const cr = actor.system.details?.cr || actor.system.attributes?.cr?.value;
+      
+      if (race || charClass) {
+        // Humanoid NPC with race/class
+        return `<span class="entity-type">${(race + ' ' + charClass).trim() || 'NPC'}</span>`;
+      } else if (creatureType) {
+        // Monster with creature type
+        let displayText = '';
+        if (size && size !== 'med') displayText += `${size.charAt(0).toUpperCase() + size.slice(1)} `;
+        displayText += creatureType;
+        if (cr) displayText += ` (CR ${cr})`;
+        return `<span class="entity-type">${displayText}</span>`;
+      } else {
+        // Fallback
+        return '<span class="entity-type">NPC</span>';
+      }
+    } 
+    else {
+      // Unknown actor type
+      return `<span class="entity-type">${actor.type || 'Actor'}</span>`;
+    }
+  }
+}
+
+
+
   // === JOURNAL CREATION METHODS ===
 
   async createLocationJournal(name = "New Location") {
