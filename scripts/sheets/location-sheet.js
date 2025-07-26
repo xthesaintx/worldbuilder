@@ -16,8 +16,10 @@ export class LocationSheet extends CampaignCodexBaseSheet {
     const data = await super.getData();
     const locationData = this.document.getFlag("campaign-codex", "data") || {};
     
-    // Get linked documents
-    data.linkedNPCs = await this._getLinkedNPCs(locationData.linkedNPCs || []);
+    // Get linked documents - split direct and auto-populated NPCs
+    data.directNPCs = await this._getDirectNPCs(locationData.linkedNPCs || []);
+    data.shopNPCs = await this._getShopNPCs(locationData.linkedShops || []);
+    data.allNPCs = [...data.directNPCs, ...data.shopNPCs];
     data.linkedShops = await this._getLinkedShops(locationData.linkedShops || []);
     data.linkedRegion = await this._getLinkedRegion();
     
@@ -34,15 +36,15 @@ export class LocationSheet extends CampaignCodexBaseSheet {
       { key: 'notes', label: 'Notes', icon: 'fas fa-sticky-note', active: this._currentTab === 'notes' }
     ];
     
-    // Statistics
+    // Statistics - use total NPC count
     data.statistics = [
-      { icon: 'fas fa-users', value: data.linkedNPCs.length, label: 'NPCS', color: '#fd7e14' },
+      { icon: 'fas fa-users', value: data.allNPCs.length, label: 'NPCS', color: '#fd7e14' },
       { icon: 'fas fa-store', value: data.linkedShops.length, label: 'SHOPS', color: '#6f42c1' }
     ];
     
-    // Quick links
+    // Quick links - use all NPCs
     data.quickLinks = [
-      ...data.linkedNPCs.map(npc => ({ ...npc, type: 'npc' })),
+      ...data.allNPCs.map(npc => ({ ...npc, type: 'npc' })),
       ...data.linkedShops.map(shop => ({ ...shop, type: 'shop' }))
     ];
     
@@ -88,11 +90,45 @@ export class LocationSheet extends CampaignCodexBaseSheet {
   }
 
   _generateNPCsTab(data) {
-    return `
+    // Create separate sections for direct NPCs and shop NPCs
+    let content = `
       ${TemplateComponents.contentHeader('fas fa-users', 'NPCs at this Location')}
-      ${TemplateComponents.dropZone('npc', 'fas fa-user-plus', 'Add NPCs', 'Drag NPCs or actors here to add them to this location')}
-      ${TemplateComponents.entityGrid(data.linkedNPCs, 'npc', true)}
+      ${TemplateComponents.dropZone('npc', 'fas fa-user-plus', 'Add NPCs', 'Drag NPCs or actors here to add them directly to this location')}
     `;
+
+    // Direct NPCs section
+    if (data.directNPCs.length > 0) {
+      content += `
+        <div class="npc-section">
+          <h3 style="color: var(--cc-main-text); font-family: var(--cc-font-heading); font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 16px 0; border-bottom: 1px solid var(--cc-border-light); padding-bottom: 8px;">
+            <i class="fas fa-user" style="color: var(--cc-accent); margin-right: 8px;"></i>
+            Direct NPCs (${data.directNPCs.length})
+          </h3>
+          ${TemplateComponents.entityGrid(data.directNPCs, 'npc', true)}
+        </div>
+      `;
+    }
+
+    // Shop NPCs section
+    if (data.shopNPCs.length > 0) {
+      content += `
+        <div class="npc-section">
+          <h3 style="color: var(--cc-main-text); font-family: var(--cc-font-heading); font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 16px 0; border-bottom: 1px solid var(--cc-border-light); padding-bottom: 8px;">
+            <i class="fas fa-store" style="color: var(--cc-accent); margin-right: 8px;"></i>
+            Shop NPCs (${data.shopNPCs.length})
+          </h3>
+          ${TemplateComponents.infoBanner('NPCs automatically populated from shops at this location.')}
+          ${TemplateComponents.entityGrid(data.shopNPCs, 'npc', true)}
+        </div>
+      `;
+    }
+
+    // If no NPCs at all
+    if (data.allNPCs.length === 0) {
+      content += TemplateComponents.emptyState('npc');
+    }
+
+    return content;
   }
 
   _generateShopsTab(data) {
@@ -110,7 +146,8 @@ export class LocationSheet extends CampaignCodexBaseSheet {
     `;
   }
 
-  async _getLinkedNPCs(npcIds) {
+  // Get directly linked NPCs
+  async _getDirectNPCs(npcIds) {
     const npcs = [];
     for (const id of npcIds) {
       const journal = game.journal.get(id);
@@ -122,11 +159,52 @@ export class LocationSheet extends CampaignCodexBaseSheet {
           name: journal.name,
           img: actor ? actor.img : "icons/svg/mystery-man.svg",
           actor: actor,
-          meta: game.campaignCodex.getActorDisplayMeta(actor)
+          meta: game.campaignCodex.getActorDisplayMeta(actor),
+          source: 'direct'
         });
       }
     }
     return npcs;
+  }
+
+  // Get NPCs from linked shops
+  async _getShopNPCs(shopIds) {
+    const npcMap = new Map();
+    
+    for (const shopId of shopIds) {
+      const shop = game.journal.get(shopId);
+      if (!shop) continue;
+      
+      const shopData = shop.getFlag("campaign-codex", "data") || {};
+      const linkedNPCs = shopData.linkedNPCs || [];
+      
+      for (const npcId of linkedNPCs) {
+        const npcJournal = game.journal.get(npcId);
+        if (!npcJournal) continue;
+        
+        if (!npcMap.has(npcId)) {
+          const npcData = npcJournal.getFlag("campaign-codex", "data") || {};
+          const actor = npcData.linkedActor ? game.actors.get(npcData.linkedActor) : null;
+          
+          npcMap.set(npcId, {
+            id: npcJournal.id,
+            name: npcJournal.name,
+            img: actor ? actor.img : "icons/svg/mystery-man.svg",
+            actor: actor,
+            shops: [shop.name],
+            meta: game.campaignCodex.getActorDisplayMeta(actor),
+            source: 'shop'
+          });
+        } else {
+          const npc = npcMap.get(npcId);
+          if (!npc.shops.includes(shop.name)) {
+            npc.shops.push(shop.name);
+          }
+        }
+      }
+    }
+    
+    return Array.from(npcMap.values());
   }
 
   async _getLinkedShops(shopIds) {
@@ -134,10 +212,14 @@ export class LocationSheet extends CampaignCodexBaseSheet {
     for (const id of shopIds) {
       const journal = game.journal.get(id);
       if (journal) {
+        const shopData = journal.getFlag("campaign-codex", "data") || {};
+        const npcCount = (shopData.linkedNPCs || []).length;
+        
         shops.push({
           id: journal.id,
           name: journal.name,
-          img: journal.getFlag("campaign-codex", "image") ||  "icons/svg/item-bag.svg"
+          img: journal.getFlag("campaign-codex", "image") ||  "icons/svg/item-bag.svg",
+          meta: `<span class="entity-stat">${npcCount} NPCs</span>`
         });
       }
     }
@@ -165,8 +247,21 @@ export class LocationSheet extends CampaignCodexBaseSheet {
   }
 
   _activateSheetSpecificListeners(html) {
-    // Remove buttons
-    html.find('.remove-npc').click((e) => this._onRemoveFromList(e, 'linkedNPCs'));
+    // Remove buttons - only allow removing direct NPCs
+    html.find('.remove-npc').click((e) => {
+      const npcId = e.currentTarget.dataset.npcId;
+      // Check if this is a direct NPC or shop NPC
+      const npcCard = e.currentTarget.closest('.entity-card');
+      const isShopNPC = npcCard.querySelector('.shop-tags');
+      
+      if (isShopNPC) {
+        ui.notifications.warn("Cannot remove shop NPCs directly. Remove them from their shops instead.");
+        return;
+      }
+      
+      this._onRemoveFromList(e, 'linkedNPCs');
+    });
+    
     html.find('.remove-shop').click((e) => this._onRemoveFromList(e, 'linkedShops'));
 
     // Open buttons
@@ -180,6 +275,14 @@ export class LocationSheet extends CampaignCodexBaseSheet {
     
     // Region link
     html.find('.region-link').click((e) => this._onOpenDocument(e, 'region'));
+
+    // Refresh button for auto-populated data
+    html.find('.refresh-npcs').click(this._onRefreshNPCs.bind(this));
+  }
+
+  async _onRefreshNPCs(event) {
+    this.render(false);
+    ui.notifications.info("Location data refreshed!");
   }
 
   async _handleDrop(data, event) {
@@ -205,8 +308,6 @@ export class LocationSheet extends CampaignCodexBaseSheet {
     }
   }
 
-  // Add this method to both LocationSheet and ShopSheet classes
-  // Replace the existing _handleActorDrop method
   async _handleActorDrop(data, event) {
     let actor;
     
@@ -251,14 +352,9 @@ export class LocationSheet extends CampaignCodexBaseSheet {
       ui.notifications.info(`Created NPC journal for "${actor.name}"`);
     }
 
-    // Automatically link to current sheet based on sheet type
-    if (this.getSheetType() === "location") {
-      await game.campaignCodex.linkLocationToNPC(this.document, npcJournal);
-      ui.notifications.info(`Added "${actor.name}" to location`);
-    } else if (this.getSheetType() === "shop") {
-      await game.campaignCodex.linkShopToNPC(this.document, npcJournal);
-      ui.notifications.info(`Added "${actor.name}" to shop`);
-    }
+    // Link to location as direct NPC
+    await game.campaignCodex.linkLocationToNPC(this.document, npcJournal);
+    ui.notifications.info(`Added "${actor.name}" to location`);
     
     this.render(false);
   }

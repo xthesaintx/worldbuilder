@@ -1070,3 +1070,140 @@
   color: #b8941f;
   text-shadow: 0 0 4px rgba(212, 175, 55, 0.3);
 }
+
+
+/* Enhanced NPC Section Styling */
+.campaign-codex .npc-section {
+  margin-bottom: 32px;
+}
+
+.campaign-codex .npc-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Shop NPC Cards */
+.campaign-codex .entity-card.shop-npc {
+  border-left: 4px solid #6f42c1;
+  background: linear-gradient(135deg, rgba(111, 66, 193, 0.02), rgba(111, 66, 193, 0.05));
+}
+
+.campaign-codex .entity-card.shop-npc:hover {
+  border-left-color: #563d7c;
+  background: linear-gradient(135deg, rgba(111, 66, 193, 0.05), rgba(111, 66, 193, 0.08));
+}
+
+/* Shop Tags */
+.campaign-codex .shop-tag {
+  background: #6f42c1 !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+.campaign-codex .shop-tags {
+  margin-top: 4px;
+}
+
+.campaign-codex .shop-tags i {
+  color: #6f42c1;
+}
+
+/* Enhanced Location Tags */
+.campaign-codex .location-tag {
+  background: #e9ecef;
+  color: #666;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-right: 4px;
+  margin-bottom: 2px;
+  display: inline-block;
+}
+
+/* Entity stat styling */
+.campaign-codex .entity-stat {
+  background: rgba(212, 175, 55, 0.1);
+  color: #b8941f;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 6px;
+}
+
+/* Disabled action button styling */
+.campaign-codex .action-btn[style*="opacity: 0.3"] {
+  cursor: not-allowed !important;
+  opacity: 0.3 !important;
+}
+
+.campaign-codex .action-btn[style*="opacity: 0.3"]:hover {
+  background: #dc3545 !important;
+  color: white !important;
+  border-color: #dc3545 !important;
+  transform: none !important;
+}
+
+/* Section headers with better spacing */
+.campaign-codex .npc-section h3 {
+  color: var(--cc-main-text);
+  font-family: var(--cc-font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 24px 0 16px 0;
+  border-bottom: 1px solid var(--cc-border-light);
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.campaign-codex .npc-section h3 i {
+  color: var(--cc-accent);
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+/* Refresh button positioning */
+.campaign-codex .content-header .refresh-btn {
+  margin-left: auto;
+}
+
+/* Enhanced info banner for auto-populated content */
+.campaign-codex .info-banner.auto-populated {
+  background: rgba(111, 66, 193, 0.1);
+  border-color: rgba(111, 66, 193, 0.2);
+}
+
+.campaign-codex .info-banner.auto-populated i {
+  color: #6f42c1;
+}
+
+/* Enhanced grid spacing for mixed content */
+.campaign-codex .npc-section .entity-grid {
+  margin-top: 8px;
+}
+
+/* Visual distinction for different NPC types */
+.campaign-codex .entity-card.npc-card[data-source="direct"] {
+  border-left: 4px solid #28a745;
+}
+
+.campaign-codex .entity-card.npc-card[data-source="shop"] {
+  border-left: 4px solid #6f42c1;
+}
+
+/* Hover effects for source-specific cards */
+.campaign-codex .entity-card.npc-card[data-source="direct"]:hover {
+  border-left-color: #218838;
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.15);
+}
+
+.campaign-codex .entity-card.npc-card[data-source="shop"]:hover {
+  border-left-color: #563d7c;
+  box-shadow: 0 8px 25px rgba(111, 66, 193, 0.15);
+}
