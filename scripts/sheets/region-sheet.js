@@ -138,7 +138,7 @@ export class RegionSheet extends CampaignCodexBaseSheet {
           id: journal.id,
           name: journal.name,
           img: journal.getFlag("campaign-codex", "image") ||  "icons/svg/direction.svg",
-          meta: game.campaignCodex.getActorDisplayMeta(actor)
+          meta: `<span class="entity-stat">${(locationData.linkedNPCs || []).length} NPCs</span> <span class="entity-stat">${(locationData.linkedShops || []).length} Shops</span>`
         });
       }
     }

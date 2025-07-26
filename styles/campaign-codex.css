@@ -993,10 +993,10 @@
 }
 
 /* Notification Styling for Item Transfers */
-.notification.info {
+/*.notification.info {
   background: linear-gradient(135deg, #28a745, #20c997);
   color: white;
-}
+}*/
 
 /* Enhanced Item Details */
 .campaign-codex .item-details {
